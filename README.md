@@ -12,6 +12,8 @@ Benutzer können ihre Sammlung durchsuchen, filtern und sortieren, Records mit v
 
 Das Projekt dient gleichzeitig als **Portfolioarbeit** und demonstriert den Einsatz moderner .NET- und Angular-Technologien in einer produktionsreifen Webanwendung.
 
+Die vollständige Projektdokumentation ist im [Wiki](https://github.com/A-v-L-303/MyMusic/wiki) verfügbar.
+
 ---
 
 ## Geplante Features
