@@ -1,0 +1,11 @@
+# Standard: Git entscheidet über Textdateien selbst.
+* text=auto
+
+# Shell-Skripte laufen in Linux-Containern und müssen LF behalten.
+# Mit CRLF scheitert der Interpreter mit "bad interpreter: No such file or directory".
+*.sh text eol=lf
+
+# Windows-spezifische Skripte behalten CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf

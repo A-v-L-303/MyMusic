@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-07-15
+Stand: 2026-07-15 (nach Abschluss von Block 0a)
 Branch: `main`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
@@ -19,61 +19,82 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Das Repository enthält bisher ausschließlich die Arbeitsstruktur
-(CLAUDE.md, Subagenten, Permissions, Ordnergerüst) — noch keinen Anwendungscode.
-Offen ist damit der gesamte MVP-Umfang aus Phase 1 der Feature-Roadmap:
+Block 0a (Solution- und Aspire-Fundament) ist abgeschlossen. Offen aus dem
+MVP-Umfang der Phase 1:
 
-- Solution-Grundgerüst mit Onion-Layern, Aspire-Orchestrierung und
-  Angular-Workspace.
-- CQRS-Eigenframework, generisches Repository, ExceptionManager.
+- CQRS-Eigenframework, generisches Repository, ExceptionManager (Block 0b).
+- Angular-Workspace (Block 0c).
 - CRUD-Slices für Genre, Country, Label, Artist, Record und Tracks.
 - Zustandsbewertung nach Goldmine-Standard.
-- Keycloak-Authentifizierung und Mandantentrennung.
+- Keycloak-Authentifizierung im Code und Mandantentrennung.
 - Discogs-Integration, Dashboard und Volltext-Suche.
 - User Stories mit Akzeptanzkriterien (Lücke laut `offene-themen.md` im Wiki).
 
 ## 0. Fundament: Walking Skeleton
 
+Block 0 wurde in drei einzeln prüfbare Teilblöcke zerlegt, weil das
+Abnahmekriterium des Gesamtblocks erst ganz am Ende messbar gewesen wäre.
+
+### 0a. Solution- und Aspire-Fundament
+
+Status: **abgeschlossen** (2026-07-15)
+Arbeits-Prompt: `docs/prompts/2026-07-15-block-0a-fundament.md`
+
+Umgesetzt:
+
+- .NET-10-Solution (`MyMusic.slnx`) mit den vier Onion-Layern `MyMusic.Domain`,
+  `MyMusic.Application`, `MyMusic.Infrastructure`, `MyMusic.Api` (ADR 0001).
+- Testprojekte je Layer plus `MyMusic.IntegrationTests`.
+- `MyMusic.AppHost` und `MyMusic.ServiceDefaults` (Aspire 13.4.6).
+- PostgreSQL, Seq und Keycloak 26.5 als Aspire-Ressourcen mit Datenvolumes.
+- Boot-Reihenfolge: Migrator → `WaitFor(PostgreSQL)`, API →
+  `WaitForCompletion(Migrator)` + `WaitFor(Keycloak)`.
+- `MyMusic.Migrator` als einmaliger Job mit DDL-Rechten.
+- Keycloak-Realm als JSON-Import unter `/keycloak/`; Admin-Credentials als
+  Aspire-Parameter über User Secrets.
+- DB-Berechtigungskonzept: Rolle `mymusic_api` mit reinen DML-Rechten, per
+  Integrationstest abgesichert.
+- Serilog mit Console- und Seq-Sink (ADR 0002).
+
+Bewusst nicht Teil von 0a:
+
+- JWT-Verdrahtung im Code und Auth-Smoke-Test (0b).
+- Erste echte EF-Migration — separat freizugeben, gehört zum Genre-Slice.
+
+### 0b. CQRS, Repository und Auth-Smoke-Test
+
 Status: offen
-Priorität: hoch, erster Umsetzungsblock
-
-Ziel:
-
-- Lauffähiges technisches Grundgerüst ohne Fachlogik, das den gesamten Stack
-  einmal validiert.
+Priorität: hoch, nächster Umsetzungsblock
 
 Aufgaben:
 
-- Projektnamen der vier Onion-Layer vorschlagen und freigeben lassen
-  (im Wiki noch nicht festgelegt; Aspire-Projektnamen sind festgelegt).
-- .NET-10-Solution mit den Onion-Layern und Testprojekten anlegen.
-- `MyMusic.AppHost` und `MyMusic.ServiceDefaults` einrichten
-  (OpenTelemetry, Health Checks, Service Discovery).
-- PostgreSQL, Seq und Keycloak als Aspire-Ressourcen einbinden;
-  Boot-Reihenfolge per `WaitFor()` gemäß Wiki `architektur/aspire-orchestrierung.md`.
-- PostgreSQL-Volume für die Entwicklung binden (Container sonst ephemer).
-- `MyMusic.Migrator` als einmaligen Aspire-Job anlegen (DDL-Rechte nur hier).
-- Keycloak-Realm/Client als JSON-Import unter `/keycloak/` versionieren;
-  Admin-Credentials als Aspire-Parameter (`secret: true`) über User Secrets.
-- CQRS-Eigenframework umsetzen (`IMediator`, Command-/Query-Schnittstellen,
+- CQRS-Eigenframework (`IMediator`, Command-/Query-Schnittstellen,
   Validierungs-Pipeline-Decorator mit FluentValidation).
-- Generisches `IRepository<T>` und EF-Core-Anbindung umsetzen.
-- `ExceptionManager` und zentralen `IExceptionHandler` umsetzen.
-- Angular-22-Workspace mit Tailwind CSS und Design-System-Anbindung aufsetzen;
-  API-Basis-URL über `runtime-config.json`.
-- Serilog + Seq im API-Projekt konfigurieren (Header-Ausschlüsse gemäß
-  Sicherheitskonzept).
-
-Bewusst später:
-
-- Fachliche Endpunkte und UI-Features (eigene Slices ab Block 2).
-- Production-Deployment und TLS-Strategie (im Wiki noch offen).
+- Generisches `IRepository<T>` und EF-Core-Anbindung.
+- `ExceptionManager` und zentraler `IExceptionHandler`.
+- `AddAuthentication().AddJwtBearer()` gegen die Keycloak-Authority.
+- Ein einzelner geschützter Smoke-Test-Endpunkt: ohne Token 401, mit Token 200,
+  als Integrationstest gegen den laufenden Keycloak.
 
 Abnahmekriterium:
 
-- Alle Dienste starten über den AppHost in der dokumentierten Boot-Reihenfolge,
-  der Migrator läuft durch und beendet sich, die leere API ist erreichbar und
-  `dotnet build` sowie `dotnet test` laufen fehlerfrei.
+- Unit Tests grün; die Kette Keycloak → API ist einmal nachgewiesen.
+
+### 0c. Angular-Workspace
+
+Status: offen
+Priorität: mittel
+
+Aufgaben:
+
+- Angular-22-Workspace mit Tailwind CSS und Design-System-Anbindung.
+- API-Basis-URL über `runtime-config.json` (Laufzeit, nicht Build-Zeit).
+- Einbindung in den AppHost — **Achtung**: `AddNpmApp()` existiert in Aspire 13
+  nicht mehr, Ersatz ist `AddJavaScriptApp()` (Wiki-Korrektur ausstehend).
+
+Abnahmekriterium:
+
+- Das Frontend startet über den AppHost.
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 

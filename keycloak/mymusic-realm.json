@@ -1,0 +1,50 @@
+{
+  "realm": "mymusic",
+  "displayName": "MyMusic",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+
+  "roles": {
+    "realm": [
+      {
+        "name": "User",
+        "description": "Darf die eigene Sammlung verwalten (CRUD auf eigene Daten)."
+      },
+      {
+        "name": "Admin",
+        "description": "Alle Rechte der Rolle User und darf Benutzer inklusive aller Daten loeschen."
+      }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "mymusic-angular",
+      "name": "MyMusic Angular Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/*"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MyMusic.Api/MyMusic.Api.csproj" />
+    <Project Path="src/MyMusic.AppHost/MyMusic.AppHost.csproj" />
+    <Project Path="src/MyMusic.Application/MyMusic.Application.csproj" />
+    <Project Path="src/MyMusic.Domain/MyMusic.Domain.csproj" />
+    <Project Path="src/MyMusic.Infrastructure/MyMusic.Infrastructure.csproj" />
+    <Project Path="src/MyMusic.Migrator/MyMusic.Migrator.csproj" />
+    <Project Path="src/MyMusic.ServiceDefaults/MyMusic.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyMusic.Api.Tests/MyMusic.Api.Tests.csproj" />
+    <Project Path="tests/MyMusic.Application.Tests/MyMusic.Application.Tests.csproj" />
+    <Project Path="tests/MyMusic.Domain.Tests/MyMusic.Domain.Tests.csproj" />
+    <Project Path="tests/MyMusic.IntegrationTests/MyMusic.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
