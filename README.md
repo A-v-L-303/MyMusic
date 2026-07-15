@@ -1,31 +1,87 @@
 # MyMusic
 
-Multi-User-Webanwendung zur Verwaltung privater Musiksammlungen mit Schwerpunkt
-Schallplatten (Vinyl) und CDs.
+Eine Multi-User-Webanwendung zur Verwaltung von Schallplatten- und CD-Sammlungen.
 
-**Status**: In Einrichtung — die fachliche Planung liegt im Projekt-Wiki
-(außerhalb dieses Repositories), der Anwendungscode entsteht schrittweise.
+---
 
-## Kernfunktionen (geplant)
+## Über das Projekt
 
-- CRUD für Records, Tracks, Artists, Labels und Genres
-- Dashboard mit Sammlungsstatistiken
-- Volltext-Suche
-- Metadaten-Import über die Discogs-API
-- Zustandsbewertung nach dem Goldmine-Standard
-- Multi-User-Betrieb mit Keycloak-Authentifizierung und Mandantentrennung
+MyMusic soll die strukturierte Verwaltung privater Musiksammlungen ermöglichen. Schwerpunkt sind physische Tonträger — **Schallplatten (Vinyl)** und **CDs**.
 
-## Tech-Stack
+Benutzer können ihre Sammlung durchsuchen, filtern und sortieren, Records mit vollständiger Track-Liste pflegen, Metadaten automatisch über die Discogs-API abrufen und den physischen Zustand nach dem Goldmine-Standard bewerten.
 
-| Bereich | Technologie |
+Das Projekt dient gleichzeitig als **Portfolioarbeit** und demonstriert den Einsatz moderner .NET- und Angular-Technologien in einer produktionsreifen Webanwendung.
+
+Die vollständige Projektdokumentation ist im [Wiki](https://github.com/A-v-L-303/MyMusic/wiki) verfügbar.
+
+---
+
+## Geplante Features
+
+- **Records** — CRUD, Album-Cover-Upload, Card-Ansicht mit Paginierung, Filter und Sortierung, Detailansicht mit Tracks
+- **Tracks** — Verwaltung direkt in der Record-Detailansicht
+- **Artists** — CRUD, Tabellenansicht, Filter und Sortierung
+- **Labels** — CRUD, Tabellenansicht, Filter und Sortierung
+- **Genres** — CRUD, Tabellenansicht
+- **Authentifizierung** — Anmeldung via Keycloak (Authorization Code + PKCE), Mandantentrennung
+- **Dashboard** — Anzahl Records je Format, Top Artists, Top Labels, Verteilung nach Erscheinungsjahr
+- **Volltext-Suche** — Globale Suche über Records, Artists und Labels
+- **Discogs-Integration** — Metadaten-Suche beim Anlegen eines Records, manuell editierbar
+- **Zustandsbewertung** — Physischer Zustand nach Goldmine-Standard (Mint, VG+, VG, …)
+
+---
+
+## Geplanter Tech-Stack
+
+### Backend
+
+| Technologie | Version | Zweck |
+|---|---|---|
+| .NET / C# | 10 | Laufzeit und Sprache |
+| ASP.NET Core (Minimal API) | 10 | HTTP-Endpunkte |
+| Entity Framework Core | — | ORM / Datenzugriff |
+| PostgreSQL | — | Relationale Datenbank |
+| Keycloak | 26.5 | Identitäts- und Zugriffsmanagement |
+| FluentValidation | — | Input-Validierung |
+| Serilog + Seq | — | Strukturiertes Logging |
+| xUnit | — | Tests |
+| Swagger / OpenAPI | — | API-Dokumentation |
+
+### Frontend
+
+| Technologie | Version | Zweck |
+|---|---|---|
+| Angular | 21 | SPA-Framework |
+| Tailwind CSS | 3 | Styling |
+
+### Infrastruktur
+
+| Technologie | Zweck |
 |---|---|
-| Backend | C# / .NET 10, ASP.NET Core Minimal API, EF Core, PostgreSQL |
-| Frontend | Angular 21, Tailwind CSS 3 |
-| Infrastruktur | Keycloak 26.5, .NET Aspire 13, Docker |
-| Qualität | xUnit, FluentValidation, Serilog + Seq, Swagger |
+| .NET Aspire 13 | Orchestrierung verteilter Dienste |
+| Docker | Containerisierung |
 
-Architektur: Onion-Architektur, DDD, eigene CQRS-Implementierung (ohne MediatR),
-generisches Repository-Pattern.
+---
+
+## geplante Architektur
+
+Das Backend folgt der **Onion-Architektur** in Kombination mit **Domain Driven Design** und einer eigens implementierten **CQRS**-Lösung (ohne MediatR). Der Datenzugriff erfolgt über ein generisches **Repository-Pattern**.
+
+```
+┌─────────────────────────────────────────┐
+│                API Layer                │  ASP.NET Core Minimal API
+├─────────────────────────────────────────┤
+│           Application Layer            │  Commands, Queries, Services
+├─────────────────────────────────────────┤
+│          Infrastructure Layer          │  EF Core, PostgreSQL, Keycloak
+├─────────────────────────────────────────┤
+│           Core (Domain) Layer          │  Entities, Value Objects, Aggregates
+└─────────────────────────────────────────┘
+
+         Angular 21 Frontend (SPA)
+```
+
+---
 
 ## Repository-Struktur
 
@@ -36,5 +92,5 @@ docs/prompts/  Archiv der freigegebenen Arbeits-Prompts
 src/           Anwendungscode (Backend und Frontend)
 tests/         Automatisierte Tests
 CLAUDE.md      Dauerhafte Projekt- und Arbeitsregeln
-TASK.md        Priorisierte Liste möglicher nächster Aufgaben
+TASK.md        Operative Arbeitsliste der nächsten Umsetzungsschritte
 ```
