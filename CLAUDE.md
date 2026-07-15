@@ -121,21 +121,28 @@ Dazu kommen die im Wiki festgelegten Aspire-Projekte
 - `MyMusic.Migrator` — separates Konsolen-Projekt für EF-Migrationen als
   einmaliger Aspire-Job (kein Dauerdienst).
 
-Die konkreten Projektnamen der vier Onion-Layer sind im Wiki noch nicht
-festgelegt und werden vor dem Anlegen der Solution zur Freigabe vorgeschlagen.
-Zielbild — nicht ohne Prüfung des vorhandenen Standes blind erzeugen:
+Die Solution `MyMusic.slnx` und die Projekte sind angelegt. Iststand:
 
 ```text
 src/
+├── MyMusic.Domain/           # Core (Domain)
+├── MyMusic.Application/      # Application
+├── MyMusic.Infrastructure/   # Infrastructure
+├── MyMusic.Api/              # API
 ├── MyMusic.AppHost/
 ├── MyMusic.ServiceDefaults/
-├── MyMusic.Migrator/
-├── <Domain-, Application-, Infrastructure-, API-Projekt>
-└── frontend/            # Angular-22-Workspace
+└── MyMusic.Migrator/
 
 tests/
-└── <Testprojekte je Layer>
+├── MyMusic.Domain.Tests/
+├── MyMusic.Application.Tests/
+├── MyMusic.Api.Tests/
+└── MyMusic.IntegrationTests/
 ```
+
+Der Angular-22-Workspace unter `src/frontend/` ist noch nicht angelegt. Die
+Projekte sind überwiegend leere Gerüste — vorhandene C#-Dateien vor jeder
+Änderung prüfen, nichts blind erzeugen.
 
 ### 4.2 Abhängigkeitsrichtung
 
@@ -282,7 +289,16 @@ Design System (Wiki `design/`).
 
 ## 9. Konventionen
 
-Verbindlich und vollständig: Wiki `entwicklung/codierrichtlinien.md`. Kernpunkte:
+**Die Codierrichtlinien im Wiki unter `entwicklung/codierrichtlinien.md` sind für
+jede Zeile Code verbindlich und ausnahmslos einzuhalten** — sowohl bei neuem Code
+als auch bei Änderungen an bestehendem. Sie sind dort vollständig und in der
+maßgeblichen Fassung beschrieben; die folgende Liste ist nur eine Gedächtnisstütze
+und ersetzt das Lesen der Wiki-Seite nicht. Bei Abweichungen zwischen dieser Datei
+und der Wiki-Seite gilt die Wiki-Seite; die Abweichung ist zu melden. Verlangt eine
+Aufgabe einen Verstoß gegen die Richtlinien, ist der Konflikt vor der Umsetzung
+anzusprechen — nicht stillschweigend zu entscheiden.
+
+Kernpunkte:
 
 - Code-Bezeichner Englisch; Fehlermeldungen und Log-Nachrichten Deutsch.
 - Keine Abkürzungen (`ArtistId` statt `ArtId`).
@@ -290,7 +306,16 @@ Verbindlich und vollständig: Wiki `entwicklung/codierrichtlinien.md`. Kernpunkt
 - Backend: `PascalCase` für Typen/Methoden/Properties, `_camelCase` für private
   Felder; Namensschemata `{Aktion}{Entität}Command`, `{Command}Handler`,
   `{Entität}Response`, `{Entität}ResponseBuilder`, `{Entität}Endpoints`.
-- Eine Klasse pro Datei; neue Namespaces in `GlobalUsing.cs`.
+- Eine Klasse pro Datei.
+- Jedes Projekt erhält eine `GlobalUsing.cs` im Projektstamm; alle `using`-Direktiven
+  werden dort als `global using` gepflegt, nicht in den einzelnen Dateien. Ausnahme:
+  Projekte mit nur einer einzigen C#-Datei — dort stehen die `using` in der Datei
+  selbst (derzeit `MyMusic.Api`, `MyMusic.AppHost`, `MyMusic.Migrator`,
+  `MyMusic.ServiceDefaults`).
+- Namespaces file-scoped nach dem Schema `{Projektname}.{Ordnerpfad ab Projektstamm}`
+  — z. B. `namespace MyMusic.Infrastructure.Persistence;`. Keine Block-Namespaces
+  (`namespace X { … }`). Ausnahme: `MyMusic.ServiceDefaults/Extensions.cs` behält
+  `namespace Microsoft.Extensions.Hosting;` (Aspire-Template-Vorgabe).
 - Endpoint-Methoden `private static`.
 - Frontend: `inject()` statt Konstruktor-Injection, `rxResource` statt
   `ngOnInit` + `subscribe`, Signal Forms statt `ReactiveFormsModule`, kein
