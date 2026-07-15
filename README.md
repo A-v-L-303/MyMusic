@@ -86,11 +86,79 @@ Das Backend folgt der **Onion-Architektur** in Kombination mit **Domain Driven D
 ## Repository-Struktur
 
 ```
-.claude/       Arbeitsmodell für Claude Code (Agenten, Permissions)
-docs/adr/      Architekturentscheidungen (ADRs)
-docs/prompts/  Archiv der freigegebenen Arbeits-Prompts
-src/           Anwendungscode (Backend und Frontend)
-tests/         Automatisierte Tests
-CLAUDE.md      Dauerhafte Projekt- und Arbeitsregeln
-TASK.md        Operative Arbeitsliste der nächsten Umsetzungsschritte
+.claude/         Arbeitsmodell für Claude Code (Agenten, Permissions)
+docs/adr/        Architekturentscheidungen (ADRs)
+docs/prompts/    Archiv der freigegebenen Arbeits-Prompts
+keycloak/        Realm-Definition als JSON-Import (versioniert)
+src/             Anwendungscode (Backend und Frontend)
+tests/           Automatisierte Tests
+CLAUDE.md        Dauerhafte Projekt- und Arbeitsregeln
+MyMusic.slnx     Solution (neues XML-Format, .NET 10)
+NuGet.config     Paketquellen (nur nuget.org, für reproduzierbare Builds)
+TASK.md          Operative Arbeitsliste der nächsten Umsetzungsschritte
 ```
+
+---
+
+## Lokale Entwicklung
+
+### Voraussetzungen
+
+| Werkzeug | Version | Hinweis |
+|---|---|---|
+| .NET SDK | 10.0 | |
+| Docker | laufender Daemon | für PostgreSQL, Seq und Keycloak |
+| Aspire CLI | 13.4.x | `dotnet tool install -g Aspire.Cli` (optional, `dotnet run` genügt) |
+| Node.js | 22 | erst für den Angular-Workspace nötig |
+
+### Secrets einrichten
+
+Der AppHost erwartet drei Parameter als User Secrets. Sie liegen außerhalb des Repositories
+und gehören nie ins Git:
+
+```powershell
+cd src/MyMusic.AppHost
+dotnet user-secrets set "Parameters:postgres-password" "<wert>"
+dotnet user-secrets set "Parameters:api-database-password" "<wert>"
+dotnet user-secrets set "Parameters:keycloak-admin-password" "<wert>"
+```
+
+### Starten
+
+```powershell
+dotnet run --project src/MyMusic.AppHost
+```
+
+Der AppHost startet PostgreSQL, Seq und Keycloak, lässt den Migrator einmalig laufen und
+startet danach die API. Die Adresse des Aspire-Dashboards steht in der Konsolenausgabe.
+
+### Wichtig: Datenbank-Init-Skript läuft nur einmal
+
+`src/MyMusic.AppHost/initdb/01-create-api-role.sh` legt die Datenbank und die eingeschränkte
+Rolle `mymusic_api` an. Das PostgreSQL-Image führt Init-Skripte **ausschließlich bei leerem
+Datenverzeichnis** aus. Da die Entwicklungsdaten in einem Volume liegen, läuft das Skript
+genau einmal — nach Änderungen daran greift es erst, wenn das Volume verworfen wird:
+
+```powershell
+docker volume rm mymusic-postgres-data
+```
+
+Das ist die häufigste Ursache dafür, dass Änderungen an den Datenbankrechten scheinbar
+wirkungslos bleiben.
+
+### Berechtigungskonzept der Datenbank
+
+Der Migrator besitzt DDL- und DML-Rechte, die API ausschließlich DML — Anwendungscode kann
+das Schema also nicht verändern. Die API bekommt deshalb **nicht** den automatisch von Aspire
+injizierten Connection String, sondern einen eigenen mit der Rolle `mymusic_api`. Abgesichert
+ist das durch `tests/MyMusic.IntegrationTests/DatabasePermissionTests.cs`.
+
+### Prüfen
+
+```powershell
+dotnet build MyMusic.slnx
+dotnet test MyMusic.slnx
+```
+
+Der Integrationstest startet den kompletten AppHost inklusive Container und braucht daher
+rund eine Minute.
