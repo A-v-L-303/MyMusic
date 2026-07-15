@@ -51,7 +51,7 @@ Die vollständige Projektdokumentation ist im [Wiki](https://github.com/A-v-L-30
 
 | Technologie | Version | Zweck |
 |---|---|---|
-| Angular | 21 | SPA-Framework |
+| Angular | 22 | SPA-Framework |
 | Tailwind CSS | 3 | Styling |
 
 ### Infrastruktur
