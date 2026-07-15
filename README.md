@@ -78,7 +78,7 @@ Das Backend folgt der **Onion-Architektur** in Kombination mit **Domain Driven D
 │           Core (Domain) Layer          │  Entities, Value Objects, Aggregates
 └─────────────────────────────────────────┘
 
-         Angular 21 Frontend (SPA)
+         Angular 22 Frontend (SPA)
 ```
 
 ---

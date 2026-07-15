@@ -59,7 +59,7 @@ Aufgaben:
   Validierungs-Pipeline-Decorator mit FluentValidation).
 - Generisches `IRepository<T>` und EF-Core-Anbindung umsetzen.
 - `ExceptionManager` und zentralen `IExceptionHandler` umsetzen.
-- Angular-21-Workspace mit Tailwind CSS und Design-System-Anbindung aufsetzen;
+- Angular-22-Workspace mit Tailwind CSS und Design-System-Anbindung aufsetzen;
   API-Basis-URL über `runtime-config.json`.
 - Serilog + Seq im API-Projekt konfigurieren (Header-Ausschlüsse gemäß
   Sicherheitskonzept).

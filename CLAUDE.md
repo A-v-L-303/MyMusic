@@ -96,7 +96,7 @@ Wiki aktualisieren):
 - Keycloak 26.5 als Identity Provider.
 - .NET Aspire 13 für die Orchestrierung.
 - Docker als Containerisierungs-Basis.
-- Angular 21 mit Tailwind CSS 3 als Frontend.
+- Angular 22 mit Tailwind CSS 3 als Frontend.
 - Discogs-API als externe Metadatenquelle, serverseitig proxied.
 
 Eigene CQRS-Implementierung — **kein MediatR** und kein vergleichbares Framework.
@@ -131,7 +131,7 @@ src/
 ├── MyMusic.ServiceDefaults/
 ├── MyMusic.Migrator/
 ├── <Domain-, Application-, Infrastructure-, API-Projekt>
-└── frontend/            # Angular-21-Workspace
+└── frontend/            # Angular-22-Workspace
 
 tests/
 └── <Testprojekte je Layer>
