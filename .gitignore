@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+TestResults/
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# IDE
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Lokale Umgebungskonfiguration (niemals Secrets committen)
+appsettings.*.local.json
+.env
+.env.*
+
+# Claude Code — lokale, nicht geteilte Einstellungen
+.claude/settings.local.json
