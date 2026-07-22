@@ -302,7 +302,12 @@ Kernpunkte:
 
 - Code-Bezeichner Englisch; Fehlermeldungen und Log-Nachrichten Deutsch.
 - Keine Abkürzungen (`ArtistId` statt `ArtId`).
-- Kommentare nur, wenn das *Warum* nicht offensichtlich ist.
+- Maximale Zeilenlänge 120 Zeichen; lange Ausdrücke, Methodenaufrufe mit
+  mehreren Parametern, Bedingungen oder verkettete Aufrufe (LINQ, RxJS)
+  werden auf mehrere Zeilen umgebrochen.
+- Grundsätzlich keine Kommentare; Ausnahme nur bei absoluter Notwendigkeit
+  (z. B. nicht ersichtlicher Zweck einer Methode) — rein beschreibende
+  Kommentare sind nicht erlaubt.
 - Backend: `PascalCase` für Typen/Methoden/Properties, `_camelCase` für private
   Felder; Namensschemata `{Aktion}{Entität}Command`, `{Command}Handler`,
   `{Entität}Response`, `{Entität}ResponseBuilder`, `{Entität}Endpoints`.
