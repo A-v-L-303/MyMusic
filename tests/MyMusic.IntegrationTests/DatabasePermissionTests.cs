@@ -2,7 +2,7 @@ namespace MyMusic.IntegrationTests;
 
 public class DatabasePermissionTests
 {
-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan _defaultTimeout = TimeSpan.FromMinutes(5);
 
     [Fact]
     public async Task ApiRolleDarfLesenUndSchreibenAberKeinSchemaAendern()
@@ -12,13 +12,13 @@ public class DatabasePermissionTests
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.MyMusic_AppHost>(cancellationToken);
 
-        await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
+        await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
 
-        await app.StartAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
+        await app.StartAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
 
         await app.ResourceNotifications
             .WaitForResourceAsync("migrator", KnownResourceStates.Finished, cancellationToken)
-            .WaitAsync(DefaultTimeout, cancellationToken);
+            .WaitAsync(_defaultTimeout, cancellationToken);
 
         await using var connection = new NpgsqlConnection(
             await BuildApiConnectionStringAsync(app, appHost, cancellationToken));
