@@ -1,7 +1,9 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgresPassword = builder.AddParameter("postgres-password", secret: true);
+
 var apiDatabasePassword = builder.AddParameter("api-database-password", secret: true);
+
 var keycloakAdminPassword = builder.AddParameter("keycloak-admin-password", secret: true);
 
 var postgres = builder.AddPostgres("postgres", password: postgresPassword)

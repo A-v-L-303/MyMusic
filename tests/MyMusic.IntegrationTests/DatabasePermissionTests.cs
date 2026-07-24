@@ -11,7 +11,9 @@ public class DatabasePermissionTests
 
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.MyMusic_AppHost>(cancellationToken);
+
         await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
+
         await app.StartAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
 
         await app.ResourceNotifications
@@ -20,12 +22,14 @@ public class DatabasePermissionTests
 
         await using var connection = new NpgsqlConnection(
             await BuildApiConnectionStringAsync(app, appHost, cancellationToken));
+
         await connection.OpenAsync(cancellationToken);
 
         // Der Verbindungsaufbau selbst beweist bereits, dass die Rolle existiert und CONNECT hat.
         await using (var command = new NpgsqlCommand("SELECT current_user;", connection))
         {
             var currentUser = await command.ExecuteScalarAsync(cancellationToken);
+
             Assert.Equal("mymusic_api", currentUser);
         }
 
@@ -34,6 +38,7 @@ public class DatabasePermissionTests
         await using (var command = new NpgsqlCommand("""SELECT count(*) FROM "__EFMigrationsHistory";""", connection))
         {
             var count = await command.ExecuteScalarAsync(cancellationToken);
+
             Assert.NotNull(count);
         }
 
@@ -57,9 +62,11 @@ public class DatabasePermissionTests
         CancellationToken cancellationToken)
     {
         var privilegedConnectionString = await app.GetConnectionStringAsync("mymusicdb", cancellationToken);
+
         Assert.NotNull(privilegedConnectionString);
 
         var apiPassword = appHost.Configuration["Parameters:api-database-password"];
+
         Assert.False(string.IsNullOrWhiteSpace(apiPassword),
             "Parameters:api-database-password fehlt - bitte per 'dotnet user-secrets' im AppHost setzen.");
 
