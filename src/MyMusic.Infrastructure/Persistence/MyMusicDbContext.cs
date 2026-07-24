@@ -5,6 +5,7 @@ public class MyMusicDbContext(DbContextOptions<MyMusicDbContext> options) : DbCo
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyMusicDbContext).Assembly);
     }
 }

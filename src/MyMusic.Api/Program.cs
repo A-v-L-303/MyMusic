@@ -13,6 +13,7 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
         .WriteTo.Console();
 
     var seqUrl = builder.Configuration.GetConnectionString("seq");
+
     if (!string.IsNullOrWhiteSpace(seqUrl))
     {
         loggerConfiguration.WriteTo.Seq(seqUrl);
