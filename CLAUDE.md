@@ -307,7 +307,10 @@ Kernpunkte:
   werden auf mehrere Zeilen umgebrochen.
 - Grundsätzlich keine Kommentare; Ausnahme nur bei absoluter Notwendigkeit
   (z. B. nicht ersichtlicher Zweck einer Methode) — rein beschreibende
-  Kommentare sind nicht erlaubt.
+  Kommentare sind nicht erlaubt. Ausdrücklich erlaubt sind darüber hinaus:
+  System-Kommentare (z. B. automatisch beim Erstellen eines Projekts erzeugte),
+  Assertion-Rationale-Kommentare in Tests und XML-Dokumentationskommentare für
+  Methoden. Ausdrücklich verboten ist es, in Kommentaren auf das Wiki zu verweisen.
 - Backend: `PascalCase` für Typen/Methoden/Properties, `_camelCase` für private
   Felder; Namensschemata `{Aktion}{Entität}Command`, `{Command}Handler`,
   `{Entität}Response`, `{Entität}ResponseBuilder`, `{Entität}Endpoints`.
