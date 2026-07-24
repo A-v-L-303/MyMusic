@@ -4,8 +4,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Serilog schreibt nach Console (Aspire-Dashboard) und nach Seq.
-// Die Seq-URL liefert Aspire als Verbindungsinformation; fehlt sie, bleibt nur die Console.
 builder.Services.AddSerilog((services, loggerConfiguration) =>
 {
     loggerConfiguration
@@ -23,9 +21,6 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 
 var app = builder.Build();
 
-// Loggt nur Methode, Pfad, Statuscode und Dauer. Keine Header, keine Request-Bodies
-// und keine DTOs — siehe Sicherheitskonzept. Wer hier Felder ergaenzt, muss pruefen,
-// dass weder Authorization- noch Cookie-Header und keine personenbezogenen Daten anfallen.
 app.UseSerilogRequestLogging();
 
 app.MapDefaultEndpoints();

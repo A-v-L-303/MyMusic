@@ -44,7 +44,8 @@ public static class Extensions
         return builder;
     }
 
-    public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -68,7 +69,8 @@ public static class Extensions
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)
                             && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath)
                     )
-                    // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
+                    // Uncomment the following line to enable gRPC instrumentation (requires the
+                    // OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
             });
@@ -78,7 +80,8 @@ public static class Extensions
         return builder;
     }
 
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
     {
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
@@ -87,8 +90,10 @@ public static class Extensions
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
 
-        // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
-        //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+        // Uncomment the following lines to enable the Azure Monitor exporter (requires the
+        // Azure.Monitor.OpenTelemetry.AspNetCore package)
+        //if (!string.IsNullOrEmpty(
+        //        builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
         //{
         //    builder.Services.AddOpenTelemetry()
         //       .UseAzureMonitor();
@@ -97,7 +102,8 @@ public static class Extensions
         return builder;
     }
 
-    public static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
     {
         builder.Services.AddHealthChecks()
             // Add a default liveness check to ensure app is responsive
@@ -108,8 +114,10 @@ public static class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        // Adding health checks endpoints to applications in non-development environments has security implications.
-        // See https://aka.ms/aspire/healthchecks for details before enabling these endpoints in non-development environments.
+        // Adding health checks endpoints to applications in non-development environments
+        // has security implications.
+        // See https://aka.ms/aspire/healthchecks for details before enabling these endpoints
+        // in non-development environments.
         if (app.Environment.IsDevelopment())
         {
             // All health checks must pass for app to be considered ready to accept traffic after starting
