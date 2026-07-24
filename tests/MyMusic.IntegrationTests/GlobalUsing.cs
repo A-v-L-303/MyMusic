@@ -1,0 +1,3 @@
+global using Aspire.Hosting;
+global using Microsoft.Extensions.Configuration;
+global using Npgsql;

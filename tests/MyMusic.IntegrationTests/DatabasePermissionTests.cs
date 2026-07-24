@@ -1,12 +1,5 @@
-using Aspire.Hosting;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
-
 namespace MyMusic.IntegrationTests;
 
-// Sichert das Berechtigungskonzept aus dem Wiki ab (architektur/aspire-orchestrierung.md):
-// Der Migrator besitzt DDL + DML, die API ausschliesslich DML. Ohne diesen Test wuerde eine
-// spaetere Aenderung an der Aspire-Verdrahtung die Rechtetrennung unbemerkt aufweichen.
 public class DatabasePermissionTests
 {
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(5);
@@ -16,16 +9,17 @@ public class DatabasePermissionTests
     {
         var cancellationToken = CancellationToken.None;
 
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MyMusic_AppHost>(cancellationToken);
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.MyMusic_AppHost>(cancellationToken);
         await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
         await app.StartAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
 
-        // Warten, bis der Migrator durch ist - vorher existiert keine Tabelle zum Pruefen.
         await app.ResourceNotifications
             .WaitForResourceAsync("migrator", KnownResourceStates.Finished, cancellationToken)
             .WaitAsync(DefaultTimeout, cancellationToken);
 
-        await using var connection = new NpgsqlConnection(await BuildApiConnectionStringAsync(app, appHost, cancellationToken));
+        await using var connection = new NpgsqlConnection(
+            await BuildApiConnectionStringAsync(app, appHost, cancellationToken));
         await connection.OpenAsync(cancellationToken);
 
         // Der Verbindungsaufbau selbst beweist bereits, dass die Rolle existiert und CONNECT hat.
