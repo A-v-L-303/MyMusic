@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-07-15 (nach Abschluss von Block 0a)
+Stand: 2026-07-24 (nach Abschluss von Block 0a und 0d)
 Branch: `main`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
@@ -95,6 +95,29 @@ Aufgaben:
 Abnahmekriterium:
 
 - Das Frontend startet über den AppHost.
+
+### 0d. CI-Gate für Codequalität
+
+Status: **abgeschlossen** (2026-07-24)
+Arbeits-Prompt: `docs/prompts/2026-07-24-ci-gate-codequalitaet.md`
+
+Umgesetzt:
+
+- `.editorconfig` im Repo-Root: file-scoped Namespaces, Naming-Regel für
+  private Felder (`_camelCase`, Konstanten ausgenommen).
+- `.github/workflows/ci.yml`: Restore, Build, `dotnet format
+  --verify-no-changes`, Zeilenlängen-Check (max. 120 Zeichen), Unit-Tests
+  (Domain, Application, Api) bei jedem Push/PR auf `main`.
+- ADR `docs/adr/0003-ci-gate-codequalitaet.md`.
+
+Bewusst nicht Teil von 0d:
+
+- `MyMusic.IntegrationTests` läuft nicht in der CI (braucht Docker +
+  Aspire-Orchestrierung + Secrets — eigener, größerer Schritt).
+- Kein Branch-Protection-Rule-Setup (Repository-Einstellung, eigener Schritt).
+- Kein StyleCop/Roslynator; projektspezifische Regeln (Namensschemata,
+  Feature-Kapselung, Kommentar-Ausnahmen) bleiben Aufgabe des
+  `reviewer`-Subagenten.
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 

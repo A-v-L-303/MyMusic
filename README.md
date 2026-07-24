@@ -87,11 +87,13 @@ Das Backend folgt der **Onion-Architektur** in Kombination mit **Domain Driven D
 
 ```
 .claude/         Arbeitsmodell für Claude Code (Agenten, Permissions)
+.github/         GitHub-Actions-CI (Restore, Build, Format, Tests)
 docs/adr/        Architekturentscheidungen (ADRs)
 docs/prompts/    Archiv der freigegebenen Arbeits-Prompts
 keycloak/        Realm-Definition als JSON-Import (versioniert)
 src/             Anwendungscode (Backend und Frontend)
 tests/           Automatisierte Tests
+.editorconfig    Formatierungs- und Namenskonventionen (CI-Gate)
 CLAUDE.md        Dauerhafte Projekt- und Arbeitsregeln
 MyMusic.slnx     Solution (neues XML-Format, .NET 10)
 NuGet.config     Paketquellen (nur nuget.org, für reproduzierbare Builds)
@@ -162,3 +164,8 @@ dotnet test MyMusic.slnx
 
 Der Integrationstest startet den kompletten AppHost inklusive Container und braucht daher
 rund eine Minute.
+
+Restore, Build, `dotnet format --verify-no-changes`, ein Zeilenlängen-Check und die
+Unit-Test-Projekte (Domain, Application, Api) laufen zusätzlich automatisch bei jedem Push
+und Pull Request auf `main` in `.github/workflows/ci.yml`. `MyMusic.IntegrationTests` läuft
+dort bewusst nicht mit (siehe `docs/adr/0003-ci-gate-codequalitaet.md`).

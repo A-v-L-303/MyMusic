@@ -380,6 +380,20 @@ und keine nicht freigegebenen Änderungen erzeugen.
 Bei Änderungen an Datenbank, Authentifizierung oder API sind zusätzlich passende
 Integrationstests erforderlich.
 
+### CI-Gate
+
+`.github/workflows/ci.yml` führt bei jedem Push und Pull Request auf `main`
+automatisch Restore, Build, `dotnet format --verify-no-changes`, einen
+Zeilenlängen-Check (120 Zeichen) und die Unit-Test-Projekte (Domain,
+Application, Api) aus (siehe ADR `docs/adr/0003-ci-gate-codequalitaet.md`).
+Diese Pipeline ist die von der jeweiligen Session unabhängige Absicherung;
+die obigen lokalen Befehle bleiben zusätzlich die Pre-Flight-Prüfung vor
+Abschluss einer Änderung. Technisch durchgesetzt werden aktuell Formatierung,
+Stil (inkl. file-scoped Namespaces) und Zeilenlänge; `MyMusic.IntegrationTests`
+läuft dort bewusst nicht mit. Projektspezifische Regeln (Backend-Namensschemata,
+Feature-Ordner-Kapselung, Kommentar-Ausnahmen) sind damit nicht abgedeckt und
+bleiben Aufgabe des `reviewer`-Subagenten bzw. der manuellen Prüfung.
+
 ## 12. Abhängigkeiten
 
 Vor dem Hinzufügen eines NuGet- oder npm-Pakets:
