@@ -12,6 +12,7 @@
     <Project Path="tests/MyMusic.Api.Tests/MyMusic.Api.Tests.csproj" />
     <Project Path="tests/MyMusic.Application.Tests/MyMusic.Application.Tests.csproj" />
     <Project Path="tests/MyMusic.Domain.Tests/MyMusic.Domain.Tests.csproj" />
+    <Project Path="tests/MyMusic.Infrastructure.Tests/MyMusic.Infrastructure.Tests.csproj" />
     <Project Path="tests/MyMusic.IntegrationTests/MyMusic.IntegrationTests.csproj" />
   </Folder>
 </Solution>

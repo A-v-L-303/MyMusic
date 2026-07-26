@@ -1,0 +1,8 @@
+global using System.IO;
+global using System.Security.Claims;
+global using System.Text.Json;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Mvc;
+global using MyMusic.Api;
+global using MyMusic.Application.Common.Exceptions;
+global using MyMusic.Application.Common.Services;

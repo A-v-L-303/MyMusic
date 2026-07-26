@@ -45,6 +45,9 @@ jobs:
       - name: Unit Tests - Application
         run: dotnet test tests/MyMusic.Application.Tests/MyMusic.Application.Tests.csproj --no-build
 
+      - name: Unit Tests - Infrastructure
+        run: dotnet test tests/MyMusic.Infrastructure.Tests/MyMusic.Infrastructure.Tests.csproj --no-build
+
       - name: Unit Tests - Api
         run: dotnet test tests/MyMusic.Api.Tests/MyMusic.Api.Tests.csproj --no-build
 
