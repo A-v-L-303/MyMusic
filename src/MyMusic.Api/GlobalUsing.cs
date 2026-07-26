@@ -1,0 +1,13 @@
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.AspNetCore.Diagnostics;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.IdentityModel.Tokens;
+global using MyMusic.Api;
+global using MyMusic.Application.Common.CQRS;
+global using MyMusic.Application.Common.Exceptions;
+global using MyMusic.Application.Common.Services;
+global using MyMusic.Application.DependencyInjection;
+global using MyMusic.Application.Features.System.CurrentUser.Queries.GetCurrentUser;
+global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos;
+global using Serilog;

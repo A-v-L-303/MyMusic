@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-07-24 (nach Abschluss von Block 0a und 0d)
+Stand: 2026-07-26 (nach Abschluss von Block 0a, 0b und 0d)
 Branch: `main`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
@@ -19,10 +19,8 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a (Solution- und Aspire-Fundament) ist abgeschlossen. Offen aus dem
-MVP-Umfang der Phase 1:
+Block 0a, 0b und 0d sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
-- CQRS-Eigenframework, generisches Repository, ExceptionManager (Block 0b).
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Genre, Country, Label, Artist, Record und Tracks.
 - Zustandsbewertung nach Goldmine-Standard.
@@ -63,22 +61,75 @@ Bewusst nicht Teil von 0a:
 
 ### 0b. CQRS, Repository und Auth-Smoke-Test
 
-Status: offen
-Priorität: hoch, nächster Umsetzungsblock
+Status: **abgeschlossen** (2026-07-26)
+Arbeits-Prompt: `docs/prompts/2026-07-26-block-0b-cqrs-repository-auth.md`
 
-Aufgaben:
+Umgesetzt:
 
-- CQRS-Eigenframework (`IMediator`, Command-/Query-Schnittstellen,
-  Validierungs-Pipeline-Decorator mit FluentValidation).
-- Generisches `IRepository<T>` und EF-Core-Anbindung.
-- `ExceptionManager` und zentraler `IExceptionHandler`.
-- `AddAuthentication().AddJwtBearer()` gegen die Keycloak-Authority.
-- Ein einzelner geschützter Smoke-Test-Endpunkt: ohne Token 401, mit Token 200,
-  als Integrationstest gegen den laufenden Keycloak.
+- CQRS-Eigenframework (`IMediator`/`Mediator`, `ICommand<TResponse>`/
+  `IQuery<TResponse>`, `ICommandHandler<,>`/`IQueryHandler<,>`,
+  `CommandValidationDecorator` mit FluentValidation) in
+  `MyMusic.Application/Common/CQRS/`; Handler-Registrierung per Assembly-Scan
+  über `AddApplication()`.
+- Generisches `IRepository<T>` (`MyMusic.Domain/Contracts/Repository/`) und
+  EF-Core-Implementierung `Repository<T>`
+  (`MyMusic.Infrastructure/Persistence/Repositories/`); noch nicht in die
+  API-DI verdrahtet, da 0b keine Entität hat, die ihn braucht (folgt mit dem
+  Genre-Slice).
+- `ExceptionManager` (`ValidationException`, `NotFoundException`,
+  `ConflictException`) und zentraler `GlobalExceptionHandler`
+  (`IExceptionHandler`) in `MyMusic.Api`, mappt auf HTTP 400/404/409/500.
+- `AddAuthentication().AddJwtBearer()` gegen die Keycloak-Authority
+  (`ValidAudience = "account"`, `MapInboundClaims = false` — ADR 0004) und
+  `ICurrentUserService`/`CurrentUserService` (liest `sub`-Claim).
+- Smoke-Test-Endpunkt `GET /api/me` (`GetCurrentUserQuery` →
+  `GetCurrentUserQueryHandler` → `CurrentUserResponseBuilder`),
+  `.RequireAuthorization()`.
+- Neues Testprojekt `MyMusic.Infrastructure.Tests` für den generischen
+  Repository-Unit-Test (gemockter `DbContext`/`DbSet`).
+- Integrationstest `tests/MyMusic.IntegrationTests/MeEndpointTests.cs`: `/api/me`
+  ohne Token → 401, mit echtem Keycloak-Token → 200; dafür dedizierter
+  Test-Client `mymusic-integration-tests` im Realm-Import (ADR 0005).
 
-Abnahmekriterium:
+Nachträge nach unabhängiger Review:
 
-- Unit Tests grün; die Kette Keycloak → API ist einmal nachgewiesen.
+- `CurrentUserResponseBuilder` ergänzt — der Handler baute das Response-DTO
+  zunächst direkt, was der ausnahmslosen Regel „Handler hängen nur von
+  ExceptionManager und ResponseBuilder ab" (CLAUDE.md §4.3/§9) widersprach.
+- Paket-Tabelle im Arbeits-Prompt um `Microsoft.Extensions.DependencyInjection.Abstractions`
+  (Application) und `Microsoft.Extensions.DependencyInjection` (Application.Tests)
+  ergänzt — beide waren im Diff enthalten, aber nicht dokumentiert.
+- `RepositoryTests`: negativer Testfall `GetByIdAsync` → `null` bei unbekannter
+  Id ergänzt.
+- `tests/MyMusic.IntegrationTests/AssemblyInfo.cs`: Testparallelität für die
+  Assembly deaktiviert (`CollectionBehavior(DisableTestParallelization = true)`) —
+  behebt einen im Review beobachteten Timeout bei gemeinsamer Ausführung
+  beider Integrationstests (zwei parallele Aspire-Stacks konkurrierten um
+  Ressourcen). Mit gemeinsamem Lauf erneut verifiziert (2/2 grün).
+
+Abnahmekriterium erfüllt:
+
+- Unit Tests grün (Domain/Application/Api/Infrastructure); die Kette
+  Keycloak → API ist per Integrationstest gegen einen echten
+  Keycloak-Container nachgewiesen (lokal mit Docker ausgeführt, isoliert und
+  gemeinsam mit dem bestehenden Integrationstest).
+
+Bewusst nicht Teil von 0b:
+
+- Rollenkonzept, Ownership-Prüfung, Rate Limiting, CORS-Policy, CSP
+  (Abschnitt 7 — dafür fehlen die Entitäten, an denen Ownership überhaupt
+  geprüft werden könnte).
+- DI-Verdrahtung von `IRepository<T>`/`MyMusicDbContext` in `MyMusic.Api` und
+  die reale Prüfung des Repositorys gegen PostgreSQL (folgt mit dem
+  Genre-Slice, Block 2).
+
+Bekannte Lücke:
+
+- `Repository<T>.GetAllAsync` ist per Unit Test nicht absicherbar (EF Cores
+  `ToListAsync()` verlangt `IAsyncEnumerable<T>` auf dem `DbSet`, ein reiner
+  NSubstitute-Mock implementiert das in der verwendeten EF-Core-Version nicht
+  — empirisch geprüft). Realer Nachweis folgt mit dem
+  Genre-Slice-Integrationstest gegen PostgreSQL.
 
 ### 0c. Angular-Workspace
 
@@ -232,28 +283,29 @@ Abnahmekriterium:
 
 ## 7. Authentifizierung und Mandantentrennung
 
-Status: offen
-Priorität: hoch; Grundlagen entstehen bereits im Walking Skeleton
+Status: teilweise offen
+Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
 
 - Vollständige Umsetzung des Sicherheitskonzepts
   (Wiki `sicherheit/sicherheitskonzept.md`).
 
-Aufgaben:
+Bereits umgesetzt (Block 0b, siehe oben):
+
+- `AddAuthentication().AddJwtBearer()` gegen die Keycloak-Authority,
+  `ICurrentUserService` liest den `sub`-Claim, einmal nachgewiesen per
+  Integrationstest (`/api/me`).
+
+Aufgaben (noch offen):
 
 - Angular-Login-Flow (Authorization Code + PKCE) inkl. AuthGuard und
   HTTP-Interceptor.
-- JWT-Validierung, Rollen (`User`, `Admin`), Ownership-Prüfung in Handlern
-  (404 statt 403).
+- Rollen (`User`, `Admin`), Ownership-Prüfung in Handlern (404 statt 403) —
+  setzt Entitäten voraus, entsteht mit dem jeweiligen Slice.
 - Rate Limiting (100 req/min pro Benutzer), CORS-Policy per Environment, CSP.
 - Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
-
-Offene Entscheidung:
-
-- Wie viel Authentifizierung bereits mit dem Walking Skeleton kommt und wie viel
-  in diesem Block — bei Planung von Block 0 festlegen.
 
 Abnahmekriterium:
 

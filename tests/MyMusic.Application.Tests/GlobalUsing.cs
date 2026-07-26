@@ -1,0 +1,15 @@
+global using FluentValidation;
+global using FluentValidation.Results;
+global using Microsoft.Extensions.DependencyInjection;
+global using MyMusic.Application.Common.CQRS;
+global using MyMusic.Application.Common.CQRS.Validation;
+global using MyMusic.Application.Common.Exceptions;
+global using MyMusic.Application.Common.Exceptions.ExceptionManager;
+global using MyMusic.Application.Common.Services;
+global using MyMusic.Application.DependencyInjection;
+global using MyMusic.Application.Features.System.CurrentUser.Queries.GetCurrentUser;
+global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos;
+global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos.Builder;
+global using MyMusic.Application.Tests.Common.CQRS.TestDoubles;
+global using MyMusic.Application.Tests.Common.CQRS.Validation.TestDoubles;
+global using ValidationException = MyMusic.Application.Common.Exceptions.ValidationException;

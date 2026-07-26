@@ -155,6 +155,33 @@ das Schema also nicht verändern. Die API bekommt deshalb **nicht** den automati
 injizierten Connection String, sondern einen eigenen mit der Rolle `mymusic_api`. Abgesichert
 ist das durch `tests/MyMusic.IntegrationTests/DatabasePermissionTests.cs`.
 
+### CQRS, Repository, Auth-Smoke-Test (Block 0b)
+
+`MyMusic.Application` enthält seit Block 0b ein eigenes CQRS-Grundgerüst
+(`IMediator`, `ICommand<T>`/`IQuery<T>`, FluentValidation-Decorator), einen
+`ExceptionManager` mit zentralem `GlobalExceptionHandler` in `MyMusic.Api` sowie
+ein generisches `IRepository<T>`/`Repository<T>` (noch ohne Entität, folgt mit
+dem Genre-Slice). Als einziger geschützter Endpunkt existiert `GET /api/me`
+(`.RequireAuthorization()`), der ausschließlich die `userId` aus dem
+`sub`-Claim des Zugriffstokens zurückgibt — Nachweis der Kette
+Keycloak → JWT → Mediator.
+
+Für einen manuellen Testaufruf gegen den laufenden AppHost wird ein Access
+Token benötigt. Der Realm-Import enthält dafür den Client
+`mymusic-integration-tests` (Resource-Owner-Password-Grant, siehe
+`docs/adr/0005-keycloak-integrationstest-client.md`):
+
+```powershell
+$token = (Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:<keycloak-port>/realms/mymusic/protocol/openid-connect/token" `
+  -Body @{ grant_type = "password"; client_id = "mymusic-integration-tests"; username = "<vorhandener-testbenutzer>"; password = "<passwort>" }).access_token
+
+Invoke-RestMethod -Uri "http://localhost:<api-port>/api/me" -Headers @{ Authorization = "Bearer $token" }
+```
+
+Ohne Token liefert `/api/me` HTTP 401; mit gültigem Token HTTP 200 mit der
+eigenen `userId`. Ports stehen in der Aspire-Dashboard-Ausgabe.
+
 ### Prüfen
 
 ```powershell
@@ -163,9 +190,10 @@ dotnet test MyMusic.slnx
 ```
 
 Der Integrationstest startet den kompletten AppHost inklusive Container und braucht daher
-rund eine Minute.
+rund eine Minute je Testklasse.
 
 Restore, Build, `dotnet format --verify-no-changes`, ein Zeilenlängen-Check und die
-Unit-Test-Projekte (Domain, Application, Api) laufen zusätzlich automatisch bei jedem Push
-und Pull Request auf `main` in `.github/workflows/ci.yml`. `MyMusic.IntegrationTests` läuft
-dort bewusst nicht mit (siehe `docs/adr/0003-ci-gate-codequalitaet.md`).
+Unit-Test-Projekte (Domain, Application, Infrastructure, Api) laufen zusätzlich automatisch
+bei jedem Push und Pull Request auf `main` in `.github/workflows/ci.yml`.
+`MyMusic.IntegrationTests` läuft dort bewusst nicht mit (siehe
+`docs/adr/0003-ci-gate-codequalitaet.md`).

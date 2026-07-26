@@ -74,3 +74,12 @@ Projektstand unverhältnismäßig. Diese Regeln bleiben Aufgabe des
 - Projektspezifische Codierrichtlinien (Namensschemata, Feature-Kapselung,
   Kommentar-Ausnahmen, ResponseBuilder-Pattern) bleiben ausschließlich
   review-basiert abgesichert.
+
+## Nachtrag (2026-07-26, Block 0b)
+
+Mit Block 0b kam das Testprojekt `MyMusic.Infrastructure.Tests` hinzu (Unit
+Test des generischen `Repository<T>` gegen einen gemockten `DbContext`/
+`DbSet`). `.github/workflows/ci.yml` wurde um einen entsprechenden
+`dotnet test`-Schritt ergänzt — die ursprüngliche Entscheidung ("drei
+Unit-Test-Projekte") ist damit um ein viertes, layer-eigenes Testprojekt
+erweitert, ohne die grundsätzliche Gate-Architektur zu ändern.

@@ -1,0 +1,20 @@
+namespace MyMusic.Api;
+
+public static class MeEndpoints
+{
+    public static IEndpointRouteBuilder MapMeEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup("/api/me").RequireAuthorization();
+
+        group.MapGet(string.Empty, GetCurrentUserAsync);
+
+        return endpoints;
+    }
+
+    private static async Task<CurrentUserResponse> GetCurrentUserAsync(
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        return await mediator.SendAsync(new GetCurrentUserQuery(), cancellationToken);
+    }
+}
