@@ -50,6 +50,8 @@ Ohne ausdrückliche Freigabe sind insbesondere verboten:
 - Secrets, Zertifikate oder Zugangsdaten erzeugen.
 - Deployment- oder Aspire-Konfiguration verändern.
 - Git-Commits, Pushes, Rebases, Resets oder Branch-Löschungen ausführen.
+- Direkt auf `main` committen — auch mit Freigabe für die Änderung selbst
+  (siehe 2.4).
 - `git push --force`, `git reset --hard`, `git clean`, rekursive Löschungen oder
   vergleichbare destruktive Befehle.
 - Sicherheitsmechanismen vereinfachen oder vorübergehend deaktivieren.
@@ -61,7 +63,8 @@ Nach einer ausdrücklichen Freigabe:
 
 1. Ändere nur den freigegebenen Umfang.
 2. Halte Änderungen klein und thematisch geschlossen.
-3. Prüfe vor Beginn den Iststand erneut (Git-Status, Build, betroffene Dateien).
+3. Prüfe vor Beginn den Iststand erneut (Git-Status, aktueller Branch gemäß 2.4,
+   Build, betroffene Dateien).
 4. Führe passende Builds und Tests aus.
 5. Dokumentiere:
    - geänderte Dateien,
@@ -70,7 +73,33 @@ Nach einer ausdrücklichen Freigabe:
    - verbleibende Risiken,
    - nicht überprüfte Annahmen.
 
-### 2.4 Verbindliche Projektdokumentation
+### 2.4 Branch-Strategie
+
+**Auf `main` wird nicht entwickelt.** Jede inhaltliche Änderung entsteht auf einem
+eigenen Feature-Branch; `main` wird ausschließlich über einen Pull Request
+aktualisiert.
+
+- Vor der ersten Dateiänderung eines Blocks den aktuellen Branch prüfen
+  (`git branch --show-current`). Steht `main` an, ist zuerst ein Feature-Branch
+  vom aktuellen Stand von `main` anzulegen — nicht nachträglich, wenn die
+  Änderungen bereits im Arbeitsverzeichnis liegen.
+- Ein Branch je thematisch geschlossenem Block, passend zum jeweiligen
+  Arbeits-Prompt unter `docs/prompts/`. Keine fachlich unabhängigen Änderungen
+  auf einem gemeinsamen Branch bündeln.
+- Branch-Namen in Kleinbuchstaben mit Bindestrichen, sprechend und aus dem Block
+  abgeleitet (bisherige Historie: `block-0a-fundament`,
+  `block-0b-cqrs-repository-auth`, `ci-gate-codequalitaet`).
+- Das Anlegen des Branches, Commits, Push, Pull Request und Merge bleiben
+  freigabepflichtig (2.2). Die Branch-Regel ersetzt keine dieser Freigaben,
+  sondern legt nur fest, wo die freigegebene Arbeit stattfindet.
+- Nach dem Merge werden Branches nicht gelöscht.
+- Ist eine Änderung bereits versehentlich auf `main` entstanden, wird das gemeldet
+  statt stillschweigend korrigiert; das weitere Vorgehen entscheidet der Benutzer.
+
+Ausgenommen sind reine Analyseaufträge — dort entstehen ohnehin keine Änderungen
+(2.1).
+
+### 2.5 Verbindliche Projektdokumentation
 
 - Fachliche Planung liegt im Wiki und wird dort gepflegt (eigene Regeln des Wikis
   beachten).
