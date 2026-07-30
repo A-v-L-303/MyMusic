@@ -32,6 +32,14 @@ public class ExceptionManagerTests
     }
 
     [Fact]
+    public void NotFound_UnterstuetztAuchNichtGuidSchluessel()
+    {
+        var exception = _exceptionManager.NotFound("Genre", 42);
+
+        Assert.Equal("Genre mit der Id '42' wurde nicht gefunden.", exception.Message);
+    }
+
+    [Fact]
     public void Conflict_UebernimmtDieUebergebeneNachricht()
     {
         var exception = _exceptionManager.Conflict("Ein Genre mit diesem Namen existiert bereits.");

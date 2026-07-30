@@ -12,7 +12,7 @@ public class RepositoryTests
         dbSet.FindAsync(Arg.Any<object[]>(), Arg.Any<CancellationToken>())
             .Returns(ValueTask.FromResult<TestEntity?>(entity));
 
-        var repository = new Repository<TestEntity>(CreateContext(dbSet));
+        var repository = new Repository<TestEntity, Guid>(CreateContext(dbSet));
 
         var result = await repository.GetByIdAsync(entity.Id, CancellationToken.None);
 
@@ -27,7 +27,7 @@ public class RepositoryTests
         dbSet.FindAsync(Arg.Any<object[]>(), Arg.Any<CancellationToken>())
             .Returns(ValueTask.FromResult<TestEntity?>(null));
 
-        var repository = new Repository<TestEntity>(CreateContext(dbSet));
+        var repository = new Repository<TestEntity, Guid>(CreateContext(dbSet));
 
         var result = await repository.GetByIdAsync(Guid.NewGuid(), CancellationToken.None);
 
@@ -41,7 +41,7 @@ public class RepositoryTests
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
-        var repository = new Repository<TestEntity>(CreateContext(dbSet));
+        var repository = new Repository<TestEntity, Guid>(CreateContext(dbSet));
 
         await repository.AddAsync(entity, CancellationToken.None);
 
@@ -55,7 +55,7 @@ public class RepositoryTests
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
-        var repository = new Repository<TestEntity>(CreateContext(dbSet));
+        var repository = new Repository<TestEntity, Guid>(CreateContext(dbSet));
 
         repository.Update(entity);
 
@@ -69,7 +69,7 @@ public class RepositoryTests
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
-        var repository = new Repository<TestEntity>(CreateContext(dbSet));
+        var repository = new Repository<TestEntity, Guid>(CreateContext(dbSet));
 
         repository.Remove(entity);
 
@@ -85,7 +85,7 @@ public class RepositoryTests
 
         context.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(3));
 
-        var repository = new Repository<TestEntity>(context);
+        var repository = new Repository<TestEntity, Guid>(context);
 
         var result = await repository.SaveChangesAsync(CancellationToken.None);
 

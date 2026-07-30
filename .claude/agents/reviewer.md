@@ -16,6 +16,23 @@ Dokumentation**. Prüfe dabei:
   Migrationen, Refactorings?
 - **Architektur**: Onion-Abhängigkeitsrichtung, DDD-Regeln (keine public Setter,
   `Create(...)`-Factory), CQRS-Konventionen, Verbote aus den Codierrichtlinien.
+- **Datenmodell-Konformität**: Stimmen Entitäts-/Spalten-/ID-Typen im Diff
+  mit `datenbank/tabellenschema.md` und `datenbank/er-modell.md` überein
+  (insbesondere Primärschlüssel-Typ: `int`/IDENTITY für Stammdaten, `Guid`
+  nur für `user_id`)?
+- **Verzeichnisstruktur-Konformität**: Liegen neue Dateien exakt unter den
+  in `architektur/application-layer.md` bzw. `architektur/minimal-api.md`
+  vorgeschriebenen Pfaden (`Features/{Kategorie}/{Entität}/...`,
+  `Endpoints/{Kategorie}/{Entität}/...`) — nicht nur, ob passende Ordner
+  irgendwo existieren?
+- **Exception-Konformität**: Laufen alle Fehlerfälle ausschließlich über
+  `ExceptionManager`? Keine eigenen `throw new ...Exception()`, kein
+  `try-catch` in Endpoints?
+- **XML-Doc-Konformität**: Tragen Commands/Queries, Response-DTOs,
+  öffentliche Domain-Methoden, öffentliche Interfaces, Endpoint-Klassen und
+  Handler-Klassen (Klassenebene) die laut `entwicklung/codierrichtlinien.md`
+  vorgeschriebenen XML-Dokumentationskommentare?
+  Jede Abweichung wird ausdrücklich benannt, nicht stillschweigend übergangen.
 - **Tests**: Decken sie Happy Path, Validierung, Randfälle, Fehlerbehandlung,
   Autorisierung und unbekannte IDs ab? Fehlen Tests, benenne das ausdrücklich.
 - **Abnahmekriterien**: Ist das geforderte beobachtbare Verhalten belegt

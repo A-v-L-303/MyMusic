@@ -12,7 +12,11 @@ Du bist der Planungsagent für MyMusic.
   verständliche und einzeln testbare Schritte.
 - Formuliere für den ausgewählten Schritt einen konkreten Arbeits-Prompt mit den
   Abschnitten: **Ziel, Voraussetzungen, Freigegebener Umfang, Nicht-Ziele,
-  Betroffene Dateien/Module, Sicherheitsanforderungen, Verifikation, Abnahmekriterien**.
+  Betroffene Dateien/Module, Wiki-Referenzen, Sicherheitsanforderungen,
+  Verifikation, Abnahmekriterien**. Der Abschnitt **Wiki-Referenzen** listet
+  explizit alle für den Prompt bindenden Wiki-Seiten auf, mindestens
+  `datenbank/tabellenschema.md` (ID-Typen) und die entitätsspezifische
+  `domain/{entität}.md`-Seite.
 - Abnahmekriterien beschreiben beobachtbares Verhalten, keine allgemeinen
   Qualitätsaussagen.
 - Prüfe vor der Planung den Iststand (oder fordere einen Analyst-Bericht an) —

@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-07-26 (nach Abschluss von Block 0a, 0b und 0d)
+Stand: 2026-07-30 (nach Abschluss von Block 0a, 0b, 0d, 0e und 0f)
 Branch: `main`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
@@ -19,7 +19,7 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b und 0d sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
+Block 0a, 0b, 0d, 0e und 0f sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Genre, Country, Label, Artist, Record und Tracks.
@@ -169,6 +169,104 @@ Bewusst nicht Teil von 0d:
 - Kein StyleCop/Roslynator; projektspezifische Regeln (Namensschemata,
   Feature-Kapselung, Kommentar-Ausnahmen) bleiben Aufgabe des
   `reviewer`-Subagenten.
+
+### 0e. Technische Vorbereitung: generischer Repository-Schlüsseltyp & Prozess-Absicherung
+
+Status: **abgeschlossen** (2026-07-30)
+Arbeits-Prompt: `docs/prompts/2026-07-30-block-0e-repository-schluesseltyp-praevention.md`
+
+Hintergrund:
+
+- Block 2 (Genre) wurde am 29.07.2026 vollständig implementiert, aber
+  durchgängig mit `Guid`- statt `int`-IDs, ohne konsequente Nutzung des
+  `ExceptionManager` und ohne die vorgeschriebene Verzeichnisstruktur im
+  API-Layer. Nach Prüfung wurde die komplette Implementierung wieder
+  gelöscht, ohne dass je committet wurde. Der ID-Typ-Fehler ist unabhängig
+  am Code erklärbar: `IRepository<T>` aus Block 0b ist fest auf `Guid`
+  fixiert. Die anderen beiden Fehler traten trotz vorhandener Pflichtlektüre
+  (`architektur/application-layer.md`) auf. Zusätzlich fehlte ein
+  archivierter, freigegebener Arbeits-Prompt.
+
+Umgesetzt:
+
+- `IRepository<TEntity, TKey>`/`Repository<TEntity, TKey>` generisch über den
+  Schlüsseltyp, `ExceptionManager.NotFound<TId>` generisch (ADR 0006).
+  Bestehende Tests (`RepositoryTests`, `ExceptionManagerTests`) angepasst,
+  neuer `int`-Testfall für `NotFound<TId>` ergänzt.
+- ADR `docs/adr/0006-repository-id-typ-strategie.md`.
+- `implementer.md`: Pflicht-Leseliste um `datenbank/tabellenschema.md`,
+  `datenbank/er-modell.md`, `architektur/fehler-und-ausnahmekonzept.md` und
+  die entitätsspezifische `domain/{entität}.md`-Seite erweitert; zusätzlich
+  neue Abschlussprüfung (Verzeichnisstruktur- und Exception-Konformität
+  explizit gegen die Wiki-Seiten abgleichen, nicht nur zu Beginn lesen).
+- `planner.md`: Arbeits-Prompt-Abschnitte um Pflichtabschnitt
+  „Wiki-Referenzen" ergänzt.
+- `reviewer.md`: drei explizite Prüfpunkte ergänzt — Datenmodell-,
+  Verzeichnisstruktur- und Exception-Konformität.
+- Neue gebündelte Wiki-Checkliste
+  `entwicklung/vorgaben-checkliste-neue-entitaet.md`.
+- Wiki-Korrektur `tech-stack/minimal-api.md` (fälschlich als „erledigt"
+  beschriebene MeEndpoints-Verschiebung richtiggestellt) und
+  `offene-themen.md` (Pfadverweis korrigiert).
+- Leere Verzeichnis-Stubs der gelöschten Implementierung entfernt.
+- `CLAUDE.md` §4.2/§10.2 und `README.md` an neue Signatur angepasst.
+
+Abnahmekriterium erfüllt:
+
+- `dotnet build`/`dotnet test` grün mit angepasster Signatur; ADR 0006
+  vorhanden; `implementer.md`/`planner.md`/`reviewer.md` enthalten die neuen
+  Passagen; keine leeren Verzeichnis-Stubs mehr vorhanden; Wiki-Korrekturen
+  umgesetzt.
+
+Bewusst nicht Teil von 0e:
+
+- Die eigentliche Genre-Implementierung (Domain-Entität, Commands/Queries,
+  Endpoints, Migration) — folgt als eigener, separat freigegebener
+  Arbeits-Prompt (weiterhin Block 2).
+
+### 0f. XML-Dokumentationskommentare: Pflichtregel definieren und Bestandscode nachziehen
+
+Status: **abgeschlossen** (2026-07-30)
+Arbeits-Prompt: `docs/prompts/2026-07-30-block-0f-xml-dokumentationskommentare.md`
+
+Hintergrund:
+
+- Beim gelöschten Genre-Slice (siehe 0e) fehlten laut Nutzerangabe auch
+  XML-Dokumentationskommentare zu Methoden. Die bisherige Regel
+  (CLAUDE.md §9, `entwicklung/codierrichtlinien.md`) erlaubte XML-Doc-Kommentare
+  zwar, sagte aber nur „für Methoden" und nirgends verpflichtend, für welche
+  Elemente. Verifiziert: Im gesamten `src/`-Verzeichnis existierte keine
+  einzige `///`-Zeile, auch nicht im Bestandscode aus Block 0b.
+
+Umgesetzt:
+
+- Wiki `entwicklung/codierrichtlinien.md`: neue Sektion
+  „XML-Dokumentationskommentare" mit verbindlicher Pflicht-Tabelle je
+  Element (Commands/Queries, Response-DTOs, öffentliche Domain-Methoden,
+  öffentliche Interfaces, Endpoint-Klassen, Handler-Klassen nur
+  Klassenebene), Sprachregel (Deutsch) und Beispiel.
+- `entwicklung/vorgaben-checkliste-neue-entitaet.md`: neuer Checklistenpunkt 9.
+- `CLAUDE.md` §9, `implementer.md`, `reviewer.md`: konsistent auf die neue
+  Regel abgestimmt (Abschlussprüfung bzw. vierter Reviewer-Prüfpunkt
+  „XML-Doc-Konformität").
+- 6 Bestandsdateien aus Block 0b rückwirkend nachgerüstet: `IRepository.cs`,
+  `ICurrentUserService.cs`, `CurrentUserResponse.cs`, `GetCurrentUserQuery.cs`,
+  `GetCurrentUserQueryHandler.cs`, `MeEndpoints.cs`.
+
+Abnahmekriterium erfüllt:
+
+- Regel definiert Pflicht/Nicht-Pflicht je Element mit Beispiel; alle 6
+  Bestandsdateien tragen die vorgeschriebenen XML-Doc-Kommentare;
+  `dotnet build`/`dotnet test` unverändert grün (reine Kommentar-Ergänzung).
+
+Bewusst nicht Teil von 0f:
+
+- Swagger/OpenAPI-Verdrahtung und technische Durchsetzung
+  (`GenerateDocumentationFile`/CS1591) — eigene, separat freizugebende
+  Schritte.
+- XML-Docs für `Application/Common/CQRS/`-Interfaces und
+  `ExceptionManager`/`GlobalExceptionHandler` — nicht Teil der
+  abgestimmten 6-Dateien-Liste.
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 

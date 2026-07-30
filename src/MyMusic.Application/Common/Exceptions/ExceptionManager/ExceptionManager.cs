@@ -13,7 +13,7 @@ public sealed class ExceptionManager
         return new ValidationException(groupedErrors);
     }
 
-    public NotFoundException NotFound(string entityName, Guid id)
+    public NotFoundException NotFound<TId>(string entityName, TId id)
     {
         return new NotFoundException($"{entityName} mit der Id '{id}' wurde nicht gefunden.");
     }

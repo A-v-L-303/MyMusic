@@ -160,7 +160,8 @@ ist das durch `tests/MyMusic.IntegrationTests/DatabasePermissionTests.cs`.
 `MyMusic.Application` enthält seit Block 0b ein eigenes CQRS-Grundgerüst
 (`IMediator`, `ICommand<T>`/`IQuery<T>`, FluentValidation-Decorator), einen
 `ExceptionManager` mit zentralem `GlobalExceptionHandler` in `MyMusic.Api` sowie
-ein generisches `IRepository<T>`/`Repository<T>` (noch ohne Entität, folgt mit
+ein generisches `IRepository<TEntity, TKey>`/`Repository<TEntity, TKey>`
+(seit Block 0e generisch über den Schlüsseltyp, noch ohne Entität, folgt mit
 dem Genre-Slice). Als einziger geschützter Endpunkt existiert `GET /api/me`
 (`.RequireAuthorization()`), der ausschließlich die `userId` aus dem
 `sub`-Claim des Zugriffstokens zurückgibt — Nachweis der Kette

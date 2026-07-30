@@ -1,11 +1,12 @@
 namespace MyMusic.Infrastructure.Persistence.Repositories;
 
-public sealed class Repository<TEntity>(MyMusicDbContext context) : IRepository<TEntity>
+public sealed class Repository<TEntity, TKey>(MyMusicDbContext context) : IRepository<TEntity, TKey>
     where TEntity : class
+    where TKey : notnull
 {
     private readonly DbSet<TEntity> _dbSet = context.Set<TEntity>();
 
-    public async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken)
     {
         return await _dbSet.FindAsync([id], cancellationToken);
     }

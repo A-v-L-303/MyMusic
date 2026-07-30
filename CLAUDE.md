@@ -179,7 +179,7 @@ Projekte sind überwiegend leere Gerüste — vorhandene C#-Dateien vor jeder
 - Die Domain kennt keine Infrastruktur, kein UI und keine Frameworks.
 - Application darf Domain referenzieren.
 - Infrastructure implementiert die in Application/Domain definierten Verträge
-  (z. B. `IRepository<T>` aus `Domain/Contracts/Repository/`).
+  (z. B. `IRepository<TEntity, TKey>` aus `Domain/Contracts/Repository/`).
 - Die API-Schicht exponiert die Anwendung nach außen und ist Composition Root.
 - Kein PostgreSQL-/EF-Code in der Application-Schicht — nur `IRepository<T>`.
 - Das Angular-Frontend greift ausschließlich über die HTTP-API zu.
@@ -338,8 +338,12 @@ Kernpunkte:
   (z. B. nicht ersichtlicher Zweck einer Methode) — rein beschreibende
   Kommentare sind nicht erlaubt. Ausdrücklich erlaubt sind darüber hinaus:
   System-Kommentare (z. B. automatisch beim Erstellen eines Projekts erzeugte),
-  Assertion-Rationale-Kommentare in Tests und XML-Dokumentationskommentare für
-  Methoden. Ausdrücklich verboten ist es, in Kommentaren auf das Wiki zu verweisen.
+  Assertion-Rationale-Kommentare in Tests und XML-Dokumentationskommentare —
+  Pflicht für Commands/Queries, Response-DTOs, öffentliche Domain-Methoden,
+  öffentliche Interfaces, Endpoint-Klassen und Handler-Klassen (nur
+  Klassenebene), auf Deutsch; Details und Beispiel siehe Wiki
+  `entwicklung/codierrichtlinien.md`. Ausdrücklich verboten ist es, in
+  Kommentaren auf das Wiki zu verweisen.
 - Backend: `PascalCase` für Typen/Methoden/Properties, `_camelCase` für private
   Felder; Namensschemata `{Aktion}{Entität}Command`, `{Command}Handler`,
   `{Entität}Response`, `{Entität}ResponseBuilder`, `{Entität}Endpoints`.
@@ -380,7 +384,8 @@ Verbindliche Quellen: Wiki `test/grobe-testplanung.md`, `test/unit-tests.md`.
 - Tests prüfen beobachtbares Verhalten, nicht private Implementierungsdetails.
 - Sicherheitsszenarien gehören dazu: nicht authentifizierter Zugriff, Zugriff
   auf fremde Daten (404), unbekannte IDs, fehlende Pflichtfelder.
-- `IRepository<T>` wird in Handler-Tests gemockt — keine Datenbank nötig.
+- `IRepository<TEntity, TKey>` wird in Handler-Tests gemockt — keine
+  Datenbank nötig.
 - Jeder Bugfix erhält nach Möglichkeit einen reproduzierenden Test.
 - Flaky Tests dürfen nicht ignoriert werden.
 - Nicht vorhandene Tests, unprüfbare Annahmen und manuelle Prüfungen werden im
