@@ -336,14 +336,18 @@ Kernpunkte:
   werden auf mehrere Zeilen umgebrochen.
 - Grundsätzlich keine Kommentare; Ausnahme nur bei absoluter Notwendigkeit
   (z. B. nicht ersichtlicher Zweck einer Methode) — rein beschreibende
-  Kommentare sind nicht erlaubt. Ausdrücklich erlaubt sind darüber hinaus:
-  System-Kommentare (z. B. automatisch beim Erstellen eines Projekts erzeugte),
-  Assertion-Rationale-Kommentare in Tests und XML-Dokumentationskommentare —
-  Pflicht für Commands/Queries, Response-DTOs, öffentliche Domain-Methoden,
-  öffentliche Interfaces, Endpoint-Klassen und Handler-Klassen (nur
-  Klassenebene), auf Deutsch; Details und Beispiel siehe Wiki
+  Kommentare sind nicht erlaubt, auch nicht als XML-Dokumentationskommentar.
+  Ausdrücklich erlaubt sind darüber hinaus: System-Kommentare (z. B.
+  automatisch beim Erstellen eines Projekts erzeugte), Assertion-Rationale-
+  Kommentare in Tests und XML-Dokumentationskommentare für
+  Commands/Queries, Response-DTOs, öffentliche Domain-Methoden, öffentliche
+  Interfaces, Endpoint-Klassen und Handler-Klassen (nur Klassenebene) — aber
+  nur dort, wo sie echten Mehrwert über den Bezeichner hinaus liefern
+  (Constraints, Herkunft eines Werts, Invarianten, geworfene Exceptions),
+  auf Deutsch; Details und Beispiel siehe Wiki
   `entwicklung/codierrichtlinien.md`. Ausdrücklich verboten ist es, in
-  Kommentaren auf das Wiki zu verweisen.
+  Kommentaren auf das Wiki oder auf ADRs zu verweisen — ein Kommentar muss
+  für sich allein verständlich sein.
 - Backend: `PascalCase` für Typen/Methoden/Properties, `_camelCase` für private
   Felder; Namensschemata `{Aktion}{Entität}Command`, `{Command}Handler`,
   `{Entität}Response`, `{Entität}ResponseBuilder`, `{Entität}Endpoints`.

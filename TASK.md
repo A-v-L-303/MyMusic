@@ -241,17 +241,28 @@ Hintergrund:
 Umgesetzt:
 
 - Wiki `entwicklung/codierrichtlinien.md`: neue Sektion
-  „XML-Dokumentationskommentare" mit verbindlicher Pflicht-Tabelle je
-  Element (Commands/Queries, Response-DTOs, öffentliche Domain-Methoden,
-  öffentliche Interfaces, Endpoint-Klassen, Handler-Klassen nur
-  Klassenebene), Sprachregel (Deutsch) und Beispiel.
+  „XML-Dokumentationskommentare" — vorgesehen für Commands/Queries,
+  Response-DTOs, öffentliche Domain-Methoden, öffentliche Interfaces,
+  Endpoint-Klassen und (nicht-triviale) Handler-Klassen, aber nur
+  geschrieben, wenn echter Mehrwert über den Bezeichner hinaus besteht;
+  reine Wiederholungen des Bezeichners sind wie jeder andere beschreibende
+  Kommentar verboten. Verweis-Verbot in der allgemeinen Kommentarregel von
+  „Wiki" auf „Wiki oder ADRs" erweitert (Korrektur nach erster fehlerhafter
+  Anwendung der Regel — siehe unten).
 - `entwicklung/vorgaben-checkliste-neue-entitaet.md`: neuer Checklistenpunkt 9.
-- `CLAUDE.md` §9, `implementer.md`, `reviewer.md`: konsistent auf die neue
-  Regel abgestimmt (Abschlussprüfung bzw. vierter Reviewer-Prüfpunkt
-  „XML-Doc-Konformität").
-- 6 Bestandsdateien aus Block 0b rückwirkend nachgerüstet: `IRepository.cs`,
+- `CLAUDE.md` §9, `implementer.md`, `reviewer.md`: konsistent auf die
+  korrigierte Regel abgestimmt.
+- 6 Bestandsdateien aus Block 0b rückwirkend geprüft: `IRepository.cs`,
   `ICurrentUserService.cs`, `CurrentUserResponse.cs`, `GetCurrentUserQuery.cs`,
-  `GetCurrentUserQueryHandler.cs`, `MeEndpoints.cs`.
+  `GetCurrentUserQueryHandler.cs`, `MeEndpoints.cs`. Zusätzlich in
+  `Program.cs` ein bestehender Kommentar korrigiert, der auf ADR 0004 verwies.
+
+Korrektur (2026-07-30, unmittelbar nach erster Umsetzung): Die erste Fassung
+der Regel formulierte XML-Docs als kategorische Pflicht, was in der
+praktischen Anwendung zu rein beschreibenden Kommentaren führte (z. B.
+`<summary>Liefert die Daten des aktuell angemeldeten Benutzers.</summary>`
+bei einer Methode `GetCurrentUserAsync`) — vom Nutzer zurückgewiesen. Regel
+und alle sechs Dateien entsprechend korrigiert.
 
 Abnahmekriterium erfüllt:
 

@@ -28,10 +28,13 @@ Dokumentation**. Prüfe dabei:
 - **Exception-Konformität**: Laufen alle Fehlerfälle ausschließlich über
   `ExceptionManager`? Keine eigenen `throw new ...Exception()`, kein
   `try-catch` in Endpoints?
-- **XML-Doc-Konformität**: Tragen Commands/Queries, Response-DTOs,
-  öffentliche Domain-Methoden, öffentliche Interfaces, Endpoint-Klassen und
-  Handler-Klassen (Klassenebene) die laut `entwicklung/codierrichtlinien.md`
-  vorgeschriebenen XML-Dokumentationskommentare?
+- **XML-Doc-Konformität**: Liefert jeder vorhandene XML-Doc-Kommentar
+  Information über den Bezeichner hinaus (siehe
+  `entwicklung/codierrichtlinien.md`, Abschnitt „XML-Dokumentationskommentare")
+  — oder ist er eine reine Wiederholung des Bezeichners und damit ein
+  verbotener beschreibender Kommentar? Verweist irgendein Kommentar (XML
+  oder sonstig) auf das Wiki oder auf ein ADR statt eigenständig
+  verständlich zu sein?
   Jede Abweichung wird ausdrücklich benannt, nicht stillschweigend übergangen.
 - **Tests**: Decken sie Happy Path, Validierung, Randfälle, Fehlerbehandlung,
   Autorisierung und unbekannte IDs ab? Fehlen Tests, benenne das ausdrücklich.

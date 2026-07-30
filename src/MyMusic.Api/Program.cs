@@ -44,7 +44,7 @@ builder.Services
         options.TokenValidationParameters = new TokenValidationParameters
         {
             // Keycloak nimmt ohne eigenen Audience-Mapper standardmäßig "account" als
-            // Audience in jedes Access Token auf - siehe ADR 0004.
+            // Audience in jedes Access Token auf.
             ValidAudience = "account"
         };
     });

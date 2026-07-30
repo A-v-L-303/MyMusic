@@ -12,7 +12,6 @@ public static class MeEndpoints
         return endpoints;
     }
 
-    /// <summary>Liefert die Daten des aktuell angemeldeten Benutzers.</summary>
     private static async Task<CurrentUserResponse> GetCurrentUserAsync(
         IMediator mediator,
         CancellationToken cancellationToken)

@@ -41,10 +41,11 @@ Du bist der Implementierungsagent für MyMusic.
   `architektur/application-layer.md` bzw. `architektur/minimal-api.md`
   abgleichen (Pfade, nicht nur Existenz der Dateien) und bestätigen, dass
   jede geworfene Exception über den `ExceptionManager` läuft (keine eigenen
-  `throw new ...Exception()`, kein `try-catch` in Endpoints). Ebenso
-  bestätigen, dass Commands/Queries, Response-DTOs, öffentliche
-  Domain-Methoden, öffentliche Interfaces, Endpoint- und Handler-Klassen die
-  laut `entwicklung/codierrichtlinien.md` (Abschnitt
-  „XML-Dokumentationskommentare") vorgeschriebenen XML-Doc-Kommentare
-  tragen. Alle drei Punkte ausdrücklich im Abschlussbericht vermerken, nicht
-  nur Build-/Test-Ergebnis.
+  `throw new ...Exception()`, kein `try-catch` in Endpoints). Ebenso jede
+  XML-Doc-Kommentar-Zeile gegen `entwicklung/codierrichtlinien.md` (Abschnitt
+  „XML-Dokumentationskommentare") prüfen: nur dort vorhanden, wo sie
+  Information über den Bezeichner hinaus liefert — reine Wiederholungen des
+  Bezeichners (z. B. `<summary>Liefert X.</summary>` bei einer Methode
+  `GetX`) entfernen. Kein Kommentar verweist auf das Wiki oder auf ADRs.
+  Alle drei Punkte ausdrücklich im Abschlussbericht vermerken, nicht nur
+  Build-/Test-Ergebnis.
