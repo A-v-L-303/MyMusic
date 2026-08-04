@@ -6,7 +6,7 @@ public class RepositoryTests
     public async Task GetByIdAsync_DelegiertAnDbSetFindAsync()
     {
         // arrange
-        var entity = new TestEntity { Id = Guid.NewGuid() };
+        var entity = new TestEntity { Id = 1 };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
@@ -34,7 +34,7 @@ public class RepositoryTests
         var repository = new Repository<TestEntity>(CreateContext(dbSet));
 
         // act
-        var result = await repository.GetByIdAsync(Guid.NewGuid(), CancellationToken.None);
+        var result = await repository.GetByIdAsync(1, CancellationToken.None);
 
         // assert
         Assert.Null(result);
@@ -44,7 +44,7 @@ public class RepositoryTests
     public async Task AddAsync_DelegiertAnDbSetAddAsync()
     {
         // arrange
-        var entity = new TestEntity { Id = Guid.NewGuid() };
+        var entity = new TestEntity { Id = 1 };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
@@ -61,7 +61,7 @@ public class RepositoryTests
     public void Update_DelegiertAnDbSetUpdate()
     {
         // arrange
-        var entity = new TestEntity { Id = Guid.NewGuid() };
+        var entity = new TestEntity { Id = 1 };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
@@ -78,7 +78,7 @@ public class RepositoryTests
     public void Remove_DelegiertAnDbSetRemove()
     {
         // arrange
-        var entity = new TestEntity { Id = Guid.NewGuid() };
+        var entity = new TestEntity { Id = 1 };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 

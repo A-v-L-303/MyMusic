@@ -9,7 +9,7 @@ public interface IRepository<TEntity>
     /// <param name="id">Die Id der gesuchten Entität.</param>
     /// <param name="cancellationToken">Ein Token zur Überwachung von Abbruchanforderungen.</param>
     /// <returns>Die gefundene Entität, oder <see langword="null"/>, wenn keine gefunden wurde.</returns>
-    Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Ruft alle Entitäten dieses Typs asynchron ab.

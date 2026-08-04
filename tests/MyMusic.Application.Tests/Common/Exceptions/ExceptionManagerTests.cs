@@ -28,7 +28,7 @@ public class ExceptionManagerTests
     public void NotFound_ErzeugtDeutscheFehlermeldungMitEntitaetUndId()
     {
         // arrange
-        var id = Guid.NewGuid();
+        var id = 1;
 
         // act
         var exception = _exceptionManager.NotFound("Genre", id);
