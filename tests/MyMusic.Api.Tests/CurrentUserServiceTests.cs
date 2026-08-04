@@ -5,6 +5,7 @@ public class CurrentUserServiceTests
     [Fact]
     public void UserId_MitGueltigemSubClaim_GibtGuidZurueck()
     {
+        // arrange
         var expectedUserId = Guid.NewGuid();
 
         var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
@@ -13,30 +14,38 @@ public class CurrentUserServiceTests
 
         var currentUserService = new CurrentUserService(httpContextAccessor);
 
+        // act
+        // assert
         Assert.Equal(expectedUserId, currentUserService.UserId);
     }
 
     [Fact]
     public void UserId_OhneSubClaim_WirftInvalidOperationException()
     {
+        // arrange
         var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
 
         httpContextAccessor.HttpContext.Returns(CreateHttpContext(subClaim: null));
 
         var currentUserService = new CurrentUserService(httpContextAccessor);
 
+        // act
+        // assert
         Assert.Throws<InvalidOperationException>(() => currentUserService.UserId);
     }
 
     [Fact]
     public void UserId_MitUngueltigemSubClaim_WirftInvalidOperationException()
     {
+        // arrange
         var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
 
         httpContextAccessor.HttpContext.Returns(CreateHttpContext("kein-guid"));
 
         var currentUserService = new CurrentUserService(httpContextAccessor);
 
+        // act
+        // assert
         Assert.Throws<InvalidOperationException>(() => currentUserService.UserId);
     }
 

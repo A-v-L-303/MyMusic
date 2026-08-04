@@ -11,6 +11,9 @@ public static class MeEndpoints
         return endpoints;
     }
 
+    /// <summary>
+    /// Gibt die Id des aktuell angemeldeten Benutzers zurück.
+    /// </summary>
     private static async Task<CurrentUserResponse> GetCurrentUserAsync(
         IMediator mediator,
         CancellationToken cancellationToken)

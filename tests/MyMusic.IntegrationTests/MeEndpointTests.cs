@@ -7,6 +7,7 @@ public class MeEndpointTests
     [Fact]
     public async Task GetMe_OhneToken401_MitGueltigemTokenDerEigenenUserId200()
     {
+        // arrange
         var cancellationToken = CancellationToken.None;
 
         var appHost = await DistributedApplicationTestingBuilder
@@ -27,10 +28,13 @@ public class MeEndpointTests
         using var apiClient = app.CreateHttpClient("api", "http");
         using var keycloakClient = app.CreateHttpClient("keycloak", "http");
 
+        // act
         var unauthorizedResponse = await apiClient.GetAsync("/api/me", cancellationToken);
 
+        // assert
         Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedResponse.StatusCode);
 
+        // arrange
         var testUser = await CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
 
         try
@@ -41,8 +45,10 @@ public class MeEndpointTests
 
             authorizedRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
+            // act
             var authorizedResponse = await apiClient.SendAsync(authorizedRequest, cancellationToken);
 
+            // assert
             Assert.Equal(HttpStatusCode.OK, authorizedResponse.StatusCode);
 
             var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);

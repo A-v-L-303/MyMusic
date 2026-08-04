@@ -5,6 +5,7 @@ public class MediatorTests
     [Fact]
     public async Task SendAsync_Command_LoestKorrektenHandlerAufUndGibtErgebnisZurueck()
     {
+        // arrange
         var services = new ServiceCollection();
 
         services.AddSingleton<ExceptionManager>();
@@ -16,14 +17,17 @@ public class MediatorTests
 
         var mediator = provider.GetRequiredService<IMediator>();
 
+        // act
         var result = await mediator.SendAsync(new SampleCommand(), CancellationToken.None);
 
+        // assert
         Assert.Equal("Command-Ergebnis", result);
     }
 
     [Fact]
     public async Task SendAsync_Query_LoestKorrektenHandlerAufUndGibtErgebnisZurueck()
     {
+        // arrange
         var services = new ServiceCollection();
 
         services.AddSingleton<ExceptionManager>();
@@ -35,14 +39,17 @@ public class MediatorTests
 
         var mediator = provider.GetRequiredService<IMediator>();
 
+        // act
         var result = await mediator.SendAsync(new SampleQuery(), CancellationToken.None);
 
+        // assert
         Assert.Equal(42, result);
     }
 
     [Fact]
     public async Task SendAsync_Command_OhneRegistriertenHandler_WirftInvalidOperationException()
     {
+        // arrange
         var services = new ServiceCollection();
 
         services.AddSingleton<ExceptionManager>();
@@ -53,6 +60,8 @@ public class MediatorTests
 
         var mediator = provider.GetRequiredService<IMediator>();
 
+        // act
+        // assert
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => mediator.SendAsync(new SampleCommand(), CancellationToken.None));
     }
@@ -60,6 +69,7 @@ public class MediatorTests
     [Fact]
     public async Task SendAsync_Query_OhneRegistriertenHandler_WirftInvalidOperationException()
     {
+        // arrange
         var services = new ServiceCollection();
 
         services.AddSingleton<ExceptionManager>();
@@ -70,6 +80,8 @@ public class MediatorTests
 
         var mediator = provider.GetRequiredService<IMediator>();
 
+        // act
+        // assert
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => mediator.SendAsync(new SampleQuery(), CancellationToken.None));
     }

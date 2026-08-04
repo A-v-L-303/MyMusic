@@ -7,6 +7,7 @@ public class DatabasePermissionTests
     [Fact]
     public async Task ApiRolleDarfLesenUndSchreibenAberKeinSchemaAendern()
     {
+        // arrange
         var cancellationToken = CancellationToken.None;
 
         var appHost = await DistributedApplicationTestingBuilder
@@ -26,6 +27,8 @@ public class DatabasePermissionTests
         await connection.OpenAsync(cancellationToken);
 
         // Der Verbindungsaufbau selbst beweist bereits, dass die Rolle existiert und CONNECT hat.
+        // act
+        // assert
         await using (var command = new NpgsqlCommand("SELECT current_user;", connection))
         {
             var currentUser = await command.ExecuteScalarAsync(cancellationToken);
@@ -35,6 +38,8 @@ public class DatabasePermissionTests
 
         // DML muss erlaubt sein: Die Tabelle gehoert dem Migrator, die API greift ueber
         // ALTER DEFAULT PRIVILEGES darauf zu.
+        // act
+        // assert
         await using (var command = new NpgsqlCommand("""SELECT count(*) FROM "__EFMigrationsHistory";""", connection))
         {
             var count = await command.ExecuteScalarAsync(cancellationToken);
@@ -43,6 +48,8 @@ public class DatabasePermissionTests
         }
 
         // DDL muss verboten sein.
+        // act
+        // assert
         await using (var command = new NpgsqlCommand("CREATE TABLE permission_probe (id int);", connection))
         {
             var exception = await Assert.ThrowsAsync<PostgresException>(
