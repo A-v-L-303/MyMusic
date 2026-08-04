@@ -71,11 +71,11 @@ Das Backend folgt der **Onion-Architektur** in Kombination mit **Domain Driven D
 ┌─────────────────────────────────────────┐
 │                API Layer                │  ASP.NET Core Minimal API
 ├─────────────────────────────────────────┤
-│           Application Layer            │  Commands, Queries, Services
+│           Application Layer             │  Commands, Queries, Services
 ├─────────────────────────────────────────┤
-│          Infrastructure Layer          │  EF Core, PostgreSQL, Keycloak
+│          Infrastructure Layer           │  EF Core, PostgreSQL, Keycloak
 ├─────────────────────────────────────────┤
-│           Core (Domain) Layer          │  Entities, Value Objects, Aggregates
+│           Core (Domain) Layer           │  Entities, Value Objects, Aggregates
 └─────────────────────────────────────────┘
 
          Angular 22 Frontend (SPA)
