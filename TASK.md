@@ -1,6 +1,7 @@
 # Offene Aufgaben
 
-Stand: 2026-07-26 (nach Abschluss von Block 0a, 0b und 0d)
+Stand: 2026-08-04 (nach Abschluss von Block 0a, 0b und 0d; User Stories
+Genre ergänzt)
 Branch: `main`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
@@ -26,7 +27,8 @@ Block 0a, 0b und 0d sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 - Zustandsbewertung nach Goldmine-Standard.
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
 - Discogs-Integration, Dashboard und Volltext-Suche.
-- User Stories mit Akzeptanzkriterien (Lücke laut `offene-themen.md` im Wiki).
+- User Stories mit Akzeptanzkriterien für Country, Label, Artist, Record und
+  Tracks (Genre erledigt, siehe `offene-themen.md` im Wiki).
 
 ## 0. Fundament: Walking Skeleton
 
@@ -172,7 +174,8 @@ Bewusst nicht Teil von 0d:
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
-Status: offen
+Status: teilweise abgeschlossen (Genre: 2026-07-29; Country, Label, Artist,
+Record/Tracks offen)
 Priorität: hoch, jeweils vor dem zugehörigen Slice
 
 Ziel:
@@ -182,8 +185,12 @@ Ziel:
 
 Aufgaben:
 
-- Pro anstehendem Slice (beginnend mit Genre) User Stories mit
-  Akzeptanzkriterien im Wiki ergänzen — nicht alles auf einmal.
+- Pro anstehendem Slice User Stories mit Akzeptanzkriterien im Wiki
+  ergänzen — nicht alles auf einmal.
+  - Genre: erledigt, siehe
+    `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-genre.md`.
+  - Country, Label, Artist, Record/Tracks: jeweils vor dem zugehörigen Slice
+    nachzuziehen.
 - Die sechs Prüfkriterien der groben Testplanung als Grundlage nutzen.
 
 Abnahmekriterium:
@@ -200,6 +207,12 @@ Ziel:
 
 - Einfachster vertikaler Slice durch alle Schichten als Referenz für alle
   weiteren Entitäten.
+
+Voraussetzung erledigt:
+
+- User Stories und Akzeptanzkriterien liegen vor, siehe
+  `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-genre.md`
+  (2026-07-29).
 
 Aufgaben:
 
