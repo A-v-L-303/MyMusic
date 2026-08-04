@@ -1,4 +1,4 @@
-namespace MyMusic.Api;
+namespace MyMusic.Api.Endpoints.System.CurrentUser;
 
 public static class MeEndpoints
 {
