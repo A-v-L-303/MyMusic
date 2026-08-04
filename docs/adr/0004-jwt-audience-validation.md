@@ -67,8 +67,6 @@ mit HTTP 500 fehl (statt 200), da `ICurrentUserService.UserId` keinen
   eigene Audience statt `account` zu führen), muss `ValidAudience` zusammen mit
   dem Realm-Import angepasst werden — offener Folgepunkt, keine Aufgabe von
   Block 0b.
-- Der Wert `"account"` ist im Code als Kommentar begründet, da er ohne Kontext
-  wie ein „Magic String" wirkt.
 - Alle künftigen Claims-Zugriffe im Code müssen mit den rohen JWT-Claim-Namen
   arbeiten (z. B. `"sub"`, nicht `ClaimTypes.NameIdentifier`), da
   `MapInboundClaims = false` gilt.

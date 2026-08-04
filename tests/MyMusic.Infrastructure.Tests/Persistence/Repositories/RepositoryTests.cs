@@ -5,6 +5,7 @@ public class RepositoryTests
     [Fact]
     public async Task GetByIdAsync_DelegiertAnDbSetFindAsync()
     {
+        // arrange
         var entity = new TestEntity { Id = Guid.NewGuid() };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
@@ -14,14 +15,17 @@ public class RepositoryTests
 
         var repository = new Repository<TestEntity>(CreateContext(dbSet));
 
+        // act
         var result = await repository.GetByIdAsync(entity.Id, CancellationToken.None);
 
+        // assert
         Assert.Same(entity, result);
     }
 
     [Fact]
     public async Task GetByIdAsync_GibtNullZurueckWennKeineEntitaetGefundenWird()
     {
+        // arrange
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
         dbSet.FindAsync(Arg.Any<object[]>(), Arg.Any<CancellationToken>())
@@ -29,56 +33,68 @@ public class RepositoryTests
 
         var repository = new Repository<TestEntity>(CreateContext(dbSet));
 
+        // act
         var result = await repository.GetByIdAsync(Guid.NewGuid(), CancellationToken.None);
 
+        // assert
         Assert.Null(result);
     }
 
     [Fact]
     public async Task AddAsync_DelegiertAnDbSetAddAsync()
     {
+        // arrange
         var entity = new TestEntity { Id = Guid.NewGuid() };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
         var repository = new Repository<TestEntity>(CreateContext(dbSet));
 
+        // act
         await repository.AddAsync(entity, CancellationToken.None);
 
+        // assert
         await dbSet.Received(1).AddAsync(entity, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public void Update_DelegiertAnDbSetUpdate()
     {
+        // arrange
         var entity = new TestEntity { Id = Guid.NewGuid() };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
         var repository = new Repository<TestEntity>(CreateContext(dbSet));
 
+        // act
         repository.Update(entity);
 
+        // assert
         dbSet.Received(1).Update(entity);
     }
 
     [Fact]
     public void Remove_DelegiertAnDbSetRemove()
     {
+        // arrange
         var entity = new TestEntity { Id = Guid.NewGuid() };
 
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
         var repository = new Repository<TestEntity>(CreateContext(dbSet));
 
+        // act
         repository.Remove(entity);
 
+        // assert
         dbSet.Received(1).Remove(entity);
     }
 
     [Fact]
     public async Task SaveChangesAsync_DelegiertAnContextSaveChangesAsync()
     {
+        // arrange
         var dbSet = Substitute.For<DbSet<TestEntity>>();
 
         var context = CreateContext(dbSet);
@@ -87,8 +103,10 @@ public class RepositoryTests
 
         var repository = new Repository<TestEntity>(context);
 
+        // act
         var result = await repository.SaveChangesAsync(CancellationToken.None);
 
+        // assert
         Assert.Equal(3, result);
     }
 

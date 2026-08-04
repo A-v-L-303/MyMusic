@@ -334,12 +334,16 @@ Kernpunkte:
 - Maximale Zeilenlänge 120 Zeichen; lange Ausdrücke, Methodenaufrufe mit
   mehreren Parametern, Bedingungen oder verkettete Aufrufe (LINQ, RxJS)
   werden auf mehrere Zeilen umgebrochen.
-- Grundsätzlich keine Kommentare; Ausnahme nur bei absoluter Notwendigkeit
-  (z. B. nicht ersichtlicher Zweck einer Methode) — rein beschreibende
-  Kommentare sind nicht erlaubt. Ausdrücklich erlaubt sind darüber hinaus:
-  System-Kommentare (z. B. automatisch beim Erstellen eines Projekts erzeugte),
-  Assertion-Rationale-Kommentare in Tests und XML-Dokumentationskommentare für
-  Methoden. Ausdrücklich verboten ist es, in Kommentaren auf das Wiki zu verweisen.
+- Grundsätzlich keine Kommentare; erlaubt (keine Pflicht) nur bei absoluter
+  Notwendigkeit (z. B. nicht ersichtlicher Zweck einer Methode), als
+  System-Kommentar (z. B. automatisch beim Erstellen eines Projekts erzeugt)
+  oder als Assertion-Rationale-Kommentar in Tests. Rein beschreibende
+  Kommentare und Verweise auf das Wiki sind verboten. Ausnahmslos
+  **verpflichtend**: XML-Dokumentationskommentar mit `<summary>` an jeder
+  Swagger-sichtbaren Endpoint-Methode; XML-Dokumentationskommentar mit
+  `<summary>`, `<param>` und `<returns>` an jeder Methode von `IRepository<T>`;
+  die drei Struktur-Kommentare `// arrange`, `// act`, `// assert` vor dem
+  jeweiligen Abschnitt in jedem Test, zusätzlich zu Assertion-Rationale-Kommentaren.
 - Backend: `PascalCase` für Typen/Methoden/Properties, `_camelCase` für private
   Felder; Namensschemata `{Aktion}{Entität}Command`, `{Command}Handler`,
   `{Entität}Response`, `{Entität}ResponseBuilder`, `{Entität}Endpoints`.

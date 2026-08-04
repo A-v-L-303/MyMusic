@@ -36,15 +36,10 @@ builder.Services
 
         options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
 
-        // Ohne dies mappt ASP.NET Core den "sub"-Claim standardmäßig auf
-        // ClaimTypes.NameIdentifier - der ICurrentUserService liest aber den rohen
-        // "sub"-Claim (Sicherheitskonzept).
         options.MapInboundClaims = false;
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            // Keycloak nimmt ohne eigenen Audience-Mapper standardmäßig "account" als
-            // Audience in jedes Access Token auf - siehe ADR 0004.
             ValidAudience = "account"
         };
     });
