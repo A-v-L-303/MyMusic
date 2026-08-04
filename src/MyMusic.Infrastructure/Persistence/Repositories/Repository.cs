@@ -5,7 +5,7 @@ public sealed class Repository<TEntity>(MyMusicDbContext context) : IRepository<
 {
     private readonly DbSet<TEntity> _dbSet = context.Set<TEntity>();
 
-    public async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         return await _dbSet.FindAsync([id], cancellationToken);
     }
