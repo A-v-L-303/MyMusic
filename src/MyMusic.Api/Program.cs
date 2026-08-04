@@ -22,6 +22,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+builder.Services.AddDbContext<MyMusicDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("mymusicdb")));
+
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
 builder.Services.AddApplication();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -59,5 +64,7 @@ app.UseAuthorization();
 app.MapDefaultEndpoints();
 
 app.MapMeEndpoints();
+
+app.MapGenreEndpoints();
 
 app.Run();

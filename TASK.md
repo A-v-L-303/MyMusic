@@ -1,8 +1,8 @@
 # Offene Aufgaben
 
-Stand: 2026-08-04 (nach Abschluss von Block 0a, 0b und 0d; User Stories
-Genre ergänzt)
-Branch: `main`
+Stand: 2026-08-04 (nach Abschluss von Block 0a, 0b, 0d und dem
+Genre-Backend aus Block 2)
+Branch: `block-2-genre`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -23,7 +23,9 @@ Feature-Roadmap und aktuellem Repository-Stand.
 Block 0a, 0b und 0d sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
 - Angular-Workspace (Block 0c).
-- CRUD-Slices für Genre, Country, Label, Artist, Record und Tracks.
+- CRUD-Slices für Country, Label, Artist, Record und Tracks (Genre-Backend
+  erledigt, siehe Abschnitt 2; Angular-Feature `genres/` zurückgestellt bis
+  Block 0c).
 - Zustandsbewertung nach Goldmine-Standard.
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
 - Discogs-Integration, Dashboard und Volltext-Suche.
@@ -200,7 +202,9 @@ Abnahmekriterium:
 
 ## 2. Slice: Genre
 
-Status: offen
+Status: **Backend abgeschlossen** (2026-08-04); Angular-Feature `genres/`
+zurückgestellt bis Block 0c (Angular-Workspace) umgesetzt ist — siehe Klärung
+im Arbeits-Prompt `docs/prompts/2026-08-04-block-2-genre.md`.
 Priorität: hoch, erster fachlicher Durchstich
 
 Ziel:
@@ -212,24 +216,52 @@ Voraussetzung erledigt:
 
 - User Stories und Akzeptanzkriterien liegen vor, siehe
   `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-genre.md`
-  (2026-07-29).
+  (2026-07-29, ergänzt 2026-08-04).
 
-Aufgaben:
+Umgesetzt (Backend):
 
-- Domain-Entität `Genre` nach den Domain-Regeln.
-- Commands (Create, Update, Delete), Queries (GetAll, GetById), Validatoren,
-  Response-DTO und ResponseBuilder gemäß Feature-Checkliste.
-- Minimal-API-Endpoints (`GenreEndpoints`) mit `.RequireAuthorization()`.
-- Unit Tests: Handler (inkl. Mandantentrennung), Validierung, ResponseBuilder,
-  Filter nach Name.
-- Angular-Feature `genres/`: Tabellenansicht, Filterung nach Name,
-  Add/Edit als Modal.
+- Domain-Entität `Genre` (`Domain/DomainModels/Stammdaten/Genre/`) nach den
+  Domain-Regeln; `IRepository<T>` um `GetPagedAsync(...)` erweitert
+  (Filter-Expression, OrderBy-Delegate, page/pageSize, vollständig
+  datenbankseitig) und in `Repository<T>` implementiert.
+- Commands (Create, Update, Delete), Queries (GetById, GetPaged),
+  Validatoren, Response-DTOs (`GenreResponse`, `GenreListResponse`) und
+  `GenreResponseBuilder` unter `Application/Features/Stammdaten/Genre/`.
+- Minimal-API-Endpoints (`GenreEndpoints`, `/api/genres`) mit
+  `.RequireAuthorization()`; `MyMusic.Api/Program.cs` erstmals mit
+  `MyMusicDbContext`- und `IRepository<T>`-DI-Verdrahtung (in 0b bewusst
+  zurückgestellt, siehe dortige Notiz).
+- Erste EF-Migration `CreateGenreTable` (legt ausschließlich die
+  `genre`-Tabelle an, passend zu `tabellenschema.md`).
+- Unit Tests: Domain (`GenreTests`), Application (Handler inkl.
+  Mandantentrennung über kompilierte Filter-Expressions, Validatoren,
+  `GenreResponseBuilder`) — 42 neue Tests, alle grün.
+- Integrationstest `GenreEndpointsTests` (voller CRUD-Fluss, Paginierung,
+  Filter, Sortierung, Mandantentrennung mit zwei Testbenutzern) nach Muster
+  `MeEndpointTests`; Keycloak-Test-Client-Logik nach
+  `TestSupport/KeycloakTestClient.cs` extrahiert. **Hinweis**: In der
+  Umsetzungssitzung schlug der Testlauf mit einem Aspire-DCP-Fehler
+  (`Service ... should have valid address at this point`) fehl — reproduzierbar
+  auch beim unveränderten, bereits vorher funktionierenden `MeEndpointTests`,
+  also eine lokale Docker/Aspire-Umgebungseinschränkung dieser Sitzung, keine
+  Regression. Test ist vor dem nächsten produktiven Einsatz auf einer
+  funktionsfähigen lokalen Aspire-Umgebung nachzuvollziehen.
+- ADR `docs/adr/0006-domain-entity-materialisierung-und-namenskollision.md`.
+
+Bewusst nicht Teil dieses Standes:
+
+- Angular-Feature `genres/` (Tabellenansicht, Filterung, Add/Edit als
+  Modal) — braucht Block 0c.
+- Referenzprüfung gegen `record_track` in `DeleteGenreCommandHandler` (siehe
+  Slice 6 unten) — die Tabelle existiert erst dort.
 
 Abnahmekriterium:
 
 - Genres lassen sich anlegen, anzeigen, filtern, bearbeiten und löschen;
   fremde Benutzerdaten sind nicht sichtbar; Tests decken Happy Path,
-  Validierung und unbekannte IDs ab.
+  Validierung und unbekannte IDs ab. **Backend erfüllt**; die UI-seitigen
+  Teile des Kriteriums (Tabellenansicht, Modal) folgen mit dem
+  Angular-Feature nach Block 0c.
 
 ## 3. Slice: Country
 
@@ -288,6 +320,13 @@ Aufgaben:
 - Track-CRUD in der Detailansicht (Unteransicht, kein eigener Reiter).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell-Erweiterung,
   Wiki `domain/zustandsbewertung.md`).
+- **Pflicht (Nachtrag aus Block 2)**: `DeleteGenreCommandHandler`
+  (`Application/Features/Stammdaten/Genre/Commands/Delete/`) um die in
+  US-G5 beschriebene Referenzprüfung gegen `record_track` ergänzen (HTTP 409,
+  wenn noch mindestens ein Track das Genre referenziert). Im Genre-Slice
+  bewusst ausgelassen, da `record_track` dort noch nicht existierte — siehe
+  `docs/prompts/2026-08-04-block-2-genre.md` und Wiki
+  `user-stories/user-stories-genre.md` (US-G5).
 
 Abnahmekriterium:
 

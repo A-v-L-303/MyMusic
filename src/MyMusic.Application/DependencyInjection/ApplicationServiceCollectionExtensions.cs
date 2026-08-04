@@ -10,6 +10,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<CurrentUserResponseBuilder>();
 
+        services.AddScoped<GenreResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

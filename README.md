@@ -160,8 +160,8 @@ ist das durch `tests/MyMusic.IntegrationTests/DatabasePermissionTests.cs`.
 `MyMusic.Application` enthält seit Block 0b ein eigenes CQRS-Grundgerüst
 (`IMediator`, `ICommand<T>`/`IQuery<T>`, FluentValidation-Decorator), einen
 `ExceptionManager` mit zentralem `GlobalExceptionHandler` in `MyMusic.Api` sowie
-ein generisches `IRepository<T>`/`Repository<T>` (noch ohne Entität, folgt mit
-dem Genre-Slice). Als einziger geschützter Endpunkt existiert `GET /api/me`
+ein generisches `IRepository<T>`/`Repository<T>` (erste konkrete Entität und
+DI-Verdrahtung in `MyMusic.Api` seit dem Genre-Slice, Block 2). Als einziger geschützter Endpunkt existiert `GET /api/me`
 (`.RequireAuthorization()`), der ausschließlich die `userId` aus dem
 `sub`-Claim des Zugriffstokens zurückgibt — Nachweis der Kette
 Keycloak → JWT → Mediator.
@@ -181,6 +181,26 @@ Invoke-RestMethod -Uri "http://localhost:<api-port>/api/me" -Headers @{ Authoriz
 
 Ohne Token liefert `/api/me` HTTP 401; mit gültigem Token HTTP 200 mit der
 eigenen `userId`. Ports stehen in der Aspire-Dashboard-Ausgabe.
+
+### Genre-Slice (Block 2)
+
+Erster fachlicher Durchstich durch alle vier Layer inklusive Datenbank.
+`GenreEndpoints` (`/api/genres`, `.RequireAuthorization()`) bietet CRUD plus
+paginierte, nach Name filterbare und sortierte Liste:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/genres?page=&pageSize=&name=` | Paginierte Liste, sortiert nach Name |
+| GET | `/api/genres/{id}` | Einzelnes Genre |
+| POST | `/api/genres` | Genre anlegen (`{ "name": "..." }`) |
+| PUT | `/api/genres/{id}` | Genre umbenennen |
+| DELETE | `/api/genres/{id}` | Genre löschen |
+
+Die `userId` kommt in jedem Fall aus dem `sub`-Claim des Tokens (Token-Bezug
+siehe oben) — nie aus dem Request. Ein doppelter Name innerhalb der eigenen
+Sammlung liefert HTTP 409, eine fremde oder unbekannte Id HTTP 404 (nicht
+403). Das Angular-Feature `genres/` folgt erst mit Block 0c
+(Angular-Workspace), siehe `TASK.md`.
 
 ### Prüfen
 
