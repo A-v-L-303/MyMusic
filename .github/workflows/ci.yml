@@ -51,6 +51,13 @@ jobs:
       - name: Unit Tests - Api
         run: dotnet test tests/MyMusic.Api.Tests/MyMusic.Api.Tests.csproj --no-build
 
-      # MyMusic.IntegrationTests laeuft hier bewusst nicht: der Test startet den vollen
-      # Aspire-AppHost inkl. Docker-Container und braucht lokale User-Secrets. Siehe
-      # docs/adr/0003-ci-gate-codequalitaet.md.
+      - name: HTTPS-Entwicklungszertifikat erzeugen
+        run: dotnet dev-certs https
+
+      - name: Integrationstests (Aspire-AppHost, Docker)
+        run: dotnet test tests/MyMusic.IntegrationTests/MyMusic.IntegrationTests.csproj --no-build
+        timeout-minutes: 10
+        env:
+          Parameters__postgres-password: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          Parameters__api-database-password: ${{ secrets.CI_API_DATABASE_PASSWORD }}
+          Parameters__keycloak-admin-password: ${{ secrets.CI_KEYCLOAK_ADMIN_PASSWORD }}
