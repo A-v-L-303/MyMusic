@@ -202,6 +202,21 @@ Sammlung liefert HTTP 409, eine fremde oder unbekannte Id HTTP 404 (nicht
 403). Das Angular-Feature `genres/` folgt erst mit Block 0c
 (Angular-Workspace), siehe `TASK.md`.
 
+### Country-Slice (Block 3)
+
+Reine, read-only Referenztabelle ohne CRUD und ohne Mandantenbezug —
+Herkunftsländer für die künftige Label-Pflege. `CountryEndpoints`
+(`.RequireAuthorization()`) bietet nur einen Endpoint:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/countries` | Vollständige, alphabetisch sortierte Länderliste (238 Einträge) |
+
+Anders als bei Genre gibt es kein `userId` in der Query (keine `user_id`-Spalte,
+siehe `country`-Tabelle) und kein `Update()` auf der Entität (Länder werden nie
+mutiert). Die Referenzdaten werden einmalig per Migration geseedet. Kein
+Angular-Feature vorgesehen (keine CRUD-Maske, siehe `TASK.md`).
+
 ### Prüfen
 
 ```powershell

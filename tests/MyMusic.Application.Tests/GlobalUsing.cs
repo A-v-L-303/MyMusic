@@ -8,6 +8,9 @@ global using MyMusic.Application.Common.Exceptions;
 global using MyMusic.Application.Common.Exceptions.ExceptionManager;
 global using MyMusic.Application.Common.Services;
 global using MyMusic.Application.DependencyInjection;
+global using MyMusic.Application.Features.Stammdaten.Country.Queries.GetAll;
+global using MyMusic.Application.Features.Stammdaten.Country.ResponseDtos;
+global using MyMusic.Application.Features.Stammdaten.Country.ResponseDtos.Builder;
 global using MyMusic.Application.Features.Stammdaten.Genre.Commands.Create;
 global using MyMusic.Application.Features.Stammdaten.Genre.Commands.Delete;
 global using MyMusic.Application.Features.Stammdaten.Genre.Commands.Update;
@@ -21,5 +24,6 @@ global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos.Builde
 global using MyMusic.Application.Tests.Common.CQRS.TestDoubles;
 global using MyMusic.Application.Tests.Common.CQRS.Validation.TestDoubles;
 global using MyMusic.Domain.Contracts.Repository;
+global using CountryEntity = MyMusic.Domain.DomainModels.Stammdaten.Country.Country;
 global using GenreEntity = MyMusic.Domain.DomainModels.Stammdaten.Genre.Genre;
 global using ValidationException = MyMusic.Application.Common.Exceptions.ValidationException;
