@@ -12,6 +12,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<GenreResponseBuilder>();
 
+        services.AddScoped<CountryResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

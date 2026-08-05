@@ -1,8 +1,8 @@
 # Offene Aufgaben
 
-Stand: 2026-08-04 (nach Abschluss von Block 0a, 0b, 0d und dem
-Genre-Backend aus Block 2)
-Branch: `block-2-genre`
+Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, dem Genre-Backend aus
+Block 2 und dem Country-Backend aus Block 3)
+Branch: `block-3-country`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -290,16 +290,62 @@ dem Merge. Details: ADR 0003, Nachtrag 2026-08-05.
 
 ## 3. Slice: Country
 
-Status: offen
+Status: **Backend abgeschlossen** (2026-08-05); Angular-Feature entfällt für
+Country vollständig — es gibt keine CRUD-Maske, siehe Klärung im
+Arbeits-Prompt `docs/prompts/2026-08-05-block-3-country.md`.
 Priorität: mittel, vor Label benötigt
 
 Ziel:
 
 - Herkunftsländer als Stammdaten für Labels (Wiki `domain/country.md`).
 
+Voraussetzung erledigt:
+
+- User Story und Akzeptanzkriterium liegen vor, siehe
+  `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-country.md`
+  (2026-08-05).
+
+Umgesetzt (Backend):
+
+- Domain-Entität `Country` (`Domain/DomainModels/Stammdaten/Country/`) nach
+  den Domain-Regeln — `internal`-Konstruktor, `Create(...)`-Factory, **kein**
+  `Update()` (Länder werden nie mutiert), keine Regex-/Zeichensatzprüfung
+  (die Referenzliste enthält bewusst nicht-ISO-konforme Werte wie `YU`,
+  `---`).
+- Erster Slice mit dem bislang ungenutzten `GetAll`-Muster:
+  `GetAllCountriesQuery` (parameterlos, kein `userId` — Ausnahme von der
+  sonst geltenden Regel, siehe Nachtrag unten), `GetAllCountriesQueryHandler`,
+  `CountryResponse`, `CountryResponseBuilder` unter
+  `Application/Features/Stammdaten/Country/`. Sortierung alphabetisch nach
+  Landesname (`StringComparer.InvariantCulture`).
+- Minimal-API-Endpoint (`CountryEndpoints`, `GET /api/countries`) mit
+  `.RequireAuthorization()`, ohne `ICurrentUserService` (kein Mandantenbezug).
+- EF-Migration `CreateCountryTable` (legt die `country`-Tabelle an und
+  seedet einmalig alle 238 Einträge aus
+  `../../02 Wiki/MyMusic Wiki/wiki/domain/country-referenzdaten.md` per
+  `InsertData`).
+- Unit Tests: Domain (`CountryTests`, 7 Tests), Application
+  (`GetAllCountriesQueryHandlerTests`, `CountryResponseBuilderTests`, 4
+  Tests) — alle grün.
+- Integrationstest `CountryEndpointsTests` (401 ohne Token, 200 mit Token,
+  Anzahl == 238, alphabetische Sortierung, Stichprobe „Deutschland"/„DE")
+  nach Muster `GenreEndpointsTests`; grün.
+- Wiki-Nachtrag: `cqrs-framework.md` um die Ausnahme „`GetAll` ohne `userId`
+  bei Referenztabellen ohne `user_id`" ergänzt (Widerspruch zwischen Zeile 32
+  und dem `GetPaged`-Abschnitt aufgelöst).
+
+Bewusst nicht Teil dieses Standes:
+
+- Kein Angular-Feature — Country hat keinen eigenen Reiter und keine
+  CRUD-Maske (Designentscheidung „Countries read-only", siehe
+  `api-endpunkte.md`). Die Länderliste wird erst mit Block 4 (Label) und
+  Block 0c (Angular) im echten Verwendungskontext (Dropdown) sichtbar.
+
 Abnahmekriterium:
 
-- Länder stehen bei der Label-Pflege zur Auswahl.
+- Länder stehen bei der Label-Pflege zur Auswahl. **Backend erfüllt**
+  (`GET /api/countries` liefert die vollständige, sortierte Liste); die
+  UI-seitige Anbindung im Label-Formular folgt mit Block 4 und Block 0c.
 
 ## 4. Slice: Label
 

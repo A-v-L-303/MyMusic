@@ -67,4 +67,6 @@ app.MapMeEndpoints();
 
 app.MapGenreEndpoints();
 
+app.MapCountryEndpoints();
+
 app.Run();
