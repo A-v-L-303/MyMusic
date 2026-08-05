@@ -7,7 +7,12 @@ public sealed class Repository<TEntity>(MyMusicDbContext context) : IRepository<
 
     public async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
-        return await _dbSet.FindAsync([id], cancellationToken);
+        var entity = await _dbSet.FindAsync([id], cancellationToken);
+
+        if (entity is not null)
+            context.Entry(entity).State = EntityState.Detached;
+
+        return entity;
     }
 
     public async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken)
