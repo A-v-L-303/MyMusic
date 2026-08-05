@@ -3,26 +3,6 @@ namespace MyMusic.Infrastructure.Tests.Persistence.Repositories;
 public class RepositoryTests
 {
     [Fact]
-    public async Task GetByIdAsync_DelegiertAnDbSetFindAsync()
-    {
-        // arrange
-        var entity = new TestEntity { Id = 1 };
-
-        var dbSet = Substitute.For<DbSet<TestEntity>>();
-
-        dbSet.FindAsync(Arg.Any<object[]>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromResult<TestEntity?>(entity));
-
-        var repository = new Repository<TestEntity>(CreateContext(dbSet));
-
-        // act
-        var result = await repository.GetByIdAsync(entity.Id, CancellationToken.None);
-
-        // assert
-        Assert.Same(entity, result);
-    }
-
-    [Fact]
     public async Task GetByIdAsync_GibtNullZurueckWennKeineEntitaetGefundenWird()
     {
         // arrange

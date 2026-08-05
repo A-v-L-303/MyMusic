@@ -263,6 +263,31 @@ Abnahmekriterium:
   Teile des Kriteriums (Tabellenansicht, Modal) folgen mit dem
   Angular-Feature nach Block 0c.
 
+Nachtrag (2026-08-05): `GenreEndpointsTests` lief seit der Umsetzung nie
+erfolgreich durch (lokaler Aspire-DCP-Fehler, siehe unten „CI-Gate für
+Integrationstests"). Beim ersten tatsächlichen Lauf zeigte sich ein echter
+Bug in `UpdateGenreCommandHandler`: `Repository<T>.GetByIdAsync` liefert über
+`DbSet.FindAsync` eine getrackte Entität zurück; da `Genre.Update(...)` laut
+Domain-Regel immer eine neue Instanz erzeugt, kollidierte
+`Repository<T>.Update(...)` mit dem EF-Core-Change-Tracker (zwei Instanzen
+gleicher Id). Fix: `GetByIdAsync` löst die Entität nach dem Laden explizit
+vom Change-Tracker (`context.Entry(entity).State = EntityState.Detached`).
+Bekannte Lücke: Der Erfolgsfall von `GetByIdAsync` (Entität gefunden) ist
+dadurch per Unit Test mit reinem NSubstitute-Mock nicht mehr absicherbar —
+`EntityEntry<T>` hat nur einen internen Konstruktor, NSubstitute kann keinen
+Proxy dafür erzeugen (empirisch geprüft, dieselbe Einschränkungsklasse wie
+bei `GetAllAsync`). Verifiziert wird der Erfolgsfall stattdessen über
+`GenreEndpointsTests` gegen echtes PostgreSQL.
+
+## CI-Gate für Integrationstests (2026-08-05)
+
+`MyMusic.IntegrationTests` lief bislang nur lokal und blieb über mehrere
+Sitzungen hinweg ungeprüft (Aspire-DCP-Fehler, Windows/Git-Bash-spezifisch —
+auf dem Linux-CI-Runner nicht reproduzierbar). `.github/workflows/ci.yml`
+führt den Integrationstest jetzt bei jedem Push/PR auf `main` mit aus; eine
+Branch-Protection-Regel auf `main` verlangt einen erfolgreichen CI-Lauf vor
+dem Merge. Details: ADR 0003, Nachtrag 2026-08-05.
+
 ## 3. Slice: Country
 
 Status: offen
