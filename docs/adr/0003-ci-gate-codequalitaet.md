@@ -83,3 +83,31 @@ Test des generischen `Repository<T>` gegen einen gemockten `DbContext`/
 `dotnet test`-Schritt ergänzt — die ursprüngliche Entscheidung ("drei
 Unit-Test-Projekte") ist damit um ein viertes, layer-eigenes Testprojekt
 erweitert, ohne die grundsätzliche Gate-Architektur zu ändern.
+
+## Nachtrag (2026-08-05, Block 2)
+
+Anlass: Beim Genre-Slice (Block 2) blieb `MyMusic.IntegrationTests` über
+mehrere Sitzungen hinweg ungeprüft, weil der Testlauf lokal an einem
+umgebungsbedingten Aspire-DCP-Fehler scheiterte (siehe
+`docs/prompts/2026-08-04-block-2-genre.md`). Der eigentliche Testkörper
+wurde dadurch nie erreicht — ein Bug im `UpdateGenreCommandHandler`
+(EF-Core-Tracking-Konflikt bei `Repository<T>.Update`, da die Domain-Methode
+`Update(...)` laut Domain-Regel immer eine neue Instanz zurückgibt) blieb
+dadurch unentdeckt. Die beiden am Ende von ADR 0003 offen gelassenen Punkte
+werden damit geschlossen:
+
+- `MyMusic.IntegrationTests` läuft jetzt ebenfalls in der CI (Ubuntu-Runner,
+  Docker ist dort vorinstalliert und läuft bereits als Dienst — kein
+  Docker-in-Docker nötig). Die drei als Aspire-Parameter benötigten Secrets
+  (`postgres-password`, `api-database-password`, `keycloak-admin-password`)
+  werden über GitHub-Actions-Secrets (`CI_POSTGRES_PASSWORD`,
+  `CI_API_DATABASE_PASSWORD`, `CI_KEYCLOAK_ADMIN_PASSWORD`) als
+  Umgebungsvariablen (`Parameters__<name>`) injiziert.
+- Eine Branch-Protection-Rule auf `main` verlangt jetzt einen erfolgreichen
+  CI-Lauf vor dem Merge — ein rotes oder fehlendes CI-Ergebnis blockiert den
+  Merge damit tatsächlich, nicht nur meldend wie zuvor.
+
+Die ursprüngliche Einschätzung, das sei "ein eigener, deutlich größerer
+Schritt", hat sich in der Praxis nicht bestätigt: Der zuvor beobachtete
+Fehler war an eine lokale Windows/Git-Bash-Eigenheit gebunden, die auf einem
+Linux-CI-Runner mit nativem Docker nicht auftritt.
