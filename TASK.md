@@ -274,13 +274,12 @@ Umgesetzt (Backend):
 - Integrationstest `GenreEndpointsTests` (voller CRUD-Fluss, Paginierung,
   Filter, Sortierung, Mandantentrennung mit zwei Testbenutzern) nach Muster
   `MeEndpointTests`; Keycloak-Test-Client-Logik nach
-  `TestSupport/KeycloakTestClient.cs` extrahiert. **Hinweis**: In der
-  Umsetzungssitzung schlug der Testlauf mit einem Aspire-DCP-Fehler
-  (`Service ... should have valid address at this point`) fehl — reproduzierbar
-  auch beim unveränderten, bereits vorher funktionierenden `MeEndpointTests`,
-  also eine lokale Docker/Aspire-Umgebungseinschränkung dieser Sitzung, keine
-  Regression. Test ist vor dem nächsten produktiven Einsatz auf einer
-  funktionsfähigen lokalen Aspire-Umgebung nachzuvollziehen.
+  `TestSupport/KeycloakTestClient.cs` extrahiert. **Hinweis (korrigiert, siehe
+  CLAUDE.md §11)**: In der Umsetzungssitzung schlug der Testlauf mit einem
+  Fehler (`Service ... should have valid address at this point`) fehl —
+  reproduzierbar auch beim unveränderten, bereits vorher funktionierenden
+  `MeEndpointTests`. Es handelte sich **nicht** um eine Aspire/DCP-
+  Einschränkung, sondern um die Ausführung über Git Bash statt PowerShell.
 - ADR `docs/adr/0006-domain-entity-materialisierung-und-namenskollision.md`.
 
 Bewusst nicht Teil dieses Standes:
@@ -299,8 +298,9 @@ Abnahmekriterium:
   Angular-Feature nach Block 0c.
 
 Nachtrag (2026-08-05): `GenreEndpointsTests` lief seit der Umsetzung nie
-erfolgreich durch (lokaler Aspire-DCP-Fehler, siehe unten „CI-Gate für
-Integrationstests"). Beim ersten tatsächlichen Lauf zeigte sich ein echter
+erfolgreich durch — Ursache war die Ausführung über Git Bash statt PowerShell,
+keine Aspire/DCP-Einschränkung (siehe unten „CI-Gate für Integrationstests" und
+CLAUDE.md §11). Beim ersten tatsächlichen Lauf mit PowerShell zeigte sich ein echter
 Bug in `UpdateGenreCommandHandler`: `Repository<T>.GetByIdAsync` liefert über
 `DbSet.FindAsync` eine getrackte Entität zurück; da `Genre.Update(...)` laut
 Domain-Regel immer eine neue Instanz erzeugt, kollidierte
@@ -317,8 +317,10 @@ bei `GetAllAsync`). Verifiziert wird der Erfolgsfall stattdessen über
 ## CI-Gate für Integrationstests (2026-08-05)
 
 `MyMusic.IntegrationTests` lief bislang nur lokal und blieb über mehrere
-Sitzungen hinweg ungeprüft (Aspire-DCP-Fehler, Windows/Git-Bash-spezifisch —
-auf dem Linux-CI-Runner nicht reproduzierbar). `.github/workflows/ci.yml`
+Sitzungen hinweg ungeprüft — Ursache war die Ausführung über Git Bash statt
+PowerShell (siehe CLAUDE.md §11), keine Aspire/DCP-Einschränkung; auf dem
+Linux-CI-Runner tritt der Fehler ohnehin nicht auf, da dort kein Git Bash zum
+Einsatz kommt. `.github/workflows/ci.yml`
 führt den Integrationstest jetzt bei jedem Push/PR auf `main` mit aus; eine
 Branch-Protection-Regel auf `main` verlangt einen erfolgreichen CI-Lauf vor
 dem Merge. Details: ADR 0003, Nachtrag 2026-08-05.

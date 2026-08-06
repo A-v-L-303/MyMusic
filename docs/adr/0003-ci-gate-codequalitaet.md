@@ -87,9 +87,10 @@ erweitert, ohne die grundsätzliche Gate-Architektur zu ändern.
 ## Nachtrag (2026-08-05, Block 2)
 
 Anlass: Beim Genre-Slice (Block 2) blieb `MyMusic.IntegrationTests` über
-mehrere Sitzungen hinweg ungeprüft, weil der Testlauf lokal an einem
-umgebungsbedingten Aspire-DCP-Fehler scheiterte (siehe
-`docs/prompts/2026-08-04-block-2-genre.md`). Der eigentliche Testkörper
+mehrere Sitzungen hinweg ungeprüft, weil der Testlauf lokal fehlschlug. Dies
+wurde fälschlich als umgebungsbedingter Aspire-DCP-Fehler dokumentiert;
+tatsächliche Ursache war die Ausführung über Git Bash statt PowerShell (siehe
+CLAUDE.md §11, korrigiert in `TASK.md`). Der eigentliche Testkörper
 wurde dadurch nie erreicht — ein Bug im `UpdateGenreCommandHandler`
 (EF-Core-Tracking-Konflikt bei `Repository<T>.Update`, da die Domain-Methode
 `Update(...)` laut Domain-Regel immer eine neue Instanz zurückgibt) blieb
