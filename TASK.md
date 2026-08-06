@@ -1,8 +1,8 @@
 # Offene Aufgaben
 
-Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, dem Genre-Backend aus
+Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2 und dem Country-Backend aus Block 3)
-Branch: `block-3-country`
+Branch: `block-0e-swagger-openapi`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -20,7 +20,7 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b und 0d sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
+Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Country, Label, Artist, Record und Tracks (Genre-Backend
@@ -173,6 +173,41 @@ Bewusst nicht Teil von 0d:
 - Kein StyleCop/Roslynator; projektspezifische Regeln (Namensschemata,
   Feature-Kapselung, Kommentar-Ausnahmen) bleiben Aufgabe des
   `reviewer`-Subagenten.
+
+### 0e. Swagger/OpenAPI-Dokumentation
+
+Status: **abgeschlossen** (2026-08-05)
+Arbeits-Prompt: `docs/prompts/2026-08-05-block-0e-swagger-openapi.md`
+
+Nachgeholt: Swagger/OpenAPI ist seit Projektbeginn als Tech-Stack-Entscheidung
+dokumentiert (CLAUDE.md §3/§5.3/§9, Wiki `tech-stack/swagger.md`), war aber in
+keinem der bisherigen Blöcke als Aufgabe erfasst und blieb trotz drei bereits
+umgesetzter Endpunkte (`/api/me`, `/api/genres`, `/api/countries`) ungenutzt.
+
+Umgesetzt:
+
+- Paket `Swashbuckle.AspNetCore` in `MyMusic.Api.csproj`; `GenerateDocumentationFile`
+  aktiviert, damit die vorhandenen `<summary>`-Kommentare der Endpoint-Handler
+  (Genre, Country, Me) exportiert und von Swagger eingelesen werden.
+- `Program.cs`: `AddEndpointsApiExplorer()`, `AddSwaggerGen(...)` mit
+  Bearer-Security-Definition (JWT aus Keycloak, über den „Authorize"-Button in
+  der UI setzbar, damit geschützte Endpunkte über die UI testbar sind) und
+  `IncludeXmlComments(...)`.
+- `UseSwagger()`/`UseSwaggerUI()` ausschließlich innerhalb
+  `if (app.Environment.IsDevelopment())` — siehe „Bewusst nicht Teil" unten.
+- ADR `docs/adr/0007-swagger-openapi-nur-development.md`.
+
+Nachtrag (2026-08-05): Das Aspire-Dashboard zeigte für die `api`-Ressource nur
+den Basis-Endpoint, keinen direkten Link auf `/swagger`. `AppHost.cs` um
+`.WithUrlForEndpoint("https", url => { url.DisplayText = "Swagger UI"; url.Url
++= "/swagger"; })` ergänzt, damit im Dashboard ein direkter „Swagger
+UI"-Shortcut neben der `api`-Ressource erscheint.
+
+Bewusst nicht Teil von 0e:
+
+- Freischaltung der Swagger-UI in Production für die Admin-Rolle (CLAUDE.md
+  §5.3) — das Rollenkonzept (`User`/`Admin`) existiert im Code noch nicht
+  (siehe Abschnitt 7). Wird dort nachgezogen, sobald die Admin-Rolle entsteht.
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
@@ -426,6 +461,9 @@ Aufgaben (noch offen):
   HTTP-Interceptor.
 - Rollen (`User`, `Admin`), Ownership-Prüfung in Handlern (404 statt 403) —
   setzt Entitäten voraus, entsteht mit dem jeweiligen Slice.
+- Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
+  zurückgestellt aus Block 0e, siehe
+  `docs/adr/0007-swagger-openapi-nur-development.md`).
 - Rate Limiting (100 req/min pro Benutzer), CORS-Policy per Environment, CSP.
 - Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.

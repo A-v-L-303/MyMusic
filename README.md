@@ -217,6 +217,22 @@ siehe `country`-Tabelle) und kein `Update()` auf der Entität (Länder werden ni
 mutiert). Die Referenzdaten werden einmalig per Migration geseedet. Kein
 Angular-Feature vorgesehen (keine CRUD-Maske, siehe `TASK.md`).
 
+### Swagger/OpenAPI (Block 0e)
+
+Im Development-Modus ist unter `http://localhost:<api-port>/swagger` eine
+Swagger-UI erreichbar, die alle Minimal-API-Endpunkte (`/api/me`,
+`/api/genres`, `/api/countries`) samt ihrer `<summary>`-Beschreibungen
+auflistet. Über den Button "Authorize" lässt sich ein Access Token (siehe
+oben, Token-Bezug) als Bearer-Token hinterlegen, danach sind auch die
+geschützten Endpunkte direkt aus der UI heraus aufrufbar. Im
+Aspire-Dashboard erscheint neben der `api`-Ressource ein direkter
+„Swagger UI"-Link, der genau dorthin führt.
+
+In Production ist die Swagger-UI aktuell **nicht** erreichbar — die laut
+CLAUDE.md §5.3 vorgesehene Freischaltung für die Admin-Rolle setzt das noch
+nicht existierende Rollenkonzept voraus und folgt mit Block 7 (siehe `TASK.md`
+und `docs/adr/0007-swagger-openapi-nur-development.md`).
+
 ### Prüfen
 
 ```powershell
