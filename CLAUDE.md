@@ -406,9 +406,18 @@ ng lint
 git diff --check
 ```
 
-Entwicklungsumgebung ist Windows mit PowerShell. Diese Befehle sind keine
-pauschale Freigabe — führe nur Befehle aus, die zum vorhandenen Repository passen
-und keine nicht freigegebenen Änderungen erzeugen.
+Entwicklungsumgebung ist Windows mit PowerShell. **Jeder Befehl in diesem
+Repository — Git, `dotnet`, `gh`, Aspire/AppHost, ohne Ausnahme — wird
+ausschließlich über PowerShell ausgeführt, niemals über Bash/Git Bash.** Das
+gilt auch dann, wenn ein Befehl über Bash scheinbar fehlerfrei durchläuft: Ein
+über Git Bash gestarteter Aspire-AppHost blieb bereits hängen bzw. lieferte
+`AddressInUseException` — dies wurde fälschlich als „Aspire/DCP-Einschränkung"
+dokumentiert (siehe Korrektur in `docs/prompts/2026-08-05-block-0e-swagger-openapi.md`),
+tatsächliche Ursache war die Ausführung über Git Bash statt PowerShell.
+
+Diese Befehle sind keine pauschale Freigabe — führe nur Befehle aus, die zum
+vorhandenen Repository passen und keine nicht freigegebenen Änderungen
+erzeugen.
 
 Bei Änderungen an Datenbank, Authentifizierung oder API sind zusätzlich passende
 Integrationstests erforderlich.
