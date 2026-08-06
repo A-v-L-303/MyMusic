@@ -17,6 +17,7 @@ var seq = builder.AddSeq("seq")
     .WithDataVolume("mymusic-seq-data");
 
 var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26.5")
+    .WithVolume("mymusic-keycloak-data", "/opt/keycloak/data")
     .WithHttpEndpoint(targetPort: 8080, name: "http")
     .WithHttpEndpoint(targetPort: 9000, name: "management")
     .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
