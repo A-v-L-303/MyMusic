@@ -122,5 +122,5 @@ builder.AddProject<Projects.MyMusic_Api>("api")
 vorab über die installierte `Aspire.Hosting` 13.4.6-Assembly verifiziert (nicht
 geraten); der Build von `MyMusic.AppHost.csproj` kompiliert fehlerfrei. Ein
 Laufzeit-Nachweis, dass der Link im Dashboard tatsächlich erscheint, steht
-weiterhin aus — dieselbe Aspire/DCP-Einschränkung wie oben verhinderte den
-Live-Test.
+weiterhin aus — derselbe Grund wie oben (Git Bash statt PowerShell, keine
+Aspire/DCP-Einschränkung) verhinderte den Live-Test.
