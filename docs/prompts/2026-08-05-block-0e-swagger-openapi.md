@@ -93,9 +93,10 @@ and Requirements for Bearer authentication").
   wurde versucht, aber nicht abgeschlossen: Der AppHost blieb beim Start nach
   „Application host directory is: ..." hängen (kein Fortschritt über mehrere
   Minuten); ein früherer Lauf in derselben Sitzung zeigte zusätzlich
-  `AddressInUseException` beim Binden des Dashboard-Ports. Dieselbe Klasse
-  lokaler Aspire/DCP-Einschränkung wie bereits bei Genre/Country dokumentiert
-  (siehe `TASK.md`), keine durch diesen Block verursachte Regression — Build,
+  `AddressInUseException` beim Binden des Dashboard-Ports. Es handelt sich
+  **nicht** um eine Aspire/DCP-Einschränkung — Ursache war, dass die Befehle in
+  dieser Sitzung über Git Bash statt PowerShell ausgeführt wurden. Keine durch
+  diesen Block verursachte Regression — Build,
   `dotnet format --verify-no-changes`, Zeilenlängen-Check und alle vier
   Unit-Test-Projekte liefen dagegen fehlerfrei. Schritt 4 und 5 der
   Verifikation sind vor dem nächsten produktiven Einsatz auf einer
