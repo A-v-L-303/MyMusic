@@ -4,6 +4,7 @@ global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.OpenApi;
 global using MyMusic.Api;
 global using MyMusic.Api.Endpoints.Stammdaten.Country;
 global using MyMusic.Api.Endpoints.Stammdaten.Genre;

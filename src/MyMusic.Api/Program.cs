@@ -51,6 +51,28 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT-Access-Token aus Keycloak, z. B. \"Bearer eyJhbGci...\""
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = []
+    });
+
+    var xmlFilename = "MyMusic.Api.xml";
+
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+});
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -60,6 +82,13 @@ app.UseSerilogRequestLogging();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+
+    app.UseSwaggerUI();
+}
 
 app.MapDefaultEndpoints();
 
