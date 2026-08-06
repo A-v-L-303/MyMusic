@@ -1,8 +1,8 @@
 # Offene Aufgaben
 
-Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, dem Genre-Backend aus
+Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2 und dem Country-Backend aus Block 3)
-Branch: `block-3-country`
+Branch: `block-0e-swagger-openapi`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -20,7 +20,7 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b und 0d sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
+Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Country, Label, Artist, Record und Tracks (Genre-Backend
@@ -174,6 +174,41 @@ Bewusst nicht Teil von 0d:
   Feature-Kapselung, Kommentar-Ausnahmen) bleiben Aufgabe des
   `reviewer`-Subagenten.
 
+### 0e. Swagger/OpenAPI-Dokumentation
+
+Status: **abgeschlossen** (2026-08-05)
+Arbeits-Prompt: `docs/prompts/2026-08-05-block-0e-swagger-openapi.md`
+
+Nachgeholt: Swagger/OpenAPI ist seit Projektbeginn als Tech-Stack-Entscheidung
+dokumentiert (CLAUDE.md §3/§5.3/§9, Wiki `tech-stack/swagger.md`), war aber in
+keinem der bisherigen Blöcke als Aufgabe erfasst und blieb trotz drei bereits
+umgesetzter Endpunkte (`/api/me`, `/api/genres`, `/api/countries`) ungenutzt.
+
+Umgesetzt:
+
+- Paket `Swashbuckle.AspNetCore` in `MyMusic.Api.csproj`; `GenerateDocumentationFile`
+  aktiviert, damit die vorhandenen `<summary>`-Kommentare der Endpoint-Handler
+  (Genre, Country, Me) exportiert und von Swagger eingelesen werden.
+- `Program.cs`: `AddEndpointsApiExplorer()`, `AddSwaggerGen(...)` mit
+  Bearer-Security-Definition (JWT aus Keycloak, über den „Authorize"-Button in
+  der UI setzbar, damit geschützte Endpunkte über die UI testbar sind) und
+  `IncludeXmlComments(...)`.
+- `UseSwagger()`/`UseSwaggerUI()` ausschließlich innerhalb
+  `if (app.Environment.IsDevelopment())` — siehe „Bewusst nicht Teil" unten.
+- ADR `docs/adr/0007-swagger-openapi-nur-development.md`.
+
+Nachtrag (2026-08-05): Das Aspire-Dashboard zeigte für die `api`-Ressource nur
+den Basis-Endpoint, keinen direkten Link auf `/swagger`. `AppHost.cs` um
+`.WithUrlForEndpoint("https", url => { url.DisplayText = "Swagger UI"; url.Url
++= "/swagger"; })` ergänzt, damit im Dashboard ein direkter „Swagger
+UI"-Shortcut neben der `api`-Ressource erscheint.
+
+Bewusst nicht Teil von 0e:
+
+- Freischaltung der Swagger-UI in Production für die Admin-Rolle (CLAUDE.md
+  §5.3) — das Rollenkonzept (`User`/`Admin`) existiert im Code noch nicht
+  (siehe Abschnitt 7). Wird dort nachgezogen, sobald die Admin-Rolle entsteht.
+
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
 Status: teilweise abgeschlossen (Genre: 2026-07-29; Country, Label, Artist,
@@ -239,13 +274,12 @@ Umgesetzt (Backend):
 - Integrationstest `GenreEndpointsTests` (voller CRUD-Fluss, Paginierung,
   Filter, Sortierung, Mandantentrennung mit zwei Testbenutzern) nach Muster
   `MeEndpointTests`; Keycloak-Test-Client-Logik nach
-  `TestSupport/KeycloakTestClient.cs` extrahiert. **Hinweis**: In der
-  Umsetzungssitzung schlug der Testlauf mit einem Aspire-DCP-Fehler
-  (`Service ... should have valid address at this point`) fehl — reproduzierbar
-  auch beim unveränderten, bereits vorher funktionierenden `MeEndpointTests`,
-  also eine lokale Docker/Aspire-Umgebungseinschränkung dieser Sitzung, keine
-  Regression. Test ist vor dem nächsten produktiven Einsatz auf einer
-  funktionsfähigen lokalen Aspire-Umgebung nachzuvollziehen.
+  `TestSupport/KeycloakTestClient.cs` extrahiert. **Hinweis (korrigiert, siehe
+  CLAUDE.md §11)**: In der Umsetzungssitzung schlug der Testlauf mit einem
+  Fehler (`Service ... should have valid address at this point`) fehl —
+  reproduzierbar auch beim unveränderten, bereits vorher funktionierenden
+  `MeEndpointTests`. Es handelte sich **nicht** um eine Aspire/DCP-
+  Einschränkung, sondern um die Ausführung über Git Bash statt PowerShell.
 - ADR `docs/adr/0006-domain-entity-materialisierung-und-namenskollision.md`.
 
 Bewusst nicht Teil dieses Standes:
@@ -264,8 +298,9 @@ Abnahmekriterium:
   Angular-Feature nach Block 0c.
 
 Nachtrag (2026-08-05): `GenreEndpointsTests` lief seit der Umsetzung nie
-erfolgreich durch (lokaler Aspire-DCP-Fehler, siehe unten „CI-Gate für
-Integrationstests"). Beim ersten tatsächlichen Lauf zeigte sich ein echter
+erfolgreich durch — Ursache war die Ausführung über Git Bash statt PowerShell,
+keine Aspire/DCP-Einschränkung (siehe unten „CI-Gate für Integrationstests" und
+CLAUDE.md §11). Beim ersten tatsächlichen Lauf mit PowerShell zeigte sich ein echter
 Bug in `UpdateGenreCommandHandler`: `Repository<T>.GetByIdAsync` liefert über
 `DbSet.FindAsync` eine getrackte Entität zurück; da `Genre.Update(...)` laut
 Domain-Regel immer eine neue Instanz erzeugt, kollidierte
@@ -282,8 +317,10 @@ bei `GetAllAsync`). Verifiziert wird der Erfolgsfall stattdessen über
 ## CI-Gate für Integrationstests (2026-08-05)
 
 `MyMusic.IntegrationTests` lief bislang nur lokal und blieb über mehrere
-Sitzungen hinweg ungeprüft (Aspire-DCP-Fehler, Windows/Git-Bash-spezifisch —
-auf dem Linux-CI-Runner nicht reproduzierbar). `.github/workflows/ci.yml`
+Sitzungen hinweg ungeprüft — Ursache war die Ausführung über Git Bash statt
+PowerShell (siehe CLAUDE.md §11), keine Aspire/DCP-Einschränkung; auf dem
+Linux-CI-Runner tritt der Fehler ohnehin nicht auf, da dort kein Git Bash zum
+Einsatz kommt. `.github/workflows/ci.yml`
 führt den Integrationstest jetzt bei jedem Push/PR auf `main` mit aus; eine
 Branch-Protection-Regel auf `main` verlangt einen erfolgreichen CI-Lauf vor
 dem Merge. Details: ADR 0003, Nachtrag 2026-08-05.
@@ -426,6 +463,9 @@ Aufgaben (noch offen):
   HTTP-Interceptor.
 - Rollen (`User`, `Admin`), Ownership-Prüfung in Handlern (404 statt 403) —
   setzt Entitäten voraus, entsteht mit dem jeweiligen Slice.
+- Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
+  zurückgestellt aus Block 0e, siehe
+  `docs/adr/0007-swagger-openapi-nur-development.md`).
 - Rate Limiting (100 req/min pro Benutzer), CORS-Policy per Environment, CSP.
 - Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.

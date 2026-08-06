@@ -160,9 +160,12 @@ Keine.
   NSubstitute unit-testbar (bekannte, bereits dokumentierte Einschränkung:
   gemockter `DbSet` implementiert kein `IAsyncEnumerable<T>`) — einziger
   Nachweis ist der Integrationstest.
-- Lokale Aspire/Docker-Umgebung zeigte beim Genre-Slice bereits einmal einen
-  DCP-Fehler (TASK.md-Nachtrag 2026-08-05); tritt das hier erneut auf, wird
-  es als Umgebungslimitierung vermerkt, nicht verdeckt.
+- Der Genre-Slice zeigte bereits einmal einen Testlauf-Fehler, der fälschlich
+  als Aspire/DCP-Einschränkung dokumentiert wurde (TASK.md-Nachtrag
+  2026-08-05, inzwischen korrigiert); tatsächliche Ursache war die Ausführung
+  über Git Bash statt PowerShell (CLAUDE.md §11). Tritt hier ein ähnlicher
+  Fehler auf, wird zuerst PowerShell statt Git Bash geprüft, bevor eine
+  Umgebungslimitierung vermutet wird.
 - `StringComparer.InvariantCulture` ist eine Implementierungsentscheidung,
   keine Wiki-Vorgabe — kein vollständiges deutsches Duden-Alphabet, aber
   deterministisch über Umgebungen hinweg.

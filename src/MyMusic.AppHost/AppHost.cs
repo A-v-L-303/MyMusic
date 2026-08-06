@@ -42,6 +42,11 @@ builder.AddProject<Projects.MyMusic_Api>("api")
     .WaitForCompletion(migrator)
     .WaitFor(keycloak)
     .WithEnvironment("Keycloak__Authority", ReferenceExpression.Create(
-        $"{keycloak.GetEndpoint("http")}/realms/mymusic"));
+        $"{keycloak.GetEndpoint("http")}/realms/mymusic"))
+    .WithUrlForEndpoint("https", url =>
+    {
+        url.DisplayText = "Swagger UI";
+        url.Url += "/swagger";
+    });
 
 builder.Build().Run();
