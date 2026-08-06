@@ -58,6 +58,16 @@ Umgesetzt:
   Integrationstest abgesichert.
 - Serilog mit Console- und Seq-Sink (ADR 0002).
 
+Nachtrag (2026-08-06): Die obige Zeile "PostgreSQL, Seq und Keycloak 26.5 als
+Aspire-Ressourcen mit Datenvolumes" traf für Keycloak ursprünglich nicht zu —
+Keycloak hatte seit Block 0a kein Datenvolume, nur einen read-only Bind-Mount
+für den Realm-Import. Das Keycloak-Datenvolume für die Dev-Umgebung wurde
+nachträglich ergänzt (`mymusic-keycloak-data` auf `/opt/keycloak/data`, siehe
+Wiki `architektur/aspire-orchestrierung.md`). Für Production ist weiterhin die
+im Wiki (`projekt/backup-konzept.md`) dokumentierte Anbindung von Keycloak an
+eine PostgreSQL-Datenbank offen — das betrifft das noch ausstehende
+Production-/Docker-Compose-Setup, nicht Block 0a.
+
 Bewusst nicht Teil von 0a:
 
 - JWT-Verdrahtung im Code und Auth-Smoke-Test (0b).
