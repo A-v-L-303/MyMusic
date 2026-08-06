@@ -2,7 +2,7 @@
 
 Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2 und dem Country-Backend aus Block 3)
-Branch: `block-0e-swagger-openapi`
+Branch: `main`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
