@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyMusic.Domain.DomainModels.Sammlung.Record;
 using MyMusic.Infrastructure.Persistence;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyMusic.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(MyMusicDbContext))]
-    partial class MyMusicDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260807154147_CreateRecordTrackTable")]
+    partial class CreateRecordTrackTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

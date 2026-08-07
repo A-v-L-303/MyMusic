@@ -12,7 +12,7 @@ public class RecordResponseBuilderTests
             1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, "Erste Pressung", Guid.NewGuid());
 
         // act
-        var response = _builder.Build(record, "Apple Records", "The Beatles");
+        var response = _builder.Build(record, "Apple Records", "The Beatles", []);
 
         // assert
         Assert.Equal(record.Id, response.Id);
@@ -26,6 +26,26 @@ public class RecordResponseBuilderTests
         Assert.Equal(RecordCondition.Nm, response.Condition);
         Assert.Equal("Erste Pressung", response.Information);
         Assert.Null(response.AlbumCoverDataUrl);
+        Assert.Empty(response.Tracks);
+    }
+
+    [Fact]
+    public void Build_MitTracks_UebernimmtTracklisteUnveraendert()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid());
+
+        var trackResponses = new List<RecordTrackResponse>
+        {
+            new(1, record.Id, 2, "The Beatles", 3, "Rock", "Come Together", "A", 1, null)
+        };
+
+        // act
+        var response = _builder.Build(record, "Apple Records", "The Beatles", trackResponses);
+
+        // assert
+        Assert.Same(trackResponses, response.Tracks);
     }
 
     [Fact]
@@ -40,7 +60,7 @@ public class RecordResponseBuilderTests
         var recordMitCover = record.SetAlbumCover(pngBytes);
 
         // act
-        var response = _builder.Build(recordMitCover, "Apple Records", null);
+        var response = _builder.Build(recordMitCover, "Apple Records", null, []);
 
         // assert
         Assert.Equal($"data:image/png;base64,{Convert.ToBase64String(pngBytes)}", response.AlbumCoverDataUrl);
@@ -54,7 +74,7 @@ public class RecordResponseBuilderTests
             1, null, RecordFormat.Compilation, "Various Artists", 1999, RecordCondition.Vg, null, Guid.NewGuid());
 
         // act
-        var response = _builder.Build(record, "Various Records", null);
+        var response = _builder.Build(record, "Various Records", null, []);
 
         // assert
         Assert.Null(response.ArtistId);

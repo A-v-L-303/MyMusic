@@ -3,6 +3,7 @@ global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using MyMusic.Domain.Contracts.Repository;
 global using MyMusic.Domain.DomainModels.Sammlung.Record;
+global using MyMusic.Domain.DomainModels.Sammlung.RecordTrack;
 global using MyMusic.Domain.DomainModels.Stammdaten.Artist;
 global using MyMusic.Domain.DomainModels.Stammdaten.Country;
 global using MyMusic.Domain.DomainModels.Stammdaten.Genre;

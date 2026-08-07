@@ -3,9 +3,11 @@
 Stand: 2026-08-07 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
-siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend) und
-Block 6b (Album-Cover-Upload) umgesetzt und verifiziert)
-Branch: `main` (Block 6b per PR #30 nach `main` gemergt)
+siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
+Block 6b (Album-Cover-Upload) und Block 6c (Track-Backend) umgesetzt und
+verifiziert)
+Branch: `main` (Block 6b per PR #30 nach `main` gemergt); Block 6c auf
+Feature-Branch `block-6c-track-backend`, noch nicht committet/gemergt
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -28,8 +30,8 @@ Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
-  (Block 6a) und Album-Cover-Upload (Block 6b) erledigt, siehe Abschnitt 6;
-  Track-Backend (Block 6c) und die Nachträge aus Block 2/4/5 (Block 6d) noch
+  (Block 6a), Album-Cover-Upload (Block 6b) und Track-Backend (Block 6c)
+  erledigt, siehe Abschnitt 6; die Nachträge aus Block 2/4/5 (Block 6d) noch
   offen; Angular-Features `genres/`, `labels/`, `artists/` und `records/`
   zurückgestellt bis Block 0c).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
@@ -549,9 +551,10 @@ Abnahmekriterium:
 
 ## 6. Slice: Record und Tracks
 
-Status: Planung abgeschlossen (2026-08-07); Umsetzung offen, aufgeteilt in
-vier einzeln prüfbare Teilblöcke (analog Block 0), da das Abnahmekriterium
-des Gesamtblocks erst ganz am Ende messbar wäre.
+Status: Planung abgeschlossen (2026-08-07); aufgeteilt in vier einzeln
+prüfbare Teilblöcke (analog Block 0), da das Abnahmekriterium des
+Gesamtblocks erst ganz am Ende messbar wäre. Block 6a, 6b und 6c
+abgeschlossen; Block 6d (Nachträge) offen.
 Priorität: hoch, fachlicher Kern
 
 Ziel:
@@ -717,21 +720,89 @@ Abnahmekriterium erfüllt:
 
 ### 6c. Track-Backend
 
-Status: offen
+Status: **Backend abgeschlossen** (2026-08-07), umgesetzt auf Feature-Branch
+`block-6c-track-backend` (noch nicht committet/gemergt)
 
-Aufgaben:
+Umgesetzt (Backend):
 
-- Domain-Entität `RecordTrack` nach den Domain-Regeln.
-- Commands (Create, Update, Delete) als Sub-Ressource von Record
-  (`POST/PUT/DELETE /records/{id}/tracks[/{trackId}]`), eingebettet in die
-  `GET /records/{id}`-Antwort (kein eigenständiger Abruf).
-- `artistId`/`genreId` mandantengefiltert prüfen (HTTP 400 bei ungültig/
-  fremd); `recordSide`+`trackNumber` eindeutig pro Record (HTTP 409 bei
-  Verstoß).
-- EF-Migration `CreateRecordTrackTable`.
-- Unit- und Integrationstests analog zu Genre/Label/Artist.
+- Domain-Entität `RecordTrack` (`Domain/DomainModels/Sammlung/RecordTrack/`)
+  nach den Domain-Regeln — strukturell an `Record`/`Label` angelehnt, mit
+  `ArtistId`/`GenreId` als reinen FK-Werten ohne Navigation. Namensregeln wie
+  im Wiki geklärt: `TrackName` 1–150 Zeichen mit demselben erweiterten
+  Zeichenset wie `AlbumName` (inkl. Klammern), `RecordSide` 1–3 Zeichen nur
+  Buchstaben/Ziffern mit Default `"0"`, `TrackNumber` als eigenständige
+  Entität wie jede andere (siehe Architektur-Entscheidung unten).
+- **Offene Annahme**, im Wiki nicht dokumentiert: `TrackNumber >= 1`
+  angenommen (kein Mindestwert im Schema/Wiki festgelegt, nur
+  `SMALLINT NOT NULL` und Eindeutigkeit) — sollte bei Gelegenheit mit dem
+  Projektinhaber geklärt und im Wiki (`domain/record-track.md`) nachgetragen
+  werden.
+- Architektur-Entscheidung: `RecordTrack` erhält trotz der begrifflichen
+  Nähe zum „Record-Aggregat" (siehe `glossar.md`) eine eigene
+  `IRepository<RecordTrackEntity>`-Nutzung statt einer EF-Navigation auf
+  `Record` — konsistent mit `repository-pattern.md` („Die fachlichen
+  Entitäten von MyMusic bilden sich 1:1 auf die Datenbanktabellen ab").
+- Commands (Create, Update, Delete) unter
+  `Application/Features/Sammlung/RecordTrack/Commands/`. Create/Update
+  liefern die eigene `RecordTrackResponse` (nicht den vollständigen
+  `RecordResponse`) — analog zu Genre/Label/Artist, im Unterschied zum
+  Cover-Upload (der eine Domain-Methode auf `Record` selbst aufruft).
+  `artistId`/`genreId` werden per `MustAsync` mandantengefiltert geprüft
+  (HTTP 400 bei ungültig/fremd, analog zur Record-FK-Prüfung);
+  `recordId`+`recordSide`+`trackNumber` eindeutig (HTTP 409 bei Verstoß,
+  Muster `GetPagedAsync`+`page:1,pageSize:1` wie bei Label-Namen). Der
+  Zugriff auf einen fremden/nicht existierenden Record liefert HTTP 404
+  (Ownership-Check im Handler, nicht im Validator).
+- Minimal-API-Endpoints ergänzen die bestehende `RecordEndpoints`-Gruppe
+  (keine eigene Endpoint-Datei, da Tracks laut `api-endpunkte.md` keine
+  eigenständige Ressource sind): `POST /records/{id}/tracks`,
+  `PUT /records/{id}/tracks/{trackId}`, `DELETE /records/{id}/tracks/{trackId}`.
+- `RecordResponse`/`RecordResponseBuilder` um `Tracks`-Feld
+  (`IReadOnlyList<RecordTrackResponse>`) erweitert. `GetRecordByIdQueryHandler`
+  lädt alle Tracks eines Records (sortiert nach `RecordSide`/`TrackNumber`,
+  Namen aufgelöst) und bettet sie ein. **Abweichung von der ursprünglichen
+  Annahme im Arbeits-Prompt**: `UpdateRecordCommandHandler` und
+  `UploadRecordCoverCommandHandler` laden die Tracks ebenfalls (statt einer
+  leeren Liste) — eine leere Liste hätte nach jedem Bearbeiten/Cover-Upload
+  eines Records mit vorhandenen Tracks fälschlich eine leere Tracklist
+  zurückgegeben. Nur `CreateRecordCommandHandler` liefert bewusst eine leere
+  Liste (ein neu angelegter Record hat noch keine Tracks).
+- EF-Migration `CreateRecordTrackTable`: legt die `record_track`-Tabelle an
+  (FK auf `record` mit `ON DELETE CASCADE`, FK auf `artist`/`genre` mit
+  `ON DELETE RESTRICT`, zusammengesetzter Unique-Index auf `record_id`,
+  `record_side`, `track_number`). Erzeugt mit EF-Tools 9.0.0 (älter als die
+  Runtime 10.0.10) — die generierten Migrations-/Snapshot-Dateien wichen
+  stellenweise vom Projektstil ab (Block-Namespace statt file-scoped,
+  Zeilenlänge) und wurden manuell auf das bestehende Muster (siehe
+  `CreateRecordTable`/`CreateLabelTable`) angeglichen.
+- `DeleteRecordCommandHandler`: veralteten Kommentar entfernt, der auf das
+  damals noch fehlende `record_track` verwies — das Löschen kaskadiert jetzt
+  automatisch über die Datenbank (`ON DELETE CASCADE`), ohne Änderung am
+  Handler selbst.
+- Unit Tests: Domain (`RecordTrackTests`, 16 Fälle), Application (Handler/
+  Validator/Builder für Create/Update/Delete, 33 Fälle, plus zwei neue
+  Testfälle in den bestehenden `RecordResponseBuilderTests`/
+  `GetRecordByIdQueryHandlerTests` für die Tracks-Einbettung) — 51 neue
+  Unit-Tests, alle grün (Domain gesamt 114, Application gesamt 222).
+- Integrationstest: neue Testmethode
+  `RecordTrackEndpoints_CrudMandantentrennungUndEindeutigkeitspruefung` in
+  `RecordEndpointsTests.cs` (keine eigene Datei) — vollständiger CRUD-Fluss,
+  Mandantentrennung (400 bei fremdem/ungültigem `artistId`/`genreId`, 404 bei
+  fremdem/nicht existierendem Record oder Track), Eindeutigkeitsprüfung
+  (409), Einbettung in `GET /records/{id}` inkl. Sortierung, sowie expliziter
+  Nachweis der `ON DELETE CASCADE`-Kaskadierung (Record mit Track löschen,
+  erneuter Löschversuch des Tracks liefert 404 statt 204). Grün im
+  gemeinsamen Lauf mit allen sieben bestehenden Integrationstests (8/8 grün).
 
-Abnahmekriterium:
+Bewusst nicht Teil dieses Standes:
+
+- Angular-Anbindung (Tracklist als Unteransicht der Record-Detailansicht,
+  Add/Edit/Delete) — folgt erst nach Block 0c.
+- Referenzprüfungen aus Block 6d (`DeleteGenreCommandHandler` gegen
+  `record_track`, `DeleteArtistCommandHandler` gegen `record`/`record_track`)
+  bleiben offen — siehe Abschnitt 6d.
+
+Abnahmekriterium erfüllt:
 
 - Tracks lassen sich zu einem eigenen Record hinzufügen, bearbeiten und
   löschen; Mandantentrennung und Eindeutigkeitsprüfung greifen.

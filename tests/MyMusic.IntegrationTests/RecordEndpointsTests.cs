@@ -382,6 +382,308 @@ public class RecordEndpointsTests
         }
     }
 
+    [Fact]
+    public async Task RecordTrackEndpoints_CrudMandantentrennungUndEindeutigkeitspruefung()
+    {
+        // arrange
+        var cancellationToken = CancellationToken.None;
+
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.MyMusic_AppHost>(cancellationToken);
+
+        await using var app = await appHost.BuildAsync(cancellationToken)
+            .WaitAsync(_defaultTimeout, cancellationToken);
+
+        await app.StartAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
+
+        await app.ResourceNotifications
+            .WaitForResourceAsync("migrator", KnownResourceStates.Finished, cancellationToken)
+            .WaitAsync(_defaultTimeout, cancellationToken);
+
+        await app.ResourceNotifications
+            .WaitForResourceAsync("api", KnownResourceStates.Running, cancellationToken)
+            .WaitAsync(_defaultTimeout, cancellationToken);
+
+        using var apiClient = app.CreateHttpClient("api", "http");
+        using var keycloakClient = app.CreateHttpClient("keycloak", "http");
+
+        var owner = await KeycloakTestClient.CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
+
+        var otherUser = await KeycloakTestClient.CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
+
+        try
+        {
+            var ownerToken = await KeycloakTestClient.RequestUserAccessTokenAsync(
+                keycloakClient, owner, cancellationToken);
+
+            var otherToken = await KeycloakTestClient.RequestUserAccessTokenAsync(
+                keycloakClient, otherUser, cancellationToken);
+
+            var suffix = Guid.NewGuid().ToString("N")[..8];
+
+            var (countryA, _) = await GetTwoCountryIdsAsync(apiClient, ownerToken, cancellationToken);
+
+            var ownerLabel = await CreateLabelAsync(
+                apiClient, ownerToken, $"Apple Records-{suffix}", countryA, cancellationToken);
+
+            var ownerArtist = await CreateArtistAsync(
+                apiClient, ownerToken, $"The Beatles-{suffix}", cancellationToken);
+
+            var secondOwnerArtist = await CreateArtistAsync(
+                apiClient, ownerToken, $"Billy Preston-{suffix}", cancellationToken);
+
+            var ownerGenre = await CreateGenreAsync(apiClient, ownerToken, $"Rock-{suffix}", cancellationToken);
+
+            var otherUsersArtist = await CreateArtistAsync(
+                apiClient, otherToken, $"Fremdartist-{suffix}", cancellationToken);
+
+            var otherUsersGenre = await CreateGenreAsync(
+                apiClient, otherToken, $"Fremdgenre-{suffix}", cancellationToken);
+
+            var createRecordResponse = await PostRecordAsync(
+                apiClient, ownerToken, ownerLabel, ownerArtist, "Album", $"Abbey Road-{suffix}", 1969, null, null,
+                cancellationToken);
+
+            var record = await ReadRecordAsync(createRecordResponse, cancellationToken);
+
+            Assert.Empty(record.Tracks);
+
+            var otherUsersLabel = await CreateLabelAsync(
+                apiClient, otherToken, $"Fremdlabel-{suffix}", countryA, cancellationToken);
+
+            var otherUsersRecordResponse = await PostRecordAsync(
+                apiClient, otherToken, otherUsersLabel, null, "Album", $"Fremdalbum-{suffix}", 1970, null, null,
+                cancellationToken);
+
+            var otherUsersRecord = await ReadRecordAsync(otherUsersRecordResponse, cancellationToken);
+
+            // act: ohne Token -> 401
+            using var unauthorizedRequest = new HttpRequestMessage(
+                HttpMethod.Post, $"/api/records/{record.Id}/tracks")
+            {
+                Content = JsonContent.Create(
+                    BuildTrackPayload(ownerArtist, ownerGenre, "Come Together", "A", 1, null), options: _jsonOptions)
+            };
+
+            var unauthorizedResponse = await apiClient.SendAsync(unauthorizedRequest, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedResponse.StatusCode);
+
+            // act: ungültiger Artist -> 400
+            var invalidArtistResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, -1, ownerGenre, "Come Together", "A", 1, null, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, invalidArtistResponse.StatusCode);
+
+            // act: fremder Artist -> 400 (Mandantentrennung, wie nicht existent behandelt)
+            var foreignArtistResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, otherUsersArtist, ownerGenre, "Come Together", "A", 1, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, foreignArtistResponse.StatusCode);
+
+            // act: ungültiges Genre -> 400
+            var invalidGenreResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, -1, "Come Together", "A", 1, null, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, invalidGenreResponse.StatusCode);
+
+            // act: fremdes Genre -> 400 (Mandantentrennung, wie nicht existent behandelt)
+            var foreignGenreResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, otherUsersGenre, "Come Together", "A", 1, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, foreignGenreResponse.StatusCode);
+
+            // act: leerer Trackname -> 400
+            var invalidNameResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, ownerGenre, string.Empty, "A", 1, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, invalidNameResponse.StatusCode);
+
+            // act: ungültige Seite -> 400
+            var invalidSideResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, ownerGenre, "Come Together", "A-", 1, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, invalidSideResponse.StatusCode);
+
+            // act: ungültige Tracknummer -> 400
+            var invalidNumberResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, ownerGenre, "Come Together", "A", 0, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, invalidNumberResponse.StatusCode);
+
+            // act: fremder Record -> 404 statt 403
+            var foreignRecordResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, otherUsersRecord.Id, ownerArtist, ownerGenre, "Come Together", "A", 1, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, foreignRecordResponse.StatusCode);
+
+            // act: nicht existierender Record -> 404
+            var unknownRecordResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, -1, ownerArtist, ownerGenre, "Come Together", "A", 1, null, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, unknownRecordResponse.StatusCode);
+
+            // act: gültigen Track anlegen -> 201
+            var createFirstTrackResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, ownerGenre, "Come Together", "A", 1, "Opener",
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Created, createFirstTrackResponse.StatusCode);
+
+            var firstTrack = await ReadRecordTrackAsync(createFirstTrackResponse, cancellationToken);
+
+            Assert.Equal("Come Together", firstTrack.TrackName);
+            Assert.Equal(ownerArtist, firstTrack.ArtistId);
+            Assert.Equal($"The Beatles-{suffix}", firstTrack.ArtistName);
+            Assert.Equal(ownerGenre, firstTrack.GenreId);
+            Assert.Equal($"Rock-{suffix}", firstTrack.GenreName);
+            Assert.Equal("A", firstTrack.RecordSide);
+            Assert.Equal(1, firstTrack.TrackNumber);
+            Assert.Equal("Opener", firstTrack.Information);
+
+            // act: zweiten Track mit derselben Seite/Nummer anlegen -> 409
+            var duplicateTrackResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, ownerArtist, ownerGenre, "Duplicate", "A", 1, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Conflict, duplicateTrackResponse.StatusCode);
+
+            // act: zweiten, gültigen Track anlegen -> 201
+            var createSecondTrackResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, secondOwnerArtist, ownerGenre, "Something", "A", 2, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Created, createSecondTrackResponse.StatusCode);
+
+            var secondTrack = await ReadRecordTrackAsync(createSecondTrackResponse, cancellationToken);
+
+            // act: Record-Detailansicht enthält beide Tracks, sortiert nach Seite/Nummer
+            var getRecordWithTracksResponse = await GetRecordAsync(
+                apiClient, ownerToken, record.Id, cancellationToken);
+
+            var recordWithTracks = await ReadRecordAsync(getRecordWithTracksResponse, cancellationToken);
+
+            // assert
+            Assert.Equal(2, recordWithTracks.Tracks.Count);
+            Assert.Equal("Come Together", recordWithTracks.Tracks[0].TrackName);
+            Assert.Equal("Something", recordWithTracks.Tracks[1].TrackName);
+
+            // act: Bearbeiten mit fremdem Artist -> 400
+            var updateForeignArtistResponse = await PutRecordTrackAsync(
+                apiClient, ownerToken, record.Id, firstTrack.Id, otherUsersArtist, ownerGenre, "Come Together", "A",
+                1, null, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, updateForeignArtistResponse.StatusCode);
+
+            // act: Bearbeiten auf eine bereits vom anderen Track belegte Seite/Nummer -> 409
+            var updateConflictResponse = await PutRecordTrackAsync(
+                apiClient, ownerToken, record.Id, secondTrack.Id, secondOwnerArtist, ownerGenre, "Something", "A",
+                1, null, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Conflict, updateConflictResponse.StatusCode);
+
+            // act: Bearbeiten über einen fremden Record -> 404 (eigene Artist/Genre-Ids des Aufrufers,
+            // damit ausschliesslich die Datensatz-Eigentuemerpruefung getestet wird, nicht die
+            // ArtistId/GenreId-Validierung)
+            var updateForeignRecordResponse = await PutRecordTrackAsync(
+                apiClient, otherToken, otherUsersRecord.Id, firstTrack.Id, otherUsersArtist, otherUsersGenre,
+                "Irrelevant", "A", 1, null, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, updateForeignRecordResponse.StatusCode);
+
+            // act: gültiges Bearbeiten -> 200
+            var updateResponse = await PutRecordTrackAsync(
+                apiClient, ownerToken, record.Id, firstTrack.Id, ownerArtist, ownerGenre, "Come Together (Remix)",
+                "A", 1, "Geändert", cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+
+            var updatedFirstTrack = await ReadRecordTrackAsync(updateResponse, cancellationToken);
+
+            Assert.Equal("Come Together (Remix)", updatedFirstTrack.TrackName);
+            Assert.Equal("Geändert", updatedFirstTrack.Information);
+
+            // act: fremden Track löschen -> 404 statt 403
+            var deleteForeignResponse = await DeleteRecordTrackAsync(
+                apiClient, otherToken, record.Id, firstTrack.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, deleteForeignResponse.StatusCode);
+
+            // act: unbekannten Track löschen -> 404
+            var deleteUnknownResponse = await DeleteRecordTrackAsync(
+                apiClient, ownerToken, record.Id, -1, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, deleteUnknownResponse.StatusCode);
+
+            // act: eigenen Track löschen -> 204
+            var deleteResponse = await DeleteRecordTrackAsync(
+                apiClient, ownerToken, record.Id, secondTrack.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+            // act: gelöschten Track erneut löschen -> 404
+            var deleteAgainResponse = await DeleteRecordTrackAsync(
+                apiClient, ownerToken, record.Id, secondTrack.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, deleteAgainResponse.StatusCode);
+
+            // act: Record-Detailansicht enthält nur noch den verbliebenen Track
+            var getAfterDeleteResponse = await GetRecordAsync(apiClient, ownerToken, record.Id, cancellationToken);
+
+            var recordAfterDelete = await ReadRecordAsync(getAfterDeleteResponse, cancellationToken);
+
+            // assert
+            Assert.Single(recordAfterDelete.Tracks);
+            Assert.Equal("Come Together (Remix)", recordAfterDelete.Tracks[0].TrackName);
+
+            // act: Record mit verbliebenem Track löschen -> 204
+            var deleteRecordResponse = await DeleteRecordAsync(apiClient, ownerToken, record.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteRecordResponse.StatusCode);
+
+            // act: erneutes Löschen des zugehörigen Tracks -> 404, da per ON DELETE CASCADE bereits entfernt
+            var deleteCascadedTrackResponse = await DeleteRecordTrackAsync(
+                apiClient, ownerToken, record.Id, firstTrack.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, deleteCascadedTrackResponse.StatusCode);
+        }
+        finally
+        {
+            await KeycloakTestClient.DeleteTestUserAsync(keycloakClient, appHost, owner, cancellationToken);
+
+            await KeycloakTestClient.DeleteTestUserAsync(keycloakClient, appHost, otherUser, cancellationToken);
+        }
+    }
+
     private static async Task<(int CountryA, int CountryB)> GetTwoCountryIdsAsync(
         HttpClient apiClient,
         string accessToken,
@@ -624,5 +926,113 @@ public class RecordEndpointsTests
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         return request;
+    }
+
+    private static async Task<int> CreateGenreAsync(
+        HttpClient apiClient,
+        string accessToken,
+        string name,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/genres", accessToken);
+
+        request.Content = JsonContent.Create(new { name }, options: _jsonOptions);
+
+        var response = await apiClient.SendAsync(request, cancellationToken);
+
+        var genre = await response.Content.ReadFromJsonAsync<GenreResponseDto>(_jsonOptions, cancellationToken);
+
+        Assert.NotNull(genre);
+
+        return genre.Id;
+    }
+
+    private static async Task<RecordTrackResponseDto> ReadRecordTrackAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var track = await response.Content
+            .ReadFromJsonAsync<RecordTrackResponseDto>(_jsonOptions, cancellationToken);
+
+        Assert.NotNull(track);
+
+        return track;
+    }
+
+    private static async Task<HttpResponseMessage> PostRecordTrackAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int recordId,
+        int artistId,
+        int genreId,
+        string trackName,
+        string recordSide,
+        int trackNumber,
+        string? information,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(
+            HttpMethod.Post, $"/api/records/{recordId}/tracks", accessToken);
+
+        request.Content = JsonContent.Create(
+            BuildTrackPayload(artistId, genreId, trackName, recordSide, trackNumber, information),
+            options: _jsonOptions);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> PutRecordTrackAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int recordId,
+        int trackId,
+        int artistId,
+        int genreId,
+        string trackName,
+        string recordSide,
+        int trackNumber,
+        string? information,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(
+            HttpMethod.Put, $"/api/records/{recordId}/tracks/{trackId}", accessToken);
+
+        request.Content = JsonContent.Create(
+            BuildTrackPayload(artistId, genreId, trackName, recordSide, trackNumber, information),
+            options: _jsonOptions);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> DeleteRecordTrackAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int recordId,
+        int trackId,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(
+            HttpMethod.Delete, $"/api/records/{recordId}/tracks/{trackId}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static Dictionary<string, object?> BuildTrackPayload(
+        int artistId,
+        int genreId,
+        string trackName,
+        string recordSide,
+        int trackNumber,
+        string? information)
+    {
+        return new Dictionary<string, object?>
+        {
+            ["artistId"] = artistId,
+            ["genreId"] = genreId,
+            ["trackName"] = trackName,
+            ["recordSide"] = recordSide,
+            ["trackNumber"] = trackNumber,
+            ["information"] = information
+        };
     }
 }
