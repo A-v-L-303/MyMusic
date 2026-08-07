@@ -11,4 +11,5 @@ public sealed record RecordResponseDto(
     int ReleaseYear,
     string Condition,
     string? Information,
-    string? AlbumCoverDataUrl);
+    string? AlbumCoverDataUrl,
+    IReadOnlyList<RecordTrackResponseDto> Tracks);

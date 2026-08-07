@@ -4,8 +4,11 @@ public sealed class GetRecordByIdQueryHandler(
     IRepository<RecordEntity> repository,
     IRepository<LabelEntity> labelRepository,
     IRepository<ArtistEntity> artistRepository,
+    IRepository<GenreEntity> genreRepository,
+    IRepository<RecordTrackEntity> trackRepository,
     ExceptionManager exceptionManager,
-    RecordResponseBuilder responseBuilder)
+    RecordResponseBuilder responseBuilder,
+    RecordTrackResponseBuilder trackResponseBuilder)
     : IQueryHandler<GetRecordByIdQuery, RecordResponse>
 {
     public async Task<RecordResponse> HandleAsync(GetRecordByIdQuery query, CancellationToken cancellationToken)
@@ -21,6 +24,24 @@ public sealed class GetRecordByIdQueryHandler(
             ? null
             : await artistRepository.GetByIdAsync(record.ArtistId.Value, cancellationToken);
 
-        return responseBuilder.Build(record, label!.Name, artist?.Name);
+        var (tracks, _) = await trackRepository.GetPagedAsync(
+            track => track.RecordId == record.Id,
+            trackQuery => trackQuery.OrderBy(track => track.RecordSide).ThenBy(track => track.TrackNumber),
+            page: 1,
+            pageSize: int.MaxValue,
+            cancellationToken);
+
+        var trackResponses = new List<RecordTrackResponse>();
+
+        foreach (var track in tracks)
+        {
+            var trackArtist = await artistRepository.GetByIdAsync(track.ArtistId, cancellationToken);
+
+            var trackGenre = await genreRepository.GetByIdAsync(track.GenreId, cancellationToken);
+
+            trackResponses.Add(trackResponseBuilder.Build(track, trackArtist!.Name, trackGenre!.Name));
+        }
+
+        return responseBuilder.Build(record, label!.Name, artist?.Name, trackResponses);
     }
 }

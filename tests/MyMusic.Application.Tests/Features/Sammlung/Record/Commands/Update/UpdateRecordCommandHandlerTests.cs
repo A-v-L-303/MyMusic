@@ -38,8 +38,21 @@ public class UpdateRecordCommandHandlerTests
         artistRepository.GetByIdAsync(3, Arg.Any<CancellationToken>())
             .Returns(ArtistEntity.Create("The Beatles", userId));
 
+        var genreRepository = Substitute.For<IRepository<GenreEntity>>();
+
+        var trackRepository = Substitute.For<IRepository<RecordTrackEntity>>();
+
+        StubNoTracks(trackRepository);
+
         var handler = new UpdateRecordCommandHandler(
-            repository, labelRepository, artistRepository, new ExceptionManager(), new RecordResponseBuilder());
+            repository,
+            labelRepository,
+            artistRepository,
+            genreRepository,
+            trackRepository,
+            new ExceptionManager(),
+            new RecordResponseBuilder(),
+            new RecordTrackResponseBuilder());
 
         // act
         var response = await handler.HandleAsync(command, CancellationToken.None);
@@ -49,6 +62,7 @@ public class UpdateRecordCommandHandlerTests
         Assert.Equal("Universal", response.LabelName);
         Assert.Equal("The Beatles", response.ArtistName);
         Assert.Equal(RecordCondition.Mint, response.Condition);
+        Assert.Empty(response.Tracks);
 
         repository.Received(1).Update(
             Arg.Is<RecordEntity>(record => record != null && record.AlbumName == "Abbey Road (Remastered)"));
@@ -77,8 +91,19 @@ public class UpdateRecordCommandHandlerTests
 
         var artistRepository = Substitute.For<IRepository<ArtistEntity>>();
 
+        var genreRepository = Substitute.For<IRepository<GenreEntity>>();
+
+        var trackRepository = Substitute.For<IRepository<RecordTrackEntity>>();
+
         var handler = new UpdateRecordCommandHandler(
-            repository, labelRepository, artistRepository, new ExceptionManager(), new RecordResponseBuilder());
+            repository,
+            labelRepository,
+            artistRepository,
+            genreRepository,
+            trackRepository,
+            new ExceptionManager(),
+            new RecordResponseBuilder(),
+            new RecordTrackResponseBuilder());
 
         // act
         var act = () => handler.HandleAsync(command, CancellationToken.None);
@@ -111,13 +136,35 @@ public class UpdateRecordCommandHandlerTests
 
         var artistRepository = Substitute.For<IRepository<ArtistEntity>>();
 
+        var genreRepository = Substitute.For<IRepository<GenreEntity>>();
+
+        var trackRepository = Substitute.For<IRepository<RecordTrackEntity>>();
+
         var handler = new UpdateRecordCommandHandler(
-            repository, labelRepository, artistRepository, new ExceptionManager(), new RecordResponseBuilder());
+            repository,
+            labelRepository,
+            artistRepository,
+            genreRepository,
+            trackRepository,
+            new ExceptionManager(),
+            new RecordResponseBuilder(),
+            new RecordTrackResponseBuilder());
 
         // act
         var act = () => handler.HandleAsync(command, CancellationToken.None);
 
         // assert: 404 statt 403 - Existenz einer fremden Ressource wird nicht bestätigt
         await Assert.ThrowsAsync<NotFoundException>(act);
+    }
+
+    private static void StubNoTracks(IRepository<RecordTrackEntity> trackRepository)
+    {
+        trackRepository.GetPagedAsync(
+                Arg.Any<Expression<Func<RecordTrackEntity, bool>>>(),
+                Arg.Any<Func<IQueryable<RecordTrackEntity>, IOrderedQueryable<RecordTrackEntity>>>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns((Items: (IReadOnlyList<RecordTrackEntity>)new List<RecordTrackEntity>(), TotalCount: 0));
     }
 }

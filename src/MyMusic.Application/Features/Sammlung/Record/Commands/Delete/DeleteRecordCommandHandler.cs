@@ -13,8 +13,6 @@ public sealed class DeleteRecordCommandHandler(
         if (record is null || record.UserId != currentUserService.UserId)
             throw exceptionManager.NotFound("Record", command.Id);
 
-        // Zugehörige Tracks existieren erst ab Block 6c (record_track); bis dahin
-        // gibt es nichts, das beim Löschen kaskadieren könnte.
         repository.Remove(record);
 
         await repository.SaveChangesAsync(cancellationToken);

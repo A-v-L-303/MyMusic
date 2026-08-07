@@ -2,7 +2,8 @@ namespace MyMusic.Application.Features.Sammlung.Record.ResponseDtos.Builder;
 
 public sealed class RecordResponseBuilder
 {
-    public RecordResponse Build(RecordEntity record, string labelName, string? artistName)
+    public RecordResponse Build(
+        RecordEntity record, string labelName, string? artistName, IReadOnlyList<RecordTrackResponse> tracks)
     {
         return new RecordResponse(
             record.Id,
@@ -15,7 +16,8 @@ public sealed class RecordResponseBuilder
             record.ReleaseYear,
             record.Condition,
             record.Information,
-            BuildAlbumCoverDataUrl(record.AlbumCover));
+            BuildAlbumCoverDataUrl(record.AlbumCover),
+            tracks);
     }
 
     private static string? BuildAlbumCoverDataUrl(byte[]? albumCover)
@@ -40,7 +42,8 @@ public sealed class RecordResponseBuilder
             .Select(record => Build(
                 record,
                 labelNamesById[record.LabelId],
-                record.ArtistId is null ? null : artistNamesById[record.ArtistId.Value]))
+                record.ArtistId is null ? null : artistNamesById[record.ArtistId.Value],
+                []))
             .ToList();
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);

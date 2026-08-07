@@ -20,6 +20,12 @@ public static class RecordEndpoints
         // unkritisch, da diese API ausschließlich JWT-Bearer statt Cookies nutzt.
         group.MapPost("/{id:int}/cover", UploadRecordCoverAsync).DisableAntiforgery();
 
+        group.MapPost("/{id:int}/tracks", AddRecordTrackAsync);
+
+        group.MapPut("/{id:int}/tracks/{trackId:int}", UpdateRecordTrackAsync);
+
+        group.MapDelete("/{id:int}/tracks/{trackId:int}", DeleteRecordTrackAsync);
+
         return endpoints;
     }
 
@@ -143,5 +149,58 @@ public static class RecordEndpoints
         };
 
         return await mediator.SendAsync(command, cancellationToken);
+    }
+
+    /// <summary>
+    /// Fügt einen Track zu einem eigenen Record hinzu.
+    /// </summary>
+    private static async Task<IResult> AddRecordTrackAsync(
+        int id,
+        CreateRecordTrackCommand command,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        command.RecordId = id;
+
+        command.UserId = currentUserService.UserId;
+
+        var response = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Created($"/api/records/{id}/tracks/{response.Id}", response);
+    }
+
+    /// <summary>
+    /// Aktualisiert einen Track eines eigenen Records.
+    /// </summary>
+    private static async Task<RecordTrackResponse> UpdateRecordTrackAsync(
+        int id,
+        int trackId,
+        UpdateRecordTrackCommand command,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        command.Id = trackId;
+
+        command.RecordId = id;
+
+        command.UserId = currentUserService.UserId;
+
+        return await mediator.SendAsync(command, cancellationToken);
+    }
+
+    /// <summary>
+    /// Löscht einen Track eines eigenen Records.
+    /// </summary>
+    private static async Task<IResult> DeleteRecordTrackAsync(
+        int id,
+        int trackId,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        await mediator.SendAsync(new DeleteRecordTrackCommand(id, trackId), cancellationToken);
+
+        return Results.NoContent();
     }
 }

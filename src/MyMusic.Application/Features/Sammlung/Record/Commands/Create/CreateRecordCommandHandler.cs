@@ -29,6 +29,6 @@ public sealed class CreateRecordCommandHandler(
             ? null
             : await artistRepository.GetByIdAsync(record.ArtistId.Value, cancellationToken);
 
-        return responseBuilder.Build(record, label!.Name, artist?.Name);
+        return responseBuilder.Build(record, label!.Name, artist?.Name, []);
     }
 }
