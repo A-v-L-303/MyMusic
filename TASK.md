@@ -1,8 +1,8 @@
 # Offene Aufgaben
 
-Stand: 2026-08-05 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
-Block 2 und dem Country-Backend aus Block 3)
-Branch: `main`
+Stand: 2026-08-07 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Block 2, dem Country-Backend aus Block 3 und dem Label-Backend aus Block 4)
+Branch: `block-4-label`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -23,14 +23,14 @@ Feature-Roadmap und aktuellem Repository-Stand.
 Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
 - Angular-Workspace (Block 0c).
-- CRUD-Slices für Country, Label, Artist, Record und Tracks (Genre-Backend
-  erledigt, siehe Abschnitt 2; Angular-Feature `genres/` zurückgestellt bis
-  Block 0c).
+- CRUD-Slices für Artist, Record und Tracks (Genre-, Country- und
+  Label-Backend erledigt, siehe Abschnitte 2–4; Angular-Features `genres/`
+  und `labels/` zurückgestellt bis Block 0c).
 - Zustandsbewertung nach Goldmine-Standard.
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
 - Discogs-Integration, Dashboard und Volltext-Suche.
-- User Stories mit Akzeptanzkriterien für Country, Label, Artist, Record und
-  Tracks (Genre erledigt, siehe `offene-themen.md` im Wiki).
+- User Stories mit Akzeptanzkriterien für Artist und Record/Tracks (Genre,
+  Country und Label erledigt, siehe `offene-themen.md` im Wiki).
 
 ## 0. Fundament: Walking Skeleton
 
@@ -228,8 +228,8 @@ Bewusst nicht Teil von 0e:
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
-Status: teilweise abgeschlossen (Genre: 2026-07-29; Country, Label, Artist,
-Record/Tracks offen)
+Status: teilweise abgeschlossen (Genre: 2026-07-29; Country: 2026-08-05;
+Label: 2026-08-07; Artist, Record/Tracks offen)
 Priorität: hoch, jeweils vor dem zugehörigen Slice
 
 Ziel:
@@ -243,8 +243,11 @@ Aufgaben:
   ergänzen — nicht alles auf einmal.
   - Genre: erledigt, siehe
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-genre.md`.
-  - Country, Label, Artist, Record/Tracks: jeweils vor dem zugehörigen Slice
-    nachzuziehen.
+  - Country: erledigt, siehe
+    `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-country.md`.
+  - Label: erledigt, siehe
+    `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-label.md`.
+  - Artist, Record/Tracks: jeweils vor dem zugehörigen Slice nachzuziehen.
 - Die sechs Prüfkriterien der groben Testplanung als Grundlage nutzen.
 
 Abnahmekriterium:
@@ -403,18 +406,76 @@ Abnahmekriterium:
 
 ## 4. Slice: Label
 
-Status: offen
+Status: **Backend abgeschlossen** (2026-08-07); Angular-Feature `labels/`
+zurückgestellt bis Block 0c (Angular-Workspace) umgesetzt ist — analog Genre.
 Priorität: mittel
 
-Aufgaben:
+Ziel:
 
-- CRUD, Tabellenansicht mit Paginierung, Filterung nach Name und Land,
-  Sortierung nach Name.
+- Label als Stammdaten für Records, mit Herkunftsland-Referenz auf
+  [[country]] (Wiki `domain/label.md`).
+
+Voraussetzung erledigt:
+
+- User Stories und Akzeptanzkriterien liegen vor, siehe
+  `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-label.md`
+  (2026-08-07).
+
+Umgesetzt (Backend):
+
+- Domain-Entität `Label` (`Domain/DomainModels/Stammdaten/Label/`) nach den
+  Domain-Regeln — Name Pflichtfeld 1–60 Zeichen mit erweitertem Zeichenset
+  gegenüber Genre (zusätzlich `.` und `/`, bewusst ohne Klammern, siehe
+  Klärung 2026-08-07), `information` optional (max. 255 Zeichen),
+  `CountryId` als reiner Wert ohne Navigationseigenschaft (DDD-Aggregatgrenze
+  zu Country).
+- Erster Slice mit einer Fremdschlüsselbeziehung zwischen zwei
+  Stammdaten-Entitäten: `LabelConfiguration` konfiguriert
+  `country_id → country.id` ohne CLR-Navigation
+  (`HasOne<CountryEntity>().WithMany().HasForeignKey(...)`), mit explizitem
+  `OnDelete(DeleteBehavior.Restrict)` (EF-Core-Default für Pflichtbeziehungen
+  wäre sonst `Cascade`).
+- Commands (Create, Update, Delete), Queries (GetById, GetPaged mit Filter
+  nach Name und `countryId`), Response-DTOs (`LabelResponse`,
+  `LabelListResponse`) und `LabelResponseBuilder` unter
+  `Application/Features/Stammdaten/Label/`. `LabelResponse` löst den
+  Ländernamen serverseitig auf (Einzelabruf: `IRepository<CountryEntity>.
+  GetByIdAsync`; Liste: einmaliger `GetAllAsync`-Aufruf mit anschließendem
+  Dictionary-Lookup, da Country eine kleine, vollständig zwischenspeicherbare
+  Referenztabelle ist).
+- Neues Muster: asynchrone FluentValidation-Regel (`MustAsync`) in
+  `CreateLabelCommandValidator`/`UpdateLabelCommandValidator` prüft die
+  Existenz der `countryId` gegen `IRepository<CountryEntity>` — liefert
+  HTTP 400 bei ungültigem Land (Klärung 2026-08-07, kein 404).
+- Minimal-API-Endpoints (`LabelEndpoints`, `/api/labels`) mit
+  `.RequireAuthorization()`.
+- EF-Migration `CreateLabelTable` (legt die `label`-Tabelle mit
+  `UNIQUE (user_id, label_name)` und FK-Constraint `country_id → country.id`
+  mit `ON DELETE RESTRICT` an).
+- Unit Tests: Domain (`LabelTests`, 19 Fälle inkl. Zeichenset- und
+  CountryId-Validierung), Application (Handler, Validatoren inkl. neuem
+  Testfall für die asynchrone Länder-Existenzprüfung, `LabelResponseBuilder`
+  — 34 Fälle) — 53 neue Unit-Tests, alle grün.
+- Integrationstest `LabelEndpointsTests` (voller CRUD-Fluss, Paginierung,
+  Filter nach Name und Land, Sortierung, Mandantentrennung, 400/404/409) nach
+  Muster `GenreEndpointsTests`; grün (gemeinsamer Lauf mit
+  `MeEndpointTests`/`GenreEndpointsTests`/`CountryEndpointsTests`, 5/5 grün).
+
+Bewusst nicht Teil dieses Standes:
+
+- Angular-Feature `labels/` (Tabellenansicht, Filterung, Add/Edit als Modal)
+  — braucht Block 0c.
+- Referenzprüfung gegen `record` in `DeleteLabelCommandHandler` (siehe
+  Slice 6 unten) — die Tabelle existiert erst dort, analog zur bereits
+  bestehenden Nachtrag-Pflicht für `DeleteGenreCommandHandler`.
 
 Abnahmekriterium:
 
-- Labels sind vollständig verwaltbar; Filter und Sortierung entsprechen der
-  Feature-Roadmap.
+- Labels lassen sich anlegen, anzeigen, filtern, bearbeiten und löschen;
+  fremde Benutzerdaten sind nicht sichtbar; Tests decken Happy Path,
+  Validierung und unbekannte IDs ab. **Backend erfüllt**; die UI-seitigen
+  Teile (Tabellenansicht, Filter, Modal) folgen mit dem Angular-Feature nach
+  Block 0c.
 
 ## 5. Slice: Artist
 
@@ -452,6 +513,13 @@ Aufgaben:
   bewusst ausgelassen, da `record_track` dort noch nicht existierte — siehe
   `docs/prompts/2026-08-04-block-2-genre.md` und Wiki
   `user-stories/user-stories-genre.md` (US-G5).
+- **Pflicht (Nachtrag aus Block 4)**: `DeleteLabelCommandHandler`
+  (`Application/Features/Stammdaten/Label/Commands/Delete/`) um die in
+  US-L5 beschriebene Referenzprüfung gegen `record` ergänzen (HTTP 409, wenn
+  noch mindestens ein Record das Label referenziert). Im Label-Slice bewusst
+  ausgelassen, da `record` dort noch nicht existierte — siehe
+  `docs/prompts/2026-08-07-block-4-label.md` und Wiki
+  `user-stories/user-stories-label.md` (US-L5).
 
 Abnahmekriterium:
 
