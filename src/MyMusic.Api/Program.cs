@@ -100,4 +100,6 @@ app.MapCountryEndpoints();
 
 app.MapLabelEndpoints();
 
+app.MapArtistEndpoints();
+
 app.Run();
