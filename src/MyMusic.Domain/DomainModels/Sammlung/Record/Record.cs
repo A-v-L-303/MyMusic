@@ -12,6 +12,12 @@ public sealed class Record
 
     public const string AlbumNamePattern = @"^[\p{L}\p{N} \-&'./()]+$";
 
+    public const int MaxAlbumCoverSizeBytes = 5 * 1024 * 1024;
+
+    private static readonly byte[] _jpegSignature = [0xFF, 0xD8, 0xFF];
+
+    private static readonly byte[] _pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
     public int Id { get; private init; }
 
     public int LabelId { get; private init; }
@@ -131,5 +137,49 @@ public sealed class Record
             condition,
             information,
             UserId);
+    }
+
+    public Record SetAlbumCover(byte[] albumCover)
+    {
+        if (albumCover is null || albumCover.Length == 0)
+            throw new ArgumentException("Das Album-Cover darf nicht leer sein.", nameof(albumCover));
+
+        if (albumCover.Length > MaxAlbumCoverSizeBytes)
+            throw new ArgumentException(
+                $"Das Album-Cover darf höchstens {MaxAlbumCoverSizeBytes / (1024 * 1024)} MB groß sein.",
+                nameof(albumCover));
+
+        if (DetectAlbumCoverContentType(albumCover) is null)
+            throw new ArgumentException(
+                "Das Album-Cover muss im JPEG- oder PNG-Format vorliegen.",
+                nameof(albumCover));
+
+        return new Record(
+            Id,
+            LabelId,
+            ArtistId,
+            albumCover,
+            Format,
+            AlbumName,
+            ReleaseYear,
+            Condition,
+            Information,
+            UserId);
+    }
+
+    public static string? DetectAlbumCoverContentType(byte[] data)
+    {
+        if (HasSignature(data, _jpegSignature))
+            return "image/jpeg";
+
+        if (HasSignature(data, _pngSignature))
+            return "image/png";
+
+        return null;
+    }
+
+    private static bool HasSignature(byte[] data, byte[] signature)
+    {
+        return data.Length >= signature.Length && data.AsSpan(0, signature.Length).SequenceEqual(signature);
     }
 }

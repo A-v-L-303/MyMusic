@@ -6,6 +6,8 @@ public class RecordEndpointsTests
 
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
+    private static readonly byte[] _jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
+
     [Fact]
     public async Task RecordEndpoints_CrudFilterSortierungPaginierungUndMandantentrennung()
     {
@@ -297,6 +299,63 @@ public class RecordEndpointsTests
             // assert
             Assert.Equal(HttpStatusCode.NotFound, updateForeignResponse.StatusCode);
 
+            // act: Cover ohne Token -> 401
+            using var unauthorizedCoverRequest = new HttpRequestMessage(
+                HttpMethod.Post, $"/api/records/{abbeyRoad.Id}/cover")
+            {
+                Content = BuildCoverContent(_jpegBytes, "cover.jpg")
+            };
+
+            var unauthorizedCoverResponse = await apiClient.SendAsync(unauthorizedCoverRequest, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedCoverResponse.StatusCode);
+
+            // act: ungültiges Format (Textdatei) -> 400
+            var invalidFormatCoverResponse = await PostRecordCoverAsync(
+                apiClient, ownerToken, abbeyRoad.Id, "Kein Bild"u8.ToArray(), "cover.txt", cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, invalidFormatCoverResponse.StatusCode);
+
+            // act: zu große Datei -> 400
+            var oversizedCover = new byte[(5 * 1024 * 1024) + 1];
+
+            Array.Copy(_jpegBytes, oversizedCover, _jpegBytes.Length);
+
+            var oversizedCoverResponse = await PostRecordCoverAsync(
+                apiClient, ownerToken, abbeyRoad.Id, oversizedCover, "cover.jpg", cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.BadRequest, oversizedCoverResponse.StatusCode);
+
+            // act: fremder Record -> 404 statt 403
+            var foreignCoverResponse = await PostRecordCoverAsync(
+                apiClient, otherToken, abbeyRoad.Id, _jpegBytes, "cover.jpg", cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NotFound, foreignCoverResponse.StatusCode);
+
+            // act: gültiger Upload -> 200 mit Data-URL
+            var coverResponse = await PostRecordCoverAsync(
+                apiClient, ownerToken, abbeyRoad.Id, _jpegBytes, "cover.jpg", cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, coverResponse.StatusCode);
+
+            var abbeyRoadWithCover = await ReadRecordAsync(coverResponse, cancellationToken);
+
+            Assert.NotNull(abbeyRoadWithCover.AlbumCoverDataUrl);
+            Assert.StartsWith("data:image/jpeg;base64,", abbeyRoadWithCover.AlbumCoverDataUrl);
+
+            // act: Cover erscheint auch beim erneuten Abruf (Detailansicht)
+            var getWithCoverResponse = await GetRecordAsync(apiClient, ownerToken, abbeyRoad.Id, cancellationToken);
+
+            var abbeyRoadReloaded = await ReadRecordAsync(getWithCoverResponse, cancellationToken);
+
+            // assert
+            Assert.Equal(abbeyRoadWithCover.AlbumCoverDataUrl, abbeyRoadReloaded.AlbumCoverDataUrl);
+
             // act: eigenen Record löschen -> 204
             var deleteResponse = await DeleteRecordAsync(apiClient, ownerToken, updatedLetItBe.Id, cancellationToken);
 
@@ -437,6 +496,30 @@ public class RecordEndpointsTests
             options: _jsonOptions);
 
         return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> PostRecordCoverAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int id,
+        byte[] fileContent,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, $"/api/records/{id}/cover", accessToken);
+
+        request.Content = BuildCoverContent(fileContent, fileName);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static MultipartFormDataContent BuildCoverContent(byte[] fileContent, string fileName)
+    {
+        var content = new MultipartFormDataContent();
+
+        content.Add(new ByteArrayContent(fileContent), "file", fileName);
+
+        return content;
     }
 
     /// <summary>

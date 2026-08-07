@@ -262,6 +262,24 @@ keine `label_id`-Spalte, die Beziehung zu Label besteht erst indirekt über
 die künftige `record`-Tabelle (Slice 6). Das Angular-Feature `artists/`
 folgt erst mit Block 0c (Angular-Workspace), siehe `TASK.md`.
 
+### Album-Cover-Upload (Block 6b)
+
+`RecordEndpoints` (`/api/records`) bietet zusätzlich einen dedizierten
+Upload-Endpunkt für das Album-Cover eines eigenen Records:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| POST | `/api/records/{id}/cover` | Album-Cover hochladen (`multipart/form-data`, JPEG/PNG, max. 5 MB) |
+
+Der Upload ist unabhängig vom Anlegen/Bearbeiten des Records. Eine fremde
+oder unbekannte Record-Id liefert HTTP 404 (nicht 403); ein ungültiges
+Format oder eine zu große Datei liefern HTTP 400 (im Frontend künftig als
+Modal darzustellen, siehe `wiki/architektur/fehler-und-ausnahmekonzept.md`).
+Das Cover wird als `bytea` in der `record`-Tabelle gespeichert und in
+`RecordResponse.AlbumCoverDataUrl` als vollständige Data-URL
+(`data:image/jpeg;base64,...` bzw. `image/png`) zurückgegeben — sowohl beim
+Einzelabruf als auch je Item der paginierten Liste.
+
 ### Swagger/OpenAPI (Block 0e)
 
 Im Development-Modus ist unter `http://localhost:<api-port>/swagger` eine

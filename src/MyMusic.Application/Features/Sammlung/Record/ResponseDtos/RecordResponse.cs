@@ -10,4 +10,5 @@ public sealed record RecordResponse(
     string AlbumName,
     int ReleaseYear,
     RecordCondition Condition,
-    string? Information);
+    string? Information,
+    string? AlbumCoverDataUrl);

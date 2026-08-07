@@ -25,6 +25,25 @@ public class RecordResponseBuilderTests
         Assert.Equal(1969, response.ReleaseYear);
         Assert.Equal(RecordCondition.Nm, response.Condition);
         Assert.Equal("Erste Pressung", response.Information);
+        Assert.Null(response.AlbumCoverDataUrl);
+    }
+
+    [Fact]
+    public void Build_MitAlbumCover_LiefertDataUrlMitContentType()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid());
+
+        byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        var recordMitCover = record.SetAlbumCover(pngBytes);
+
+        // act
+        var response = _builder.Build(recordMitCover, "Apple Records", null);
+
+        // assert
+        Assert.Equal($"data:image/png;base64,{Convert.ToBase64String(pngBytes)}", response.AlbumCoverDataUrl);
     }
 
     [Fact]

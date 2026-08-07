@@ -20,6 +20,7 @@ global using MyMusic.Application.DependencyInjection;
 global using MyMusic.Application.Features.Sammlung.Record.Commands.Create;
 global using MyMusic.Application.Features.Sammlung.Record.Commands.Delete;
 global using MyMusic.Application.Features.Sammlung.Record.Commands.Update;
+global using MyMusic.Application.Features.Sammlung.Record.Commands.UploadCover;
 global using MyMusic.Application.Features.Sammlung.Record.Queries.GetById;
 global using MyMusic.Application.Features.Sammlung.Record.Queries.GetPaged;
 global using MyMusic.Application.Features.Sammlung.Record.ResponseDtos;
