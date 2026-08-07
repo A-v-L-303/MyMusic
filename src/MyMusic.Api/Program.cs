@@ -18,12 +18,17 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
     }
 });
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddDbContext<MyMusicDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("mymusicdb")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("mymusicdb"),
+        MyMusicNpgsqlOptionsConfigurator.ConfigureEnums));
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
@@ -101,5 +106,7 @@ app.MapCountryEndpoints();
 app.MapLabelEndpoints();
 
 app.MapArtistEndpoints();
+
+app.MapRecordEndpoints();
 
 app.Run();

@@ -2,8 +2,10 @@
 
 Stand: 2026-08-07 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
-Artist-Backend aus Block 5)
-Branch: `block-5-artist`
+Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
+siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend)
+umgesetzt und verifiziert)
+Branch: `block-6a-record`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -25,13 +27,13 @@ Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1
 
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
-  Artist-Backend erledigt, siehe Abschnitte 2–5; Angular-Features `genres/`,
-  `labels/` und `artists/` zurückgestellt bis Block 0c).
-- Zustandsbewertung nach Goldmine-Standard.
+  Artist-Backend erledigt, siehe Abschnitte 2–5; Planung für Record/Tracks
+  abgeschlossen, siehe Abschnitt 6; Angular-Features `genres/`, `labels/`
+  und `artists/` zurückgestellt bis Block 0c).
+- Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
+  `record`-Schemas, siehe Abschnitt 6).
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
 - Discogs-Integration, Dashboard und Volltext-Suche.
-- User Stories mit Akzeptanzkriterien für Record/Tracks (Genre, Country,
-  Label und Artist erledigt, siehe `offene-themen.md` im Wiki).
 
 ## 0. Fundament: Walking Skeleton
 
@@ -229,8 +231,8 @@ Bewusst nicht Teil von 0e:
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
-Status: teilweise abgeschlossen (Genre: 2026-07-29; Country: 2026-08-05;
-Label: 2026-08-07; Artist: 2026-08-07; Record/Tracks offen)
+Status: abgeschlossen (Genre: 2026-07-29; Country: 2026-08-05;
+Label: 2026-08-07; Artist: 2026-08-07; Record/Tracks: 2026-08-07)
 Priorität: hoch, jeweils vor dem zugehörigen Slice
 
 Ziel:
@@ -250,7 +252,8 @@ Aufgaben:
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-label.md`.
   - Artist: erledigt, siehe
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-artist.md`.
-  - Record/Tracks: vor dem zugehörigen Slice nachzuziehen.
+  - Record/Tracks: erledigt, siehe
+    `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-record.md`.
 - Die sechs Prüfkriterien der groben Testplanung als Grundlage nutzen.
 
 Abnahmekriterium:
@@ -544,33 +547,174 @@ Abnahmekriterium:
 
 ## 6. Slice: Record und Tracks
 
-Status: offen
+Status: Planung abgeschlossen (2026-08-07); Umsetzung offen, aufgeteilt in
+vier einzeln prüfbare Teilblöcke (analog Block 0), da das Abnahmekriterium
+des Gesamtblocks erst ganz am Ende messbar wäre.
 Priorität: hoch, fachlicher Kern
+
+Ziel:
+
+- Ein Record mit Tracks und Zustandsbewertung ist vollständig anleg-, filter-,
+  sortier-, bearbeit- und löschbar.
+
+Voraussetzung erledigt:
+
+- User Stories und Akzeptanzkriterien liegen vor, siehe
+  `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-record.md`
+  (2026-08-07). Dabei mehrere bislang undokumentierte Regeln geklärt (u. a.
+  Duplikate bei Record ausdrücklich erlaubt, Fremdreferenzen `labelId`/
+  `artistId`/`genreId` immer mandantengefiltert mit HTTP 400 bei ungültiger
+  oder fremder Id, `record_side` auf 1–3 alphanumerische Zeichen korrigiert,
+  `track_number` eindeutig pro Record+Seite, wählbare Sortierung für
+  `GET /records`, Jahresfilter als Von-Bis-Zeitraum). Offen geblieben: Die
+  Fehlerdarstellung bei ungültigem Cover-Upload (Inline vs. Modal) — vor
+  Umsetzung von Block 6b gesondert zu klären.
+
+### 6a. Record-Backend (CRUD ohne Cover, ohne Tracks)
+
+Status: **Backend abgeschlossen** (2026-08-07)
+
+Umgesetzt (Backend):
+
+- Domain-Entität `Record` (`Domain/DomainModels/Sammlung/Record/`) nach den
+  Domain-Regeln — erste Entität mit eigenen Enums (`RecordFormat`,
+  `RecordCondition`) und erste Verwendung der neuen Kategorie `Sammlung`
+  neben `Stammdaten` (Klärung 2026-08-07, siehe Wiki
+  `architektur/application-layer.md`).
+- Commands (Create, Update, Delete), Queries (GetById, GetPaged mit Filter
+  nach Name/`artistId`/`labelId`/Erscheinungsjahr-Zeitraum/`countryId` und
+  wählbarer Sortierung nach Name/Erscheinungsjahr/Format), Response-DTOs
+  (`RecordResponse`, `RecordListResponse`) und `RecordResponseBuilder` unter
+  `Application/Features/Sammlung/Record/`. `RecordResponse` enthält bewusst
+  noch kein `Tracks`-Feld (kommt mit Block 6c).
+- Neues Validierungsmuster: `labelId`/`artistId` werden per `MustAsync`
+  mandantengefiltert geprüft (Existenz und Zugehörigkeit zum angemeldeten
+  Benutzer in einem Schritt) — eine fremde oder nicht existente Id wird
+  identisch behandelt (HTTP 400), siehe Wiki `user-stories-record.md`.
+- `countryId`-Filter löst zunächst die passenden `labelId`s des Benutzers auf
+  (`record.label_id → label.country_id`, Record hat kein eigenes Länderfeld).
+- Minimal-API-Endpoints (`RecordEndpoints`, `/api/records`) ohne
+  `/cover`-Endpoint (folgt in 6b) und ohne Track-Unterressourcen (folgt in
+  6c); `sortBy`/`sortDirection`-Normalisierung analog zur bestehenden
+  `page`/`pageSize`-Normalisierung.
+- EF-Migration `CreateRecordTable`: legt die `record`-Tabelle sowie die
+  beiden nativen PostgreSQL-Enum-Typen `record_format`/`record_condition`
+  an (erste Verwendung nativer Postgres-Enums im Projekt), FK zu
+  `label`/`artist` mit `ON DELETE RESTRICT`, bewusst **ohne**
+  Unique-Constraint (Duplikate ausdrücklich erlaubt).
+- `JsonStringEnumConverter` global in `MyMusic.Api/Program.cs` aktiviert,
+  damit `Format`/`Condition` als lesbare Strings (z. B. `"CdAlbum"`, `"Vg"`)
+  statt als Zahlen über die API laufen.
+- Unit Tests: Domain (`RecordTests`, 20 Fälle inkl. Zeichensatz mit
+  Klammern, Erscheinungsjahr-Bereich), Application (Handler, Validatoren
+  inkl. neuer mandantengefilterter FK-Prüfung, `RecordResponseBuilder`,
+  `GetPagedRecordsQueryHandler` inkl. Sortier-/Filter-Kombinationen — 48
+  Fälle) — 68 neue Unit-Tests, alle grün.
+- Integrationstest `RecordEndpointsTests` (CRUD-Fluss, alle Filter inkl.
+  `countryId` über Label, alle Sortierfelder, Paginierung,
+  Mandantentrennung, 400/404, Duplikate ausdrücklich erlaubt) nach Muster
+  `LabelEndpointsTests`; grün (gemeinsamer Lauf mit den fünf bestehenden
+  Integrationstests, 7/7 grün).
+
+Nachträge nach Implementierung (zwei grundlegende, projektweit relevante
+technische Korrekturen, gefunden über den vollständigen Integrationstestlauf):
+
+- **`HasPostgresEnum<T>`-Parameterreihenfolge**: Die generische Überladung
+  lautet `(schema, name, nameTranslator)`, nicht `(name, nameTranslator)` —
+  ein einzelner positionaler String wird als Schema interpretiert. Führte
+  zunächst dazu, dass `record_format`/`record_condition` als Schemas mit
+  darin liegenden Typen `RecordFormat`/`RecordCondition` angelegt wurden,
+  statt als Typen im Standard-Schema. Fix: `name:`/`nameTranslator:`
+  explizit benannt übergeben.
+- **`ManyServiceProvidersCreatedWarning`**: `NpgsqlDbContextOptionsBuilder
+  .MapEnum(...)` fließt in die `DbContextOptions` ein, anhand derer EF Core
+  seinen internen `ServiceProvider` cacht. Neue `INpgsqlNameTranslator`
+  -Instanzen bei jedem `UseNpgsql(...)`-Aufruf (also je DbContext-
+  Konstruktion, je Request) ließen EF Core nach mehr als zwanzig Requests
+  **jeden** Endpunkt — auch die unveränderten Genre-/Label-/Artist-/
+  Country-Endpunkte — mit HTTP 500 fehlschlagen, da die Konfiguration bei
+  jeder DbContext-Instanziierung als „geändert" galt. Fix:
+  Übersetzer-Instanzen als Singletons (`MyMusicNpgsqlOptionsConfigurator`)
+  statt `new` je Aufruf. Nur über den vollständigen
+  `RecordEndpointsTests`-Lauf mit vielen aufeinanderfolgenden Requests
+  aufgefallen — bei kurzen manuellen Prüfungen unauffällig.
+- `RecordConfiguration.cs`: `HasDefaultValueSql("'VG'::record_condition")`
+  statt `HasDefaultValue(RecordCondition.Vg)`, da EF sonst den rohen
+  Int-Wert ohne Enum-Cast als DB-Default schreibt (Postgres lehnt
+  `DEFAULT 3` für eine Spalte vom Typ `record_condition` ab). Zusätzlich
+  `HasSentinel((RecordCondition)(-1))`, da `RecordCondition.Mint` zufällig
+  der CLR-Default (`0`) ist und ohne Sentinel als „nicht gesetzt"
+  missverstanden würde.
+
+Bewusst nicht Teil dieses Standes:
+
+- Album-Cover (`AlbumCover` bleibt `null`, Upload folgt in 6b).
+- Tracks (`RecordResponse` ohne `Tracks`-Feld, folgt in 6c).
+
+Abnahmekriterium erfüllt:
+
+- Records lassen sich anlegen, anzeigen, filtern, sortieren, bearbeiten und
+  löschen (noch ohne Cover, noch ohne Tracks); fremde Benutzerdaten sind
+  nicht sichtbar; `labelId`/`artistId` werden mandantengefiltert geprüft.
+
+### 6b. Album-Cover-Upload
+
+Status: offen
 
 Aufgaben:
 
-- Record-CRUD mit Card-Ansicht, Paginierung, Filterung (Name, Artist, Label,
-  Erscheinungsjahr, Land) und Sortierung (Name, Erscheinungsjahr, Format).
-- Album-Cover hochladen und Vorschau anzeigen.
-- Record-Detailansicht mit Track-Liste.
-- Track-CRUD in der Detailansicht (Unteransicht, kein eigener Reiter).
-- Zustandsbewertung nach Goldmine-Standard (Datenmodell-Erweiterung,
-  Wiki `domain/zustandsbewertung.md`).
-- **Pflicht (Nachtrag aus Block 2)**: `DeleteGenreCommandHandler`
+- Vorab klären: Fehlerdarstellung bei ungültigem Format/zu großer Datei
+  (siehe offener Punkt in `user-stories-record.md`).
+- Endpoint `POST /records/{id}/cover` (multipart/form-data, JPEG/PNG,
+  max. 5 MB), Ownership-Prüfung wie bei den übrigen Record-Endpoints.
+
+Abnahmekriterium:
+
+- Für einen eigenen Record kann ein Cover hochgeladen werden und erscheint
+  danach in Card- und Detailansicht.
+
+### 6c. Track-Backend
+
+Status: offen
+
+Aufgaben:
+
+- Domain-Entität `RecordTrack` nach den Domain-Regeln.
+- Commands (Create, Update, Delete) als Sub-Ressource von Record
+  (`POST/PUT/DELETE /records/{id}/tracks[/{trackId}]`), eingebettet in die
+  `GET /records/{id}`-Antwort (kein eigenständiger Abruf).
+- `artistId`/`genreId` mandantengefiltert prüfen (HTTP 400 bei ungültig/
+  fremd); `recordSide`+`trackNumber` eindeutig pro Record (HTTP 409 bei
+  Verstoß).
+- EF-Migration `CreateRecordTrackTable`.
+- Unit- und Integrationstests analog zu Genre/Label/Artist.
+
+Abnahmekriterium:
+
+- Tracks lassen sich zu einem eigenen Record hinzufügen, bearbeiten und
+  löschen; Mandantentrennung und Eindeutigkeitsprüfung greifen.
+
+### 6d. Nachträge aus Block 2, 4 und 5
+
+Status: offen
+
+Aufgaben:
+
+- `DeleteGenreCommandHandler`
   (`Application/Features/Stammdaten/Genre/Commands/Delete/`) um die in
   US-G5 beschriebene Referenzprüfung gegen `record_track` ergänzen (HTTP 409,
   wenn noch mindestens ein Track das Genre referenziert). Im Genre-Slice
   bewusst ausgelassen, da `record_track` dort noch nicht existierte — siehe
   `docs/prompts/2026-08-04-block-2-genre.md` und Wiki
   `user-stories/user-stories-genre.md` (US-G5).
-- **Pflicht (Nachtrag aus Block 4)**: `DeleteLabelCommandHandler`
+- `DeleteLabelCommandHandler`
   (`Application/Features/Stammdaten/Label/Commands/Delete/`) um die in
   US-L5 beschriebene Referenzprüfung gegen `record` ergänzen (HTTP 409, wenn
   noch mindestens ein Record das Label referenziert). Im Label-Slice bewusst
   ausgelassen, da `record` dort noch nicht existierte — siehe
   `docs/prompts/2026-08-07-block-4-label.md` und Wiki
   `user-stories/user-stories-label.md` (US-L5).
-- **Pflicht (Nachtrag aus Block 5)**: `DeleteArtistCommandHandler`
+- `DeleteArtistCommandHandler`
   (`Application/Features/Stammdaten/Artist/Commands/Delete/`) um die in
   US-A5 beschriebene Referenzprüfung gegen `record` **und** `record_track`
   ergänzen (HTTP 409, wenn noch mindestens ein Record oder Track den Artist
@@ -579,8 +723,7 @@ Aufgaben:
   `record`/`record_track` dort noch nicht existierten — siehe
   `docs/prompts/2026-08-07-block-5-artist.md` und Wiki
   `user-stories/user-stories-artist.md` (US-A5).
-- **Pflicht (Nachtrag aus Block 5)**: `GetPagedArtistsQuery`/
-  `GetPagedArtistsQueryHandler`/`ArtistEndpoints`
+- `GetPagedArtistsQuery`/`GetPagedArtistsQueryHandler`/`ArtistEndpoints`
   (`Application/Features/Stammdaten/Artist/Queries/GetPaged/`,
   `Api/Endpoints/Stammdaten/Artist/`) um einen `labelId`-Filter ergänzen,
   sobald `record.artist_id → record.label_id` existiert (siehe US-A2). Im
@@ -591,8 +734,9 @@ Aufgaben:
 
 Abnahmekriterium:
 
-- Ein Record mit Tracks und Zustandsbewertung ist vollständig anleg-, filter-,
-  sortier-, bearbeit- und löschbar.
+- `DeleteGenreCommandHandler`, `DeleteLabelCommandHandler` und
+  `DeleteArtistCommandHandler` verhindern das Löschen real referenzierter
+  Datensätze (HTTP 409); `GET /artists` unterstützt den `labelId`-Filter.
 
 ## 7. Authentifizierung und Mandantentrennung
 

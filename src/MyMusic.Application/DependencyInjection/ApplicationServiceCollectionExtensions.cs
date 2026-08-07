@@ -18,6 +18,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<ArtistResponseBuilder>();
 
+        services.AddScoped<RecordResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

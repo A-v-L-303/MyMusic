@@ -10,7 +10,9 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddDbContext<MyMusicDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("mymusicdb")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("mymusicdb"),
+        MyMusicNpgsqlOptionsConfigurator.ConfigureEnums));
 
 var host = builder.Build();
 

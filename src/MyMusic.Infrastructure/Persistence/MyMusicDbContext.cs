@@ -6,6 +6,14 @@ public class MyMusicDbContext(DbContextOptions<MyMusicDbContext> options) : DbCo
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasPostgresEnum<RecordFormat>(
+            name: "record_format",
+            nameTranslator: MyMusicNpgsqlOptionsConfigurator.RecordFormatTranslator);
+
+        modelBuilder.HasPostgresEnum<RecordCondition>(
+            name: "record_condition",
+            nameTranslator: MyMusicNpgsqlOptionsConfigurator.RecordConditionTranslator);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyMusicDbContext).Assembly);
     }
 }
