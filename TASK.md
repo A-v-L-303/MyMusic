@@ -5,7 +5,7 @@ Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend) und
 Block 6b (Album-Cover-Upload) umgesetzt und verifiziert)
-Branch: `block-6b-album-cover`
+Branch: `main` (Block 6b per PR #30 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
