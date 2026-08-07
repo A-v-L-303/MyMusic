@@ -173,14 +173,15 @@ Token benötigt. Der Realm-Import enthält dafür den Client
 
 ```powershell
 $token = (Invoke-RestMethod -Method Post `
-  -Uri "http://localhost:<keycloak-port>/realms/mymusic/protocol/openid-connect/token" `
+  -Uri "http://localhost:8080/realms/mymusic/protocol/openid-connect/token" `
   -Body @{ grant_type = "password"; client_id = "mymusic-integration-tests"; username = "<vorhandener-testbenutzer>"; password = "<passwort>" }).access_token
 
 Invoke-RestMethod -Uri "http://localhost:<api-port>/api/me" -Headers @{ Authorization = "Bearer $token" }
 ```
 
 Ohne Token liefert `/api/me` HTTP 401; mit gültigem Token HTTP 200 mit der
-eigenen `userId`. Ports stehen in der Aspire-Dashboard-Ausgabe.
+eigenen `userId`. Der Keycloak-Port ist seit Block 0a fest auf `8080`; der
+API-Port steht in der Aspire-Dashboard-Ausgabe.
 
 ### Genre-Slice (Block 2)
 

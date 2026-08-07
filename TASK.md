@@ -68,6 +68,13 @@ im Wiki (`projekt/backup-konzept.md`) dokumentierte Anbindung von Keycloak an
 eine PostgreSQL-Datenbank offen — das betrifft das noch ausstehende
 Production-/Docker-Compose-Setup, nicht Block 0a.
 
+Nachtrag (2026-08-07): Die Keycloak-Endpunkte `http` und `management` hatten
+seit Block 0a keine festen Host-Ports, sondern von Aspire zufällig vergebene
+(`WithHttpEndpoint()` setzte nur `targetPort`, kein `port:`-Argument). Das
+widersprach der im Wiki (`architektur/aspire-orchestrierung.md`, Abschnitt
+„Port-Konfiguration") dokumentierten Entscheidung für feste Host-Ports 8080
+(http) und 9000 (management). In `AppHost.cs` nachträglich ergänzt.
+
 Bewusst nicht Teil von 0a:
 
 - JWT-Verdrahtung im Code und Auth-Smoke-Test (0b).
