@@ -16,6 +16,10 @@ public static class RecordEndpoints
 
         group.MapDelete("/{id:int}", DeleteRecordAsync);
 
+        // Formularbindung erfordert seit .NET 8 explizites Opt-out von Antiforgery (ADR 0008);
+        // unkritisch, da diese API ausschließlich JWT-Bearer statt Cookies nutzt.
+        group.MapPost("/{id:int}/cover", UploadRecordCoverAsync).DisableAntiforgery();
+
         return endpoints;
     }
 
@@ -115,5 +119,29 @@ public static class RecordEndpoints
         await mediator.SendAsync(new DeleteRecordCommand(id), cancellationToken);
 
         return Results.NoContent();
+    }
+
+    /// <summary>
+    /// Lädt ein Album-Cover für einen eigenen Record hoch.
+    /// </summary>
+    private static async Task<RecordResponse> UploadRecordCoverAsync(
+        int id,
+        [FromForm] IFormFile file,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        await using var memoryStream = new MemoryStream();
+
+        await file.CopyToAsync(memoryStream, cancellationToken);
+
+        var command = new UploadRecordCoverCommand
+        {
+            Id = id,
+            UserId = currentUserService.UserId,
+            FileContent = memoryStream.ToArray()
+        };
+
+        return await mediator.SendAsync(command, cancellationToken);
     }
 }

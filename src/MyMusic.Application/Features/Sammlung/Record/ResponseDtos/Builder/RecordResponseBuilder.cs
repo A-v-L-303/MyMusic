@@ -14,7 +14,18 @@ public sealed class RecordResponseBuilder
             record.AlbumName,
             record.ReleaseYear,
             record.Condition,
-            record.Information);
+            record.Information,
+            BuildAlbumCoverDataUrl(record.AlbumCover));
+    }
+
+    private static string? BuildAlbumCoverDataUrl(byte[]? albumCover)
+    {
+        if (albumCover is null)
+            return null;
+
+        var contentType = RecordEntity.DetectAlbumCoverContentType(albumCover);
+
+        return $"data:{contentType};base64,{Convert.ToBase64String(albumCover)}";
     }
 
     public RecordListResponse BuildPaged(

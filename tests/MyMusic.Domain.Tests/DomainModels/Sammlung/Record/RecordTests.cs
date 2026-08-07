@@ -215,4 +215,114 @@ public class RecordTests
         Assert.Equal(userId, updatedRecord.UserId);
         Assert.Equal(record.AlbumCover, updatedRecord.AlbumCover);
     }
+
+    [Fact]
+    public void SetAlbumCover_GueltigesJpeg_GibtNeueInstanzMitCoverZurueck()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+
+        byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
+
+        // act
+        var updatedRecord = record.SetAlbumCover(jpegBytes);
+
+        // assert
+        Assert.NotSame(record, updatedRecord);
+        Assert.Null(record.AlbumCover);
+        Assert.Equal(jpegBytes, updatedRecord.AlbumCover);
+    }
+
+    [Fact]
+    public void SetAlbumCover_GueltigesPng_GibtNeueInstanzMitCoverZurueck()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+
+        byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        // act
+        var updatedRecord = record.SetAlbumCover(pngBytes);
+
+        // assert
+        Assert.Equal(pngBytes, updatedRecord.AlbumCover);
+    }
+
+    [Fact]
+    public void SetAlbumCover_LeeresArray_WirftArgumentException()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+
+        // act
+        var act = () => record.SetAlbumCover([]);
+
+        // assert
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void SetAlbumCover_ZuGross_WirftArgumentException()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+
+        var zuGrosseDatei = new byte[RecordEntity.MaxAlbumCoverSizeBytes + 1];
+
+        byte[] jpegSignatur = [0xFF, 0xD8, 0xFF];
+
+        Array.Copy(jpegSignatur, zuGrosseDatei, jpegSignatur.Length);
+
+        // act
+        var act = () => record.SetAlbumCover(zuGrosseDatei);
+
+        // assert
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void SetAlbumCover_UngueltigeSignatur_WirftArgumentException()
+    {
+        // arrange
+        var record = RecordEntity.Create(
+            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+
+        byte[] textBytes = "Kein Bild"u8.ToArray();
+
+        // act
+        var act = () => record.SetAlbumCover(textBytes);
+
+        // assert
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void DetectAlbumCoverContentType_Jpeg_GibtImageJpegZurueck()
+    {
+        // arrange
+        byte[] jpegBytes = [0xFF, 0xD8, 0xFF];
+
+        // act
+        var contentType = RecordEntity.DetectAlbumCoverContentType(jpegBytes);
+
+        // assert
+        Assert.Equal("image/jpeg", contentType);
+    }
+
+    [Fact]
+    public void DetectAlbumCoverContentType_UnbekannteSignatur_GibtNullZurueck()
+    {
+        // arrange
+        byte[] unknownBytes = [0x00, 0x01, 0x02];
+
+        // act
+        var contentType = RecordEntity.DetectAlbumCoverContentType(unknownBytes);
+
+        // assert
+        Assert.Null(contentType);
+    }
 }

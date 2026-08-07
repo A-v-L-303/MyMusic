@@ -3,9 +3,9 @@
 Stand: 2026-08-07 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
-siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend)
-umgesetzt und verifiziert)
-Branch: `block-6a-record`
+siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend) und
+Block 6b (Album-Cover-Upload) umgesetzt und verifiziert)
+Branch: `block-6b-album-cover`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -27,9 +27,11 @@ Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1
 
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
-  Artist-Backend erledigt, siehe Abschnitte 2–5; Planung für Record/Tracks
-  abgeschlossen, siehe Abschnitt 6; Angular-Features `genres/`, `labels/`
-  und `artists/` zurückgestellt bis Block 0c).
+  Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
+  (Block 6a) und Album-Cover-Upload (Block 6b) erledigt, siehe Abschnitt 6;
+  Track-Backend (Block 6c) und die Nachträge aus Block 2/4/5 (Block 6d) noch
+  offen; Angular-Features `genres/`, `labels/`, `artists/` und `records/`
+  zurückgestellt bis Block 0c).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
@@ -659,19 +661,59 @@ Abnahmekriterium erfüllt:
 
 ### 6b. Album-Cover-Upload
 
-Status: offen
+Status: **Backend abgeschlossen** (2026-08-07)
+Arbeits-Prompt: `docs/prompts/2026-08-07-block-6b-album-cover-upload.md`
 
-Aufgaben:
+Vorab geklärt: Fehlerdarstellung bei ungültigem Format/zu großer Datei ist
+**Modal**, nicht Inline — Ausnahme von der allgemeinen 400-Regel in
+`fehler-und-ausnahmekonzept.md` (Datei-Uploads sind dort nicht als eigene
+Kategorie geführt). Beide betroffenen Wiki-Seiten aktualisiert.
 
-- Vorab klären: Fehlerdarstellung bei ungültigem Format/zu großer Datei
-  (siehe offener Punkt in `user-stories-record.md`).
-- Endpoint `POST /records/{id}/cover` (multipart/form-data, JPEG/PNG,
-  max. 5 MB), Ownership-Prüfung wie bei den übrigen Record-Endpoints.
+Umgesetzt (Backend):
 
-Abnahmekriterium:
+- Domain-Methode `Record.SetAlbumCover(byte[])` — analog zu `Update(...)`,
+  gibt neue Instanz zurück. Neue Konstante `MaxAlbumCoverSizeBytes` (5 MB)
+  und statische Methode `DetectAlbumCoverContentType(byte[])` (Magic-Byte-
+  Erkennung JPEG/PNG), von Domain-Guard **und** Application-Validator
+  gemeinsam genutzt.
+- Commands unter `Application/Features/Sammlung/Record/Commands/UploadCover/`
+  (`UploadRecordCoverCommand`, Validator, Handler) nach dem Muster von
+  `UpdateRecordCommand`: Load → Ownership-Check (404) →
+  `SetAlbumCover(...)` → `Update`/`SaveChangesAsync` → Label-/Artist-Namen
+  nachladen → `RecordResponseBuilder.Build(...)`.
+- `RecordResponse` um `AlbumCoverDataUrl` (`string?`) erweitert;
+  `RecordResponseBuilder` baut bei vorhandenem Cover eine vollständige
+  Data-URL (`data:image/jpeg;base64,...` bzw. `image/png`) — erscheint
+  automatisch in Card- **und** Detailansicht, da `Build(...)` in beiden
+  Pfaden verwendet wird.
+- Minimal-API-Endpoint `POST /api/records/{id}/cover` in der bestehenden
+  `RecordEndpoints`-Gruppe, `[FromForm] IFormFile`-Bindung,
+  `.DisableAntiforgery()` (seit .NET 8 für formularbindende Endpunkte
+  erforderlich; unkritisch bei reiner JWT-Bearer-API ohne Cookies, siehe
+  ADR `docs/adr/0008-kein-antiforgery-fuer-cover-upload.md`).
+- Keine neue EF-Migration nötig — `album_cover bytea` existiert bereits seit
+  der Block-6a-Migration `CreateRecordTable`.
+- Unit Tests: Domain (`RecordTests`, `SetAlbumCover`/
+  `DetectAlbumCoverContentType`, 8 neue Fälle), Application
+  (`UploadRecordCoverCommandValidatorTests`,
+  `UploadRecordCoverCommandHandlerTests`, `RecordResponseBuilderTests`
+  erweitert) — alle grün.
+- Integrationstest `RecordEndpointsTests` um den Cover-Upload-Fluss im
+  bestehenden CRUD-Testfall ergänzt (401 ohne Token, 400 bei ungültigem
+  Format, 400 bei zu großer Datei, 404 bei fremdem Record, 200 mit
+  Data-URL, Persistenz über erneuten Abruf geprüft).
+
+Bewusst nicht Teil dieses Standes:
+
+- Angular-Anbindung (Upload-UI, Modal-Fehlerdarstellung) — folgt erst nach
+  Block 0c.
+- Thumbnail-/Resize-Verarbeitung, verschärftes `RequestSizeLimit`.
+
+Abnahmekriterium erfüllt:
 
 - Für einen eigenen Record kann ein Cover hochgeladen werden und erscheint
-  danach in Card- und Detailansicht.
+  danach in Card- und Detailansicht; fremde/unbekannte Records liefern 404,
+  ungültiges Format/zu große Datei liefern 400.
 
 ### 6c. Track-Backend
 
