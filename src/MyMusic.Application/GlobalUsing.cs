@@ -13,6 +13,8 @@ global using MyMusic.Application.Features.Stammdaten.Country.ResponseDtos;
 global using MyMusic.Application.Features.Stammdaten.Country.ResponseDtos.Builder;
 global using MyMusic.Application.Features.Stammdaten.Genre.ResponseDtos;
 global using MyMusic.Application.Features.Stammdaten.Genre.ResponseDtos.Builder;
+global using MyMusic.Application.Features.Sammlung.Record.ResponseDtos;
+global using MyMusic.Application.Features.Sammlung.Record.ResponseDtos.Builder;
 global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos;
 global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos.Builder;
 global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos;
@@ -22,4 +24,7 @@ global using ArtistEntity = MyMusic.Domain.DomainModels.Stammdaten.Artist.Artist
 global using CountryEntity = MyMusic.Domain.DomainModels.Stammdaten.Country.Country;
 global using GenreEntity = MyMusic.Domain.DomainModels.Stammdaten.Genre.Genre;
 global using LabelEntity = MyMusic.Domain.DomainModels.Stammdaten.Label.Label;
+global using RecordEntity = MyMusic.Domain.DomainModels.Sammlung.Record.Record;
+global using RecordFormat = MyMusic.Domain.DomainModels.Sammlung.Record.RecordFormat;
+global using RecordCondition = MyMusic.Domain.DomainModels.Sammlung.Record.RecordCondition;
 global using ValidationException = MyMusic.Application.Common.Exceptions.ValidationException;
