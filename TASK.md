@@ -6,8 +6,7 @@ Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload) und Block 6c (Track-Backend) umgesetzt und
 verifiziert)
-Branch: `main` (Block 6b per PR #30 nach `main` gemergt); Block 6c auf
-Feature-Branch `block-6c-track-backend`, noch nicht committet/gemergt
+Branch: `main` (Block 6b per PR #30, Block 6c per PR #32 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -720,8 +719,7 @@ Abnahmekriterium erfüllt:
 
 ### 6c. Track-Backend
 
-Status: **Backend abgeschlossen** (2026-08-07), umgesetzt auf Feature-Branch
-`block-6c-track-backend` (noch nicht committet/gemergt)
+Status: **Backend abgeschlossen** (2026-08-07), PR #32 nach `main` gemergt
 
 Umgesetzt (Backend):
 
