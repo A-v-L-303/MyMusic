@@ -98,4 +98,6 @@ app.MapGenreEndpoints();
 
 app.MapCountryEndpoints();
 
+app.MapLabelEndpoints();
+
 app.Run();

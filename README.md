@@ -218,12 +218,34 @@ siehe `country`-Tabelle) und kein `Update()` auf der Entität (Länder werden ni
 mutiert). Die Referenzdaten werden einmalig per Migration geseedet. Kein
 Angular-Feature vorgesehen (keine CRUD-Maske, siehe `TASK.md`).
 
+### Label-Slice (Block 4)
+
+Erster Slice mit einer Fremdschlüsselbeziehung zu einer anderen
+Stammdaten-Entität (`country_id → country.id`, `ON DELETE RESTRICT`).
+`LabelEndpoints` (`/api/labels`, `.RequireAuthorization()`) bietet CRUD plus
+paginierte, nach Name und Land filterbare und nach Name sortierte Liste:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/labels?page=&pageSize=&name=&countryId=` | Paginierte Liste, sortiert nach Name |
+| GET | `/api/labels/{id}` | Einzelnes Label |
+| POST | `/api/labels` | Label anlegen (`{ "name", "countryId", "information" }`) |
+| PUT | `/api/labels/{id}` | Label bearbeiten |
+| DELETE | `/api/labels/{id}` | Label löschen |
+
+Die Response löst den Ländernamen serverseitig auf (`CountryName` neben
+`CountryId`). Eine nicht existierende `countryId` liefert HTTP 400 (nicht
+404), ein doppelter Name innerhalb der eigenen Sammlung HTTP 409, eine fremde
+oder unbekannte Id HTTP 404 (nicht 403) — analog Genre. Das Angular-Feature
+`labels/` folgt erst mit Block 0c (Angular-Workspace), siehe `TASK.md`.
+
 ### Swagger/OpenAPI (Block 0e)
 
 Im Development-Modus ist unter `http://localhost:<api-port>/swagger` eine
 Swagger-UI erreichbar, die alle Minimal-API-Endpunkte (`/api/me`,
-`/api/genres`, `/api/countries`) samt ihrer `<summary>`-Beschreibungen
-auflistet. Über den Button "Authorize" lässt sich ein Access Token (siehe
+`/api/genres`, `/api/countries`, `/api/labels`) samt ihrer
+`<summary>`-Beschreibungen auflistet. Über den Button "Authorize" lässt sich
+ein Access Token (siehe
 oben, Token-Bezug) als Bearer-Token hinterlegen, danach sind auch die
 geschützten Endpunkte direkt aus der UI heraus aufrufbar. Im
 Aspire-Dashboard erscheint neben der `api`-Ressource ein direkter
