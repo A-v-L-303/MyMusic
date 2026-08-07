@@ -1,8 +1,9 @@
 # Offene Aufgaben
 
 Stand: 2026-08-07 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
-Block 2, dem Country-Backend aus Block 3 und dem Label-Backend aus Block 4)
-Branch: `block-4-label`
+Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
+Artist-Backend aus Block 5)
+Branch: `block-5-artist`
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -23,14 +24,14 @@ Feature-Roadmap und aktuellem Repository-Stand.
 Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
 - Angular-Workspace (Block 0c).
-- CRUD-Slices für Artist, Record und Tracks (Genre-, Country- und
-  Label-Backend erledigt, siehe Abschnitte 2–4; Angular-Features `genres/`
-  und `labels/` zurückgestellt bis Block 0c).
+- CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
+  Artist-Backend erledigt, siehe Abschnitte 2–5; Angular-Features `genres/`,
+  `labels/` und `artists/` zurückgestellt bis Block 0c).
 - Zustandsbewertung nach Goldmine-Standard.
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
 - Discogs-Integration, Dashboard und Volltext-Suche.
-- User Stories mit Akzeptanzkriterien für Artist und Record/Tracks (Genre,
-  Country und Label erledigt, siehe `offene-themen.md` im Wiki).
+- User Stories mit Akzeptanzkriterien für Record/Tracks (Genre, Country,
+  Label und Artist erledigt, siehe `offene-themen.md` im Wiki).
 
 ## 0. Fundament: Walking Skeleton
 
@@ -229,7 +230,7 @@ Bewusst nicht Teil von 0e:
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
 Status: teilweise abgeschlossen (Genre: 2026-07-29; Country: 2026-08-05;
-Label: 2026-08-07; Artist, Record/Tracks offen)
+Label: 2026-08-07; Artist: 2026-08-07; Record/Tracks offen)
 Priorität: hoch, jeweils vor dem zugehörigen Slice
 
 Ziel:
@@ -247,7 +248,9 @@ Aufgaben:
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-country.md`.
   - Label: erledigt, siehe
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-label.md`.
-  - Artist, Record/Tracks: jeweils vor dem zugehörigen Slice nachzuziehen.
+  - Artist: erledigt, siehe
+    `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-artist.md`.
+  - Record/Tracks: vor dem zugehörigen Slice nachzuziehen.
 - Die sechs Prüfkriterien der groben Testplanung als Grundlage nutzen.
 
 Abnahmekriterium:
@@ -479,18 +482,65 @@ Abnahmekriterium:
 
 ## 5. Slice: Artist
 
-Status: offen
+Status: **Backend abgeschlossen** (2026-08-07); Angular-Feature `artists/`
+zurückgestellt bis Block 0c (Angular-Workspace) umgesetzt ist — analog
+Genre und Label.
 Priorität: mittel
 
-Aufgaben:
+Ziel:
 
-- CRUD, Tabellenansicht mit Paginierung, Filterung nach Name und Label,
-  Sortierung nach Name.
+- Artist als Stammdaten für Records und Tracks (Wiki `domain/artist.md`).
+
+Voraussetzung erledigt:
+
+- User Stories und Akzeptanzkriterien liegen vor, siehe
+  `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-artist.md`
+  (2026-08-07).
+
+Umgesetzt (Backend):
+
+- Domain-Entität `Artist` (`Domain/DomainModels/Stammdaten/Artist/`) nach
+  den Domain-Regeln — strukturell nahezu identisch zu Genre (kein
+  Fremdschlüssel, kein Zusatzfeld), mit eigenen Namensregeln: Name
+  Pflichtfeld 3–120 Zeichen mit demselben erweiterten Zeichenset wie Label
+  (zusätzlich `.` und `/`, bewusst ohne Klammern, siehe Klärung 2026-08-07).
+- Commands (Create, Update, Delete), Queries (GetById, GetPaged mit Filter
+  nach Name), Response-DTOs (`ArtistResponse`, `ArtistListResponse`) und
+  `ArtistResponseBuilder` unter `Application/Features/Stammdaten/Artist/`.
+- Minimal-API-Endpoints (`ArtistEndpoints`, `/api/artists`) mit
+  `.RequireAuthorization()`.
+- EF-Migration `CreateArtistTable` (legt die `artist`-Tabelle mit
+  `UNIQUE (user_id, artist_name)` an; kein Fremdschlüssel).
+- Unit Tests: Domain (`ArtistTests`, 15 Fälle inkl. Zeichensatz- und
+  Längenvalidierung), Application (Handler, Validatoren,
+  `ArtistResponseBuilder` — 39 Fälle) — 54 neue Unit-Tests, alle grün.
+- Integrationstest `ArtistEndpointsTests` (voller CRUD-Fluss, Paginierung,
+  Namensfilter, Sortierung, Mandantentrennung, 400/404/409) nach Muster
+  `GenreEndpointsTests`; grün (gemeinsamer Lauf mit `MeEndpointTests`/
+  `GenreEndpointsTests`/`CountryEndpointsTests`/`LabelEndpointsTests`,
+  6/6 grün).
+
+Bewusst nicht Teil dieses Standes:
+
+- Angular-Feature `artists/` (Tabellenansicht, Filterung, Add/Edit als
+  Modal) — braucht Block 0c.
+- **Label-Filter bei `GET /artists`**: Laut `api-endpunkte.md` vorgesehen,
+  aber fachlich erst mit Slice 6 umsetzbar — die `artist`-Tabelle hat keine
+  `label_id`-Spalte, die Beziehung zu Label besteht nur indirekt über
+  `record.artist_id → record.label_id`, siehe Wiki `domain/artist.md` und
+  `user-stories-artist.md` (US-A2).
+- Referenzprüfung gegen `record`/`record_track` in
+  `DeleteArtistCommandHandler` (siehe Slice 6 unten) — beide Tabellen
+  existieren erst dort, analog zur bereits bestehenden Nachtrag-Pflicht für
+  `DeleteGenreCommandHandler`/`DeleteLabelCommandHandler`.
 
 Abnahmekriterium:
 
-- Artists sind vollständig verwaltbar; Filter und Sortierung entsprechen der
-  Feature-Roadmap.
+- Artists lassen sich anlegen, anzeigen, filtern, bearbeiten und löschen;
+  fremde Benutzerdaten sind nicht sichtbar; Tests decken Happy Path,
+  Validierung und unbekannte IDs ab. **Backend erfüllt** (Filterung
+  vorerst nur nach Name, siehe oben); die UI-seitigen Teile (Tabellenansicht,
+  Filter, Modal) folgen mit dem Angular-Feature nach Block 0c.
 
 ## 6. Slice: Record und Tracks
 
@@ -520,6 +570,24 @@ Aufgaben:
   ausgelassen, da `record` dort noch nicht existierte — siehe
   `docs/prompts/2026-08-07-block-4-label.md` und Wiki
   `user-stories/user-stories-label.md` (US-L5).
+- **Pflicht (Nachtrag aus Block 5)**: `DeleteArtistCommandHandler`
+  (`Application/Features/Stammdaten/Artist/Commands/Delete/`) um die in
+  US-A5 beschriebene Referenzprüfung gegen `record` **und** `record_track`
+  ergänzen (HTTP 409, wenn noch mindestens ein Record oder Track den Artist
+  referenziert — zwei Existenzabfragen, da Artist anders als Genre/Label von
+  beiden Tabellen referenziert wird). Im Artist-Slice bewusst ausgelassen, da
+  `record`/`record_track` dort noch nicht existierten — siehe
+  `docs/prompts/2026-08-07-block-5-artist.md` und Wiki
+  `user-stories/user-stories-artist.md` (US-A5).
+- **Pflicht (Nachtrag aus Block 5)**: `GetPagedArtistsQuery`/
+  `GetPagedArtistsQueryHandler`/`ArtistEndpoints`
+  (`Application/Features/Stammdaten/Artist/Queries/GetPaged/`,
+  `Api/Endpoints/Stammdaten/Artist/`) um einen `labelId`-Filter ergänzen,
+  sobald `record.artist_id → record.label_id` existiert (siehe US-A2). Im
+  Artist-Slice bewusst ausgelassen, da die Beziehung zu Label nur über die
+  hier neu entstehende `record`-Tabelle geprüft werden kann — siehe
+  `docs/prompts/2026-08-07-block-5-artist.md` und Wiki
+  `user-stories/user-stories-artist.md` (US-A2).
 
 Abnahmekriterium:
 
