@@ -329,6 +329,9 @@ anzusprechen — nicht stillschweigend zu entscheiden.
 
 Kernpunkte:
 
+- Commit- und Pull-Request-Kommentare werden immer auf Deutsch verfasst, in
+  UTF-8-Formatierung mit echten Umlauten (ä, ö, ü). Ersatzschreibweisen wie
+  ue, oe, ae sind absolut verboten.
 - Code-Bezeichner Englisch; Fehlermeldungen und Log-Nachrichten Deutsch.
 - Keine Abkürzungen (`ArtistId` statt `ArtId`).
 - Maximale Zeilenlänge 120 Zeichen; lange Ausdrücke, Methodenaufrufe mit
