@@ -275,6 +275,25 @@ den Basis-Endpoint, keinen direkten Link auf `/swagger`. `AppHost.cs` um
 += "/swagger"; })` ergänzt, damit im Dashboard ein direkter „Swagger
 UI"-Shortcut neben der `api`-Ressource erscheint.
 
+Nachtrag (2026-08-08): Die am 2026-08-05 offen gebliebene Live-Verifikation
+(Verifikationsschritt 4/5, Aufruf von `/swagger` in Development) wurde
+nachgeholt und lieferte dabei einen 500er auf `/swagger/v1/swagger.json`. Über
+die Seq-Logs des laufenden AppHosts wurde die genaue Ursache ermittelt:
+`SwaggerGeneratorException` beim Cover-Upload-Endpunkt
+(`POST /api/records/{id}/cover`), weil der `IFormFile`-Parameter in
+`UploadRecordCoverAsync` explizit mit `[FromForm]` annotiert war — Swashbuckle
+unterstützt diese Kombination nicht (offizielle Doku:
+„You're not supposed to decorate IFormFile parameters with the FromForm
+attribute", `configure-and-customize-swaggergen.md#handle-forms-and-file-uploads`).
+Fix: `[FromForm]`-Attribut in
+`src/MyMusic.Api/Endpoints/Sammlung/Record/RecordEndpoints.cs` entfernt
+(ASP.NET Core erkennt die Formularbindung für `IFormFile` automatisch anhand
+des Typs); `.DisableAntiforgery()` bleibt unverändert bestehen (ADR 0008 ist
+davon nicht betroffen). Live erneut geprüft: `/swagger/v1/swagger.json`
+liefert 200, alle Endpunkte (inkl. Cover-Upload) erscheinen in der UI.
+Regressionstest `tests/MyMusic.IntegrationTests/SwaggerEndpointTests.cs`
+ergänzt, der `/swagger/v1/swagger.json` aufruft und 200 erwartet.
+
 Bewusst nicht Teil von 0e:
 
 - Freischaltung der Swagger-UI in Production für die Admin-Rolle (CLAUDE.md

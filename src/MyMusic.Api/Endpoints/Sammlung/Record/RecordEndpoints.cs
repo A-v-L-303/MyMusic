@@ -132,7 +132,7 @@ public static class RecordEndpoints
     /// </summary>
     private static async Task<RecordResponse> UploadRecordCoverAsync(
         int id,
-        [FromForm] IFormFile file,
+        IFormFile file,
         ICurrentUserService currentUserService,
         IMediator mediator,
         CancellationToken cancellationToken)
