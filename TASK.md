@@ -7,8 +7,8 @@ siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
 vollständig abgeschlossen)
-Branch: `block-6d-nachtraege` (Block 6b per PR #30, Block 6c per PR #32 nach
-`main` gemergt; Block 6d noch nicht gemergt)
+Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34
+nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
