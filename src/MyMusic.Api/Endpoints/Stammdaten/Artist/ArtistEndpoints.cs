@@ -26,6 +26,7 @@ public static class ArtistEndpoints
         int? page,
         int? pageSize,
         string? name,
+        int? labelId,
         ICurrentUserService currentUserService,
         IMediator mediator,
         CancellationToken cancellationToken)
@@ -34,7 +35,8 @@ public static class ArtistEndpoints
 
         var normalizedPageSize = Math.Clamp(pageSize ?? 20, 1, 100);
 
-        var query = new GetPagedArtistsQuery(currentUserService.UserId, normalizedPage, normalizedPageSize, name);
+        var query = new GetPagedArtistsQuery(
+            currentUserService.UserId, normalizedPage, normalizedPageSize, name, labelId);
 
         return await mediator.SendAsync(query, cancellationToken);
     }

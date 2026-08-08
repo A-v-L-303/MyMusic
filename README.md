@@ -200,8 +200,10 @@ paginierte, nach Name filterbare und sortierte Liste:
 Die `userId` kommt in jedem Fall aus dem `sub`-Claim des Tokens (Token-Bezug
 siehe oben) — nie aus dem Request. Ein doppelter Name innerhalb der eigenen
 Sammlung liefert HTTP 409, eine fremde oder unbekannte Id HTTP 404 (nicht
-403). Das Angular-Feature `genres/` folgt erst mit Block 0c
-(Angular-Workspace), siehe `TASK.md`.
+403). `DELETE /api/genres/{id}` liefert zusätzlich HTTP 409, wenn noch
+mindestens ein Track (Slice 6) das Genre referenziert (Nachtrag Block 6d).
+Das Angular-Feature `genres/` folgt erst mit Block 0c (Angular-Workspace),
+siehe `TASK.md`.
 
 ### Country-Slice (Block 3)
 
@@ -236,8 +238,11 @@ paginierte, nach Name und Land filterbare und nach Name sortierte Liste:
 Die Response löst den Ländernamen serverseitig auf (`CountryName` neben
 `CountryId`). Eine nicht existierende `countryId` liefert HTTP 400 (nicht
 404), ein doppelter Name innerhalb der eigenen Sammlung HTTP 409, eine fremde
-oder unbekannte Id HTTP 404 (nicht 403) — analog Genre. Das Angular-Feature
-`labels/` folgt erst mit Block 0c (Angular-Workspace), siehe `TASK.md`.
+oder unbekannte Id HTTP 404 (nicht 403) — analog Genre. `DELETE
+/api/labels/{id}` liefert zusätzlich HTTP 409, wenn noch mindestens ein
+Record (Slice 6) das Label referenziert (Nachtrag Block 6d). Das
+Angular-Feature `labels/` folgt erst mit Block 0c (Angular-Workspace), siehe
+`TASK.md`.
 
 ### Artist-Slice (Block 5)
 
@@ -248,7 +253,7 @@ plus paginierte, nach Name filterbare und sortierte Liste:
 
 | Methode | Route | Beschreibung |
 |---|---|---|
-| GET | `/api/artists?page=&pageSize=&name=` | Paginierte Liste, sortiert nach Name |
+| GET | `/api/artists?page=&pageSize=&name=&labelId=` | Paginierte Liste, sortiert nach Name |
 | GET | `/api/artists/{id}` | Einzelner Artist |
 | POST | `/api/artists` | Artist anlegen (`{ "name": "..." }`) |
 | PUT | `/api/artists/{id}` | Artist umbenennen |
@@ -257,10 +262,14 @@ plus paginierte, nach Name filterbare und sortierte Liste:
 Die `userId` kommt in jedem Fall aus dem `sub`-Claim des Tokens — nie aus
 dem Request. Ein doppelter Name innerhalb der eigenen Sammlung liefert
 HTTP 409, eine fremde oder unbekannte Id HTTP 404 (nicht 403) — analog
-Genre. Ein `labelId`-Filter fehlt in diesem Slice bewusst: `artist` hat
-keine `label_id`-Spalte, die Beziehung zu Label besteht erst indirekt über
-die künftige `record`-Tabelle (Slice 6). Das Angular-Feature `artists/`
-folgt erst mit Block 0c (Angular-Workspace), siehe `TASK.md`.
+Genre. Der `labelId`-Filter (Nachtrag Block 6d) löst die Beziehung indirekt
+über die `record`-Tabelle auf (`artist` hat keine eigene `label_id`-Spalte,
+nur `record.artist_id → record.label_id`); eine fremde oder unbekannte
+`labelId` liefert eine leere Liste, kein HTTP 400 (Analogie zu `countryId`
+bei `GET /records`). `DELETE /api/artists/{id}` liefert HTTP 409, wenn noch
+mindestens ein Record oder Track (Slice 6) den Artist referenziert (zwei
+getrennte Existenzabfragen, Nachtrag Block 6d). Das Angular-Feature
+`artists/` folgt erst mit Block 0c (Angular-Workspace), siehe `TASK.md`.
 
 ### Album-Cover-Upload (Block 6b)
 

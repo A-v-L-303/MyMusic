@@ -684,6 +684,122 @@ public class RecordEndpointsTests
         }
     }
 
+    [Fact]
+    public async Task ReferenzielleIntegritaet_VerhindertLoeschenVonGenreLabelUndArtistBeiVerwendung()
+    {
+        // arrange
+        var cancellationToken = CancellationToken.None;
+
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.MyMusic_AppHost>(cancellationToken);
+
+        await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
+
+        await app.StartAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
+
+        await app.ResourceNotifications
+            .WaitForResourceAsync("migrator", KnownResourceStates.Finished, cancellationToken)
+            .WaitAsync(_defaultTimeout, cancellationToken);
+
+        await app.ResourceNotifications
+            .WaitForResourceAsync("api", KnownResourceStates.Running, cancellationToken)
+            .WaitAsync(_defaultTimeout, cancellationToken);
+
+        using var apiClient = app.CreateHttpClient("api", "http");
+        using var keycloakClient = app.CreateHttpClient("keycloak", "http");
+
+        var owner = await KeycloakTestClient.CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
+
+        try
+        {
+            var ownerToken = await KeycloakTestClient.RequestUserAccessTokenAsync(
+                keycloakClient, owner, cancellationToken);
+
+            var suffix = Guid.NewGuid().ToString("N")[..8];
+
+            var (countryA, _) = await GetTwoCountryIdsAsync(apiClient, ownerToken, cancellationToken);
+
+            var label = await CreateLabelAsync(
+                apiClient, ownerToken, $"Apple Records-{suffix}", countryA, cancellationToken);
+
+            var artist = await CreateArtistAsync(apiClient, ownerToken, $"The Beatles-{suffix}", cancellationToken);
+
+            var genre = await CreateGenreAsync(apiClient, ownerToken, $"Rock-{suffix}", cancellationToken);
+
+            var createRecordResponse = await PostRecordAsync(
+                apiClient, ownerToken, label, artist, "Album", $"Abbey Road-{suffix}", 1969, null, null,
+                cancellationToken);
+
+            var record = await ReadRecordAsync(createRecordResponse, cancellationToken);
+
+            var createTrackResponse = await PostRecordTrackAsync(
+                apiClient, ownerToken, record.Id, artist, genre, "Come Together", "A", 1, null, cancellationToken);
+
+            var track = await ReadRecordTrackAsync(createTrackResponse, cancellationToken);
+
+            // act: Genre löschen, solange ein Track es referenziert -> 409
+            var deleteGenreWhileUsedResponse = await DeleteGenreAsync(apiClient, ownerToken, genre, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Conflict, deleteGenreWhileUsedResponse.StatusCode);
+
+            // act: Label löschen, solange ein Record es referenziert -> 409
+            var deleteLabelWhileUsedResponse = await DeleteLabelAsync(apiClient, ownerToken, label, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Conflict, deleteLabelWhileUsedResponse.StatusCode);
+
+            // act: Artist löschen, solange ein Record ihn referenziert -> 409
+            var deleteArtistWhileUsedByRecordResponse = await DeleteArtistAsync(
+                apiClient, ownerToken, artist, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Conflict, deleteArtistWhileUsedByRecordResponse.StatusCode);
+
+            // act: Track löschen
+            var deleteTrackResponse = await DeleteRecordTrackAsync(
+                apiClient, ownerToken, record.Id, track.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteTrackResponse.StatusCode);
+
+            // act: Artist weiterhin löschen, solange der Record ihn direkt referenziert -> weiterhin 409
+            var deleteArtistStillUsedByRecordResponse = await DeleteArtistAsync(
+                apiClient, ownerToken, artist, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Conflict, deleteArtistStillUsedByRecordResponse.StatusCode);
+
+            // act: Record löschen -> entfernt die letzte Referenz auf Label und Artist
+            var deleteRecordResponse = await DeleteRecordAsync(apiClient, ownerToken, record.Id, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteRecordResponse.StatusCode);
+
+            // act: Genre, Label und Artist sind jetzt unreferenziert und lassen sich löschen -> 204
+            var deleteGenreResponse = await DeleteGenreAsync(apiClient, ownerToken, genre, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteGenreResponse.StatusCode);
+
+            // act
+            var deleteLabelResponse = await DeleteLabelAsync(apiClient, ownerToken, label, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteLabelResponse.StatusCode);
+
+            // act
+            var deleteArtistResponse = await DeleteArtistAsync(apiClient, ownerToken, artist, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.NoContent, deleteArtistResponse.StatusCode);
+        }
+        finally
+        {
+            await KeycloakTestClient.DeleteTestUserAsync(keycloakClient, appHost, owner, cancellationToken);
+        }
+    }
+
     private static async Task<(int CountryA, int CountryB)> GetTwoCountryIdsAsync(
         HttpClient apiClient,
         string accessToken,
@@ -915,6 +1031,39 @@ public class RecordEndpointsTests
         CancellationToken cancellationToken)
     {
         using var request = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/records/{id}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> DeleteGenreAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int id,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/genres/{id}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> DeleteLabelAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int id,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/labels/{id}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> DeleteArtistAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int id,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/artists/{id}", accessToken);
 
         return await apiClient.SendAsync(request, cancellationToken);
     }

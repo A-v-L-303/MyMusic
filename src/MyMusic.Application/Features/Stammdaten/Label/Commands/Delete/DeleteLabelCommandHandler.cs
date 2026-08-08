@@ -2,6 +2,7 @@ namespace MyMusic.Application.Features.Stammdaten.Label.Commands.Delete;
 
 public sealed class DeleteLabelCommandHandler(
     IRepository<LabelEntity> repository,
+    IRepository<RecordEntity> recordRepository,
     ICurrentUserService currentUserService,
     ExceptionManager exceptionManager)
     : ICommandHandler<DeleteLabelCommand, bool>
@@ -13,8 +14,18 @@ public sealed class DeleteLabelCommandHandler(
         if (label is null || label.UserId != currentUserService.UserId)
             throw exceptionManager.NotFound("Label", command.Id);
 
-        // Eine Referenzprüfung gegen record entfällt hier bewusst: Die Tabelle
-        // entsteht erst mit Slice 6, bis dahin kann kein Record ein Label referenzieren.
+        var (_, referencingRecordCount) = await recordRepository.GetPagedAsync(
+            record => record.LabelId == command.Id,
+            query => query.OrderBy(record => record.Id),
+            page: 1,
+            pageSize: 1,
+            cancellationToken);
+
+        if (referencingRecordCount > 0)
+            throw exceptionManager.Conflict(
+                $"Label '{label.Name}' kann nicht gelöscht werden, da es noch von mindestens einem Record " +
+                "verwendet wird.");
+
         repository.Remove(label);
 
         await repository.SaveChangesAsync(cancellationToken);
