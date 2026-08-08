@@ -91,7 +91,7 @@ public class ArtistEndpointsTests
             var genesis = await ReadArtistAsync(createGenesisResponse, cancellationToken);
 
             // act: Liste mit Namensfilter, beschränkt auf die eigene Sammlung
-            var listResponse = await GetArtistsAsync(apiClient, ownerToken, suffix, cancellationToken);
+            var listResponse = await GetArtistsAsync(apiClient, ownerToken, suffix, null, cancellationToken);
 
             // assert
             Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
@@ -106,6 +106,31 @@ public class ArtistEndpointsTests
             // Sortierung nach Name: "Genesis-..." kommt alphabetisch vor "Pink Floyd-...".
             Assert.Equal(genesisName, list.Items[0].Name);
             Assert.Equal(pinkFloydName, list.Items[1].Name);
+
+            // arrange: Label anlegen und über einen Record mit Pink Floyd verknüpfen
+            var countryId = await GetCountryIdAsync(apiClient, ownerToken, cancellationToken);
+
+            var label = await CreateLabelAsync(
+                apiClient, ownerToken, $"Harvest-{suffix}", countryId, cancellationToken);
+
+            var createRecordResponse = await PostRecordAsync(
+                apiClient, ownerToken, label, pinkFloyd.Id, $"The Wall-{suffix}", cancellationToken);
+
+            Assert.Equal(HttpStatusCode.Created, createRecordResponse.StatusCode);
+
+            // act: Liste nach labelId gefiltert -> nur Pink Floyd (indirekt über den Record verknüpft)
+            var listByLabelResponse = await GetArtistsAsync(
+                apiClient, ownerToken, suffix, label, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, listByLabelResponse.StatusCode);
+
+            var listByLabel = await listByLabelResponse.Content
+                .ReadFromJsonAsync<ArtistListResponseDto>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(listByLabel);
+            Assert.Equal(1, listByLabel.TotalCount);
+            Assert.Equal(pinkFloydName, listByLabel.Items[0].Name);
 
             // act: Get-by-Id des Besitzers -> 200
             var getOwnResponse = await GetArtistAsync(apiClient, ownerToken, pinkFloyd.Id, cancellationToken);
@@ -216,9 +241,69 @@ public class ArtistEndpointsTests
         HttpClient apiClient,
         string accessToken,
         string nameFilter,
+        int? labelId,
         CancellationToken cancellationToken)
     {
-        using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/artists?name={nameFilter}", accessToken);
+        var query = new List<string> { $"name={nameFilter}" };
+
+        if (labelId is not null)
+            query.Add($"labelId={labelId}");
+
+        using var request = CreateAuthorizedRequest(
+            HttpMethod.Get, $"/api/artists?{string.Join('&', query)}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<int> GetCountryIdAsync(
+        HttpClient apiClient,
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/countries", accessToken);
+
+        var response = await apiClient.SendAsync(request, cancellationToken);
+
+        var countries = await response.Content
+            .ReadFromJsonAsync<List<CountryResponseDto>>(_jsonOptions, cancellationToken);
+
+        Assert.NotNull(countries);
+
+        return countries[0].Id;
+    }
+
+    private static async Task<int> CreateLabelAsync(
+        HttpClient apiClient,
+        string accessToken,
+        string name,
+        int countryId,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/labels", accessToken);
+
+        request.Content = JsonContent.Create(new { name, countryId }, options: _jsonOptions);
+
+        var response = await apiClient.SendAsync(request, cancellationToken);
+
+        var label = await response.Content.ReadFromJsonAsync<LabelResponseDto>(_jsonOptions, cancellationToken);
+
+        Assert.NotNull(label);
+
+        return label.Id;
+    }
+
+    private static async Task<HttpResponseMessage> PostRecordAsync(
+        HttpClient apiClient,
+        string accessToken,
+        int labelId,
+        int? artistId,
+        string albumName,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/records", accessToken);
+
+        request.Content = JsonContent.Create(
+            new { labelId, artistId, format = "Album", albumName, releaseYear = 1969 }, options: _jsonOptions);
 
         return await apiClient.SendAsync(request, cancellationToken);
     }

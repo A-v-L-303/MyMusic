@@ -1,12 +1,14 @@
 # Offene Aufgaben
 
-Stand: 2026-08-07 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-08 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
-Block 6b (Album-Cover-Upload) und Block 6c (Track-Backend) umgesetzt und
-verifiziert)
-Branch: `main` (Block 6b per PR #30, Block 6c per PR #32 nach `main` gemergt)
+Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
+(Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
+vollständig abgeschlossen)
+Branch: `block-6d-nachtraege` (Block 6b per PR #30, Block 6c per PR #32 nach
+`main` gemergt; Block 6d noch nicht gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -29,10 +31,10 @@ Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1
 - Angular-Workspace (Block 0c).
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
-  (Block 6a), Album-Cover-Upload (Block 6b) und Track-Backend (Block 6c)
-  erledigt, siehe Abschnitt 6; die Nachträge aus Block 2/4/5 (Block 6d) noch
-  offen; Angular-Features `genres/`, `labels/`, `artists/` und `records/`
-  zurückgestellt bis Block 0c).
+  (Block 6a), Album-Cover-Upload (Block 6b), Track-Backend (Block 6c) und die
+  Nachträge aus Block 2/4/5 (Block 6d) erledigt, siehe Abschnitt 6 — damit
+  vollständig abgeschlossen; Angular-Features `genres/`, `labels/`,
+  `artists/` und `records/` zurückgestellt bis Block 0c).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
@@ -550,10 +552,10 @@ Abnahmekriterium:
 
 ## 6. Slice: Record und Tracks
 
-Status: Planung abgeschlossen (2026-08-07); aufgeteilt in vier einzeln
+Status: **abgeschlossen** (2026-08-08); aufgeteilt in vier einzeln
 prüfbare Teilblöcke (analog Block 0), da das Abnahmekriterium des
-Gesamtblocks erst ganz am Ende messbar wäre. Block 6a, 6b und 6c
-abgeschlossen; Block 6d (Nachträge) offen.
+Gesamtblocks erst ganz am Ende messbar wäre. Block 6a, 6b, 6c und 6d
+abgeschlossen.
 Priorität: hoch, fachlicher Kern
 
 Ziel:
@@ -807,20 +809,21 @@ Abnahmekriterium erfüllt:
 
 ### 6d. Nachträge aus Block 2, 4 und 5
 
-Status: offen
+Status: **abgeschlossen** (2026-08-08)
+Arbeits-Prompt: `docs/prompts/2026-08-07-block-6d-nachtraege.md`
 
-Aufgaben:
+Umgesetzt:
 
 - `DeleteGenreCommandHandler`
   (`Application/Features/Stammdaten/Genre/Commands/Delete/`) um die in
-  US-G5 beschriebene Referenzprüfung gegen `record_track` ergänzen (HTTP 409,
+  US-G5 beschriebene Referenzprüfung gegen `record_track` ergänzt (HTTP 409,
   wenn noch mindestens ein Track das Genre referenziert). Im Genre-Slice
   bewusst ausgelassen, da `record_track` dort noch nicht existierte — siehe
   `docs/prompts/2026-08-04-block-2-genre.md` und Wiki
   `user-stories/user-stories-genre.md` (US-G5).
 - `DeleteLabelCommandHandler`
   (`Application/Features/Stammdaten/Label/Commands/Delete/`) um die in
-  US-L5 beschriebene Referenzprüfung gegen `record` ergänzen (HTTP 409, wenn
+  US-L5 beschriebene Referenzprüfung gegen `record` ergänzt (HTTP 409, wenn
   noch mindestens ein Record das Label referenziert). Im Label-Slice bewusst
   ausgelassen, da `record` dort noch nicht existierte — siehe
   `docs/prompts/2026-08-07-block-4-label.md` und Wiki
@@ -828,22 +831,36 @@ Aufgaben:
 - `DeleteArtistCommandHandler`
   (`Application/Features/Stammdaten/Artist/Commands/Delete/`) um die in
   US-A5 beschriebene Referenzprüfung gegen `record` **und** `record_track`
-  ergänzen (HTTP 409, wenn noch mindestens ein Record oder Track den Artist
-  referenziert — zwei Existenzabfragen, da Artist anders als Genre/Label von
-  beiden Tabellen referenziert wird). Im Artist-Slice bewusst ausgelassen, da
+  ergänzt (HTTP 409, wenn noch mindestens ein Record oder Track den Artist
+  referenziert — zwei getrennte, nacheinander ausgeführte Existenzabfragen
+  mit Kurzschluss). Im Artist-Slice bewusst ausgelassen, da
   `record`/`record_track` dort noch nicht existierten — siehe
   `docs/prompts/2026-08-07-block-5-artist.md` und Wiki
   `user-stories/user-stories-artist.md` (US-A5).
 - `GetPagedArtistsQuery`/`GetPagedArtistsQueryHandler`/`ArtistEndpoints`
   (`Application/Features/Stammdaten/Artist/Queries/GetPaged/`,
-  `Api/Endpoints/Stammdaten/Artist/`) um einen `labelId`-Filter ergänzen,
-  sobald `record.artist_id → record.label_id` existiert (siehe US-A2). Im
-  Artist-Slice bewusst ausgelassen, da die Beziehung zu Label nur über die
-  hier neu entstehende `record`-Tabelle geprüft werden kann — siehe
+  `Api/Endpoints/Stammdaten/Artist/`) um einen `labelId`-Filter ergänzt
+  (siehe US-A2), nach dem Muster von `GetPagedRecordsQueryHandler.
+  ResolveLabelIdsForCountryAsync` (invertiert: löst über `record.label_id`
+  die passenden `record.artist_id`s auf). Im Artist-Slice bewusst
+  ausgelassen, da die Beziehung zu Label nur über die mit Block 6a
+  entstandene `record`-Tabelle geprüft werden kann — siehe
   `docs/prompts/2026-08-07-block-5-artist.md` und Wiki
-  `user-stories/user-stories-artist.md` (US-A2).
+  `user-stories/user-stories-artist.md` (US-A2). Bewusst keine
+  Existenz-/Mandantenprüfung der `labelId` (Analogie zu `countryId` bei
+  `GET /records`): fremde/unbekannte `labelId` liefert eine leere Liste,
+  kein HTTP 400.
+- Unit Tests: neue Conflict-Testfälle in den drei bestehenden
+  Delete-Handler-Testdateien (Genre 1, Label 1, Artist 2 — inkl. Nachweis
+  des Kurzschlusses per `DidNotReceive()`), zwei neue Testfälle in
+  `GetPagedArtistsQueryHandlerTests.cs` für den `labelId`-Filter.
+- Integrationstest: neuer Fact
+  `ReferenzielleIntegritaet_VerhindertLoeschenVonGenreLabelUndArtistBeiVerwendung`
+  in `RecordEndpointsTests.cs` (409 bei Verwendung, 204 nach Entfernen der
+  Referenzen); `labelId`-Filter als zusätzliche Schritte im bestehenden
+  `ArtistEndpoints_CrudPaginierungUndMandantentrennung`-Test.
 
-Abnahmekriterium:
+Abnahmekriterium erfüllt:
 
 - `DeleteGenreCommandHandler`, `DeleteLabelCommandHandler` und
   `DeleteArtistCommandHandler` verhindern das Löschen real referenzierter
