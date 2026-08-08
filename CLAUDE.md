@@ -160,7 +160,8 @@ src/
 ├── MyMusic.Api/              # API
 ├── MyMusic.AppHost/
 ├── MyMusic.ServiceDefaults/
-└── MyMusic.Migrator/
+├── MyMusic.Migrator/
+└── frontend/                 # Angular-22-Workspace (Block 0c)
 
 tests/
 ├── MyMusic.Domain.Tests/
@@ -169,8 +170,10 @@ tests/
 └── MyMusic.IntegrationTests/
 ```
 
-Der Angular-22-Workspace unter `src/frontend/` ist noch nicht angelegt. Die
-Projekte sind überwiegend leere Gerüste — vorhandene C#-Dateien vor jeder
+Der Angular-22-Workspace unter `src/frontend/` ist seit Block 0c angelegt
+(Tailwind CSS 3, Design-System-Anbindung, `RuntimeConfigService`, noch ohne
+Feature-Ordner/Navigation/Login-Flow — siehe TASK.md Abschnitt 0c). Die
+C#-Projekte sind überwiegend leere Gerüste — vorhandene Dateien vor jeder
 Änderung prüfen, nichts blind erzeugen.
 
 ### 4.2 Abhängigkeitsrichtung
