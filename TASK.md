@@ -7,9 +7,10 @@ siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
 vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
-verifiziert)
-Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
-Block 0c per PR #36 nach `main` gemergt)
+verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und live verifiziert)
+Branch: `block-7a-angular-login-flow` (noch nicht nach `main` gemergt; Block 6b
+per PR #30, Block 6c per PR #32, Block 6d per PR #34, Block 0c per PR #36
+nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -37,7 +38,9 @@ Block 0a, 0b, 0d, 0e und 0c sind abgeschlossen. Offen aus dem MVP-Umfang der Pha
   `artists/` und `records/` jetzt entsperrt, aber noch nicht umgesetzt).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
-- Keycloak-Authentifizierung im Code und Mandantentrennung.
+- Keycloak-Authentifizierung im Code und Mandantentrennung — Angular-Login-Flow
+  (Block 7a) erledigt, siehe Abschnitt 7; CORS-Policy auf der API fehlt noch
+  und blockiert echte Datenaufrufe aus Angular (siehe „Wichtiger Befund" dort).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -934,7 +937,7 @@ Abnahmekriterium erfüllt:
 
 ## 7. Authentifizierung und Mandantentrennung
 
-Status: teilweise offen
+Status: teilweise offen; Block 7a (Angular-Login-Flow) abgeschlossen
 Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
@@ -948,20 +951,116 @@ Bereits umgesetzt (Block 0b, siehe oben):
   `ICurrentUserService` liest den `sub`-Claim, einmal nachgewiesen per
   Integrationstest (`/api/me`).
 
-Aufgaben (noch offen):
+### 7a. Angular-Login-Flow
 
-- Angular-Login-Flow (Authorization Code + PKCE) inkl. AuthGuard und
-  HTTP-Interceptor.
+Status: **abgeschlossen** (2026-08-08)
+
+Umgesetzt:
+
+- `keycloak-angular` (22.0.0) + `keycloak-js` (26.2.4) als neue
+  `dependencies` in `src/frontend/package.json` — verifiziert gegen die
+  npm-Registry (`@angular/core`/`@angular/common`/`@angular/router` `^22`,
+  `keycloak-js` bis `^26`, keine zone.js-Abhängigkeit); Alternativen
+  (`angular-oauth2-oidc`, Eigenbau ohne Zusatzpaket) geprüft und verworfen,
+  siehe ADR `docs/adr/0010-angular-keycloak-integration.md`.
+- `src/frontend/src/app/core/auth/`: `keycloak.config.ts` (Realm-/Client-
+  Konstanten, `provideKeycloak()`-Config-Builder, Bearer-Interceptor-
+  Bedingung per URL-Regex ausschließlich auf `apiBaseUrl`), `auth.guard.ts`
+  (funktionaler `CanActivateChildFn` über `createAuthGuard`, leitet
+  nicht angemeldete Benutzer mit der ursprünglich angeforderten URL als
+  `redirectUri` zu Keycloak weiter), `current-user.service.ts`
+  (`isAuthenticated`/`username` als Signals, reaktiv über
+  `KEYCLOAK_EVENT_SIGNAL`, `login()`/`logout()`).
+- `main.ts` lädt `runtime-config.json` jetzt selbst *vor*
+  `bootstrapApplication()` (statt per `provideAppInitializer()` danach), da
+  `provideKeycloak()` die Keycloak-URL bereits beim Aufbau des
+  Provider-Arrays braucht — Nachtrag zu ADR 0009. `app.config.ts` ist jetzt
+  die Factory `buildAppConfig(runtimeConfig)`.
+- `app.routes.ts`: Wurzel-Route mit `canActivateChild: [authGuard]` und
+  leerem `children`-Array — künftige Feature-Routen hängen sich automatisch
+  darunter ein.
+- `app.html`/`app.ts`: minimale "User-Bereich"-Anzeige (Login-Button /
+  Username + Logout-Button, exakt nach Wiki `navigation-konzept.md`) als
+  Verifikationsfläche, plus einmaliger `GET /api/me`-Aufruf nach Login zum
+  Nachweis, dass der Interceptor ein gültiges Token an die richtige
+  API-Origin anhängt.
+- `public/silent-check-sso.html` (Standard-Keycloak-JS-Silent-Check-Seite),
+  `RuntimeConfig` um `keycloakUrl` erweitert (`write-runtime-config.mjs`
+  liest zusätzlich `MYMUSIC_KEYCLOAK_URL`).
+- `AppHost.cs`: Port der `frontend`-Ressource auf 4200 gepinnt (vorher
+  dynamisch über `PORT`, passte nicht zu den im Realm-Import bereits fest
+  hinterlegten `redirectUris`/`webOrigins`), `MYMUSIC_KEYCLOAK_URL` und
+  `WaitFor(keycloak)` ergänzt.
+- Wiki `sicherheit/sicherheitskonzept.md`: bisher fehlende Dokumentation zu
+  Token-Storage (In-Memory), Silent-Refresh (Silent-SSO-Check per iframe)
+  und Logout-Mechanik (`keycloak.logout()`) nachgetragen.
+- Unit-Tests (Vitest): `auth.guard.spec.ts`, `current-user.service.spec.ts`,
+  `runtime-config.service.spec.ts` (angepasst), `app.spec.ts` (angepasst) —
+  10/10 grün.
+- Live gegen den echten Aspire-AppHost verifiziert (PowerShell, Browser):
+  Redirect zu Keycloak mit korrektem `client_id`/`redirect_uri`/PKCE
+  (`code_challenge_method=S256`), Login mit echtem Realm-Benutzer, Rückkehr
+  zu `localhost:4200` mit Username-Anzeige, Session bleibt nach Seiten-Reload
+  über Silent-SSO-Check erhalten, Logout führt zurück in den
+  nicht-angemeldeten Zustand.
+
+**Wichtiger Befund aus der Live-Verifikation**: Der `/api/me`-Aufruf aus dem
+Angular-Client scheitert aktuell an der Backend-API — `OPTIONS /api/me`
+liefert HTTP 405, da `MyMusic.Api` noch keine CORS-Middleware konfiguriert
+hat (direkt gegen die API verifiziert). Das ist kein neuer Fehler dieses
+Blocks, sondern der bereits unten als offen geführte Punkt „CORS-Policy per
+Environment" — er war bisher nur nie sichtbar, weil noch nie ein
+Cross-Origin-Aufruf vom Angular-Client aus stattgefunden hat (Swagger UI
+läuft same-origin zur API). **Blockiert damit jede künftige
+Angular-Feature-Anbindung** (Genre/Label/Artist/Record) an die echte API,
+nicht nur diesen Verifikationsschritt — sollte vor dem ersten
+Angular-Feature-Slice behoben werden.
+
+Bewusst nicht Teil dieses Standes:
+
+- Custom-Theme für die von Keycloak gehostete Login-Seite im MyMusic-Design
+  — eigener Folgeblock 7b (FreeMarker/CSS, technisch unabhängig vom
+  Angular-Code, siehe unten).
+- Rollen (`User`/`Admin`)-Auswertung im Angular-Client (`AdminGuard`,
+  `*kaHasRoles`) — es gibt noch keine `/admin`-Route/-Feature, gegen das ein
+  solcher Guard sinnvoll getestet werden könnte.
+- CORS-Policy, Rate Limiting, CSP im Backend (siehe „Wichtiger Befund" oben
+  und Aufgabenliste unten).
+
+Abnahmekriterium erfüllt:
+
+- Nicht angemeldete Benutzer werden beim Zugriff auf eine geschützte Route
+  zu Keycloak weitergeleitet und nach erfolgreichem Login zur
+  ursprünglich angeforderten Seite zurückgeführt; die Session übersteht
+  einen Seiten-Reload ohne erneuten Login; Logout funktioniert. Die
+  Interceptor-Kette bis zur API ist eingerichtet und mandantensicher
+  (Bearer-Token nur für `apiBaseUrl`) — der tatsächliche Datenaustausch mit
+  der API ist erst nach der CORS-Konfiguration (siehe „Wichtiger Befund")
+  vollständig nutzbar.
+
+### 7b. Keycloak-Custom-Theme
+
+Status: offen (noch nicht geplant)
+
+Eigener Block für ein Keycloak-Theme im MyMusic-Design (Login-Seite u. a.),
+damit der Redirect zu Keycloak für den Benutzer nicht wie ein Wechsel zu
+einem fremden Dienst wirkt. Technisch unabhängig vom Angular-Code
+(FreeMarker-Templates/CSS statt TypeScript) — bewusst als eigener Branch/
+Arbeits-Prompt von Block 7a getrennt.
+
+Aufgaben (noch offen, außerhalb 7a/7b):
+
 - Rollen (`User`, `Admin`), Ownership-Prüfung in Handlern (404 statt 403) —
   setzt Entitäten voraus, entsteht mit dem jeweiligen Slice.
 - Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
   zurückgestellt aus Block 0e, siehe
   `docs/adr/0007-swagger-openapi-nur-development.md`).
-- Rate Limiting (100 req/min pro Benutzer), CORS-Policy per Environment, CSP.
+- Rate Limiting (100 req/min pro Benutzer), CORS-Policy per Environment, CSP
+  — CORS jetzt priorisiert, siehe „Wichtiger Befund" in Block 7a.
 - Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
 
-Abnahmekriterium:
+Abnahmekriterium (Gesamtabschnitt 7):
 
 - Ohne Login ist kein fachlicher Endpunkt erreichbar; Benutzer sehen
   ausschließlich eigene Daten; der Admin kann Benutzer löschen.

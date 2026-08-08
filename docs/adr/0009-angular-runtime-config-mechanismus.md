@@ -71,3 +71,19 @@ gültiges, wenn auch leeres, Runtime-Config-Dokument findet.
   `MYMUSIC_API_BASE_URL` gebaut wurde.
 - Der Mechanismus ist rein lesend für das Frontend (`fetch()` einer statischen Datei)
   und erfordert keine Änderung an der Backend-API.
+
+## Nachtrag (2026-08-08, Block 7a — Angular-Login-Flow)
+
+Die Ladereihenfolge wurde geändert: `RuntimeConfigService` lud die Datei bisher selbst
+per `provideAppInitializer()` **nach** `bootstrapApplication()`. Mit der Einführung von
+`provideKeycloak()` (siehe ADR 0010) reicht das nicht mehr, da dessen Konfigurations-
+objekt (u. a. die Keycloak-URL) bereits beim Aufbau des Provider-Arrays vorliegen muss —
+also bevor `bootstrapApplication()` überhaupt aufgerufen wird. `src/frontend/src/main.ts`
+lädt `runtime-config.json` deshalb jetzt selbst *vor* `bootstrapApplication()` und
+übergibt das Ergebnis an eine Factory (`buildAppConfig(runtimeConfig)` in
+`app.config.ts`), die daraus das komplette `ApplicationConfig`-Array baut.
+`RuntimeConfigService` selbst wurde dadurch einfacher: Er hält nur noch die bereits
+geladene Konfiguration (per `InjectionToken` `RUNTIME_CONFIG` injiziert), kein `load()`
+mehr. Die Grundentscheidung dieses ADRs (Werte zur Laufzeit statt zur Build-Zeit aus
+einer `runtime-config.json`) bleibt unverändert gültig — nur der Lademechanismus wandert
+vor den Angular-Bootstrap.

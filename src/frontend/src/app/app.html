@@ -1,3 +1,17 @@
+<header class="flex items-center justify-end gap-3 p-4 text-sm">
+  @if (currentUser.isAuthenticated()) {
+    <span class="text-fg">{{ currentUser.username() }}</span>
+    @if (meCheck() === 'ok') {
+      <span class="text-xs text-fg-muted">(Backend bestätigt)</span>
+    } @else if (meCheck() === 'error') {
+      <span class="text-xs text-danger">(Backend-Check fehlgeschlagen)</span>
+    }
+    <button type="button" class="btn btn-secondary btn-sm" (click)="logout()">Logout</button>
+  } @else {
+    <button type="button" class="btn btn-secondary btn-sm" (click)="login()">Login</button>
+  }
+</header>
+
 <main class="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
   <div class="flex items-center gap-2">
     <img src="mark.svg" alt="" class="h-6 w-6" />

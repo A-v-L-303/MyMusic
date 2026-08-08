@@ -53,8 +53,10 @@ var api = builder.AddProject<Projects.MyMusic_Api>("api")
 builder.AddJavaScriptApp("frontend", "../frontend", runScriptName: "start")
     .WithReference(api)
     .WaitFor(api)
+    .WaitFor(keycloak)
     .WithEnvironment("MYMUSIC_API_BASE_URL", api.GetEndpoint("https"))
-    .WithHttpEndpoint(env: "PORT")
+    .WithEnvironment("MYMUSIC_KEYCLOAK_URL", keycloak.GetEndpoint("http"))
+    .WithHttpEndpoint(port: 4200, env: "PORT")
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();
