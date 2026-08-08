@@ -36,7 +36,7 @@ var apiConnectionString = ReferenceExpression.Create(
     $"Port={postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port)};" +
     $"Database=mymusicdb;Username=mymusic_api;Password={apiDatabasePassword}");
 
-builder.AddProject<Projects.MyMusic_Api>("api")
+var api = builder.AddProject<Projects.MyMusic_Api>("api")
     .WithEnvironment("ConnectionStrings__mymusicdb", apiConnectionString)
     .WithReference(seq)
     .WaitFor(seq)
@@ -49,5 +49,12 @@ builder.AddProject<Projects.MyMusic_Api>("api")
         url.DisplayText = "Swagger UI";
         url.Url += "/swagger";
     });
+
+builder.AddJavaScriptApp("frontend", "../frontend", runScriptName: "start")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEnvironment("MYMUSIC_API_BASE_URL", api.GetEndpoint("https"))
+    .WithHttpEndpoint(env: "PORT")
+    .WithExternalHttpEndpoints();
 
 builder.Build().Run();

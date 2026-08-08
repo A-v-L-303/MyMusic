@@ -6,9 +6,10 @@ Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
-vollständig abgeschlossen)
-Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34
-nach `main` gemergt)
+vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
+verifiziert)
+Branch: `block-0c-angular-workspace` (Block 6b per PR #30, Block 6c per PR #32,
+Block 6d per PR #34 nach `main` gemergt; Block 0c noch nicht gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -26,15 +27,14 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d und 0e sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
+Block 0a, 0b, 0d, 0e und 0c sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
 
-- Angular-Workspace (Block 0c).
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
   (Block 6a), Album-Cover-Upload (Block 6b), Track-Backend (Block 6c) und die
   Nachträge aus Block 2/4/5 (Block 6d) erledigt, siehe Abschnitt 6 — damit
   vollständig abgeschlossen; Angular-Features `genres/`, `labels/`,
-  `artists/` und `records/` zurückgestellt bis Block 0c).
+  `artists/` und `records/` jetzt entsperrt, aber noch nicht umgesetzt).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Keycloak-Authentifizierung im Code und Mandantentrennung.
@@ -162,19 +162,66 @@ Bekannte Lücke:
 
 ### 0c. Angular-Workspace
 
-Status: offen
-Priorität: mittel
+Status: **abgeschlossen** (2026-08-08)
 
-Aufgaben:
+Umgesetzt:
 
-- Angular-22-Workspace mit Tailwind CSS und Design-System-Anbindung.
-- API-Basis-URL über `runtime-config.json` (Laufzeit, nicht Build-Zeit).
-- Einbindung in den AppHost — **Achtung**: `AddNpmApp()` existiert in Aspire 13
-  nicht mehr, Ersatz ist `AddJavaScriptApp()` (Wiki-Korrektur ausstehend).
+- Angular-22-Workspace unter `src/frontend/` (`npx @angular/cli@22 new`,
+  `--routing --style=css --ssr=false --skip-git --package-manager=npm --strict`).
+  Angular 22 verwendet standardmäßig **Vitest** statt Karma/Jasmine und ist
+  **zoneless** (kein `zone.js` mehr in den Dependencies); der Static-Assets-Ordner
+  heißt `public/` (nicht mehr `src/assets/`).
+- Tailwind CSS **3** (nicht das aktuelle npm-`latest` 4.x, passend zur
+  Tech-Stack-Entscheidung) plus PostCSS/Autoprefixer; `tailwind.config.js` aus
+  `../../02 Wiki/MyMusic Wiki/raw/design_system/tailwind/tailwind.config.js`
+  unverändert übernommen.
+- Design-System-Anbindung: `colors_and_type.css`/`components.css` unverändert
+  nach `src/frontend/src/styles/design-system/` kopiert, `mark.svg` als
+  Markenzeichen übernommen. Inter/JetBrains Mono **self-hosted** über
+  `@fontsource/inter`/`@fontsource/jetbrains-mono` (keine Google-Fonts-CDN-
+  Abhängigkeit zur Laufzeit, Klärung mit dem Projektinhaber).
+- Minimale App-Shell (Marke, Wortmarke, Platzhaltertext) als Nachweis der
+  Design-System-Anbindung — bewusst ohne Navigation, Routing-Hierarchie oder
+  Feature-Ordner (`core/`, `shared/`, `features/*` aus
+  `wiki/architektur/angular-projektstruktur.md` folgen erst mit den einzelnen
+  Angular-Feature-Blöcken).
+- `RuntimeConfigService` (`provideAppInitializer()` + `fetch()`) lädt
+  `public/runtime-config.json` vor dem Rendern; ein `prestart`/`prebuild`-Skript
+  (`scripts/write-runtime-config.mjs`) schreibt die Datei aus der Umgebungsvariable
+  `MYMUSIC_API_BASE_URL` — Details und Alternativenabwägung in
+  `docs/adr/0009-angular-runtime-config-mechanismus.md`.
+- AppHost-Einbindung: **`AddNpmApp()` existiert in Aspire 13 tatsächlich nicht
+  mehr** — der Ersatz ist nicht `AddJavaScriptApp()` allein, sondern ein eigenes
+  Paket `Aspire.Hosting.JavaScript` 13.4.6 (löst das bei 9.5.2 eingefrorene
+  `Aspire.Hosting.NodeJs` ab), das u. a. `AddJavaScriptApp()`, `AddNodeApp()`,
+  `AddViteApp()`, `AddNextJsApp()`, `AddBunApp()` bereitstellt — verifiziert
+  gegen die installierte Assembly und den offiziellen Aspire-Sample
+  `playground/AspireWithJavaScript` (dotnet/aspire, Tag `v13.4.6`). `AppHost.cs`
+  ergänzt um `builder.AddJavaScriptApp("frontend", "../frontend", runScriptName: "start")`
+  mit `.WithReference(api)`, `.WaitFor(api)`,
+  `.WithEnvironment("MYMUSIC_API_BASE_URL", api.GetEndpoint("https"))`,
+  `.WithHttpEndpoint(env: "PORT")`, `.WithExternalHttpEndpoints()`. Das
+  `api`-Ressourcen-Bauteil musste dafür erstmals in eine Variable gefasst werden
+  (vorher inline). `package.json` nutzt dasselbe `run-script-os`-Muster wie das
+  offizielle Aspire-Angular-Sample (`ng serve --port %PORT%`/`--port $PORT`), da
+  `ng serve` selbst kein `PORT`-Env-Var liest.
+- Node.js musste von v22.16.0 auf v22.23.2 aktualisiert werden (Angular CLI 22
+  verlangt mindestens v22.22.3/v24.15.0/v26) — mit Freigabe des Projektinhabers
+  systemweit per offiziellem MSI-Installer nachgezogen.
 
-Abnahmekriterium:
+Bewusst nicht Teil dieses Standes:
 
-- Das Frontend startet über den AppHost.
+- Keine Feature-Ordner, keine Navigation, kein Login-Flow, kein AuthGuard/
+  Interceptor, keine CORS-Änderung am Backend, kein Lucide-Icon-Paket, kein
+  echter API-Aufruf aus Angular außer `runtime-config.json`.
+- Kein Production-Publish-Pfad (`PublishAsDockerFile()` o. Ä.) für das Frontend
+  — nur lokale Aspire-Entwicklung.
+
+Abnahmekriterium erfüllt:
+
+- Das Frontend startet über den AppHost (`frontend`-Ressource, Port dynamisch
+  über `PORT`), lädt Tailwind/Design-System/Fonts und die tatsächliche
+  `runtime-config.json` mit der realen API-URL.
 
 ### 0d. CI-Gate für Codequalität
 
