@@ -1,0 +1,191 @@
+/* ==========================================================================
+   MyMusic — Components
+   Built on tokens from colors_and_type.css. Class-based, framework-agnostic.
+   ========================================================================== */
+
+/* ---- Buttons ------------------------------------------------------------ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  font-family: var(--font-sans); font-size: var(--text-sm); font-weight: var(--weight-medium);
+  line-height: 1; white-space: nowrap; cursor: pointer; user-select: none;
+  height: 34px; padding: 0 14px;
+  border-radius: var(--radius-md); border: 1px solid transparent;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn svg { width: 15px; height: 15px; }
+
+.btn-primary { background: var(--accent-solid); color: var(--fg-on-accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-solid-hover); }
+
+.btn-secondary { background: var(--bg-surface); color: var(--fg); border-color: var(--border-strong); }
+.btn-secondary:hover:not(:disabled) { background: var(--bg-hover); }
+
+.btn-ghost { background: transparent; color: var(--fg-muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg-hover); color: var(--fg); }
+
+.btn-danger { background: var(--danger-solid); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-solid-hover); }
+
+.btn-sm { height: 28px; padding: 0 10px; font-size: var(--text-xs); border-radius: var(--radius-sm); }
+.btn-lg { height: 40px; padding: 0 18px; font-size: var(--text-base); }
+.btn-icon { width: 34px; height: 34px; padding: 0; }
+.btn-icon.btn-sm { width: 28px; height: 28px; }
+
+/* ---- Form fields -------------------------------------------------------- */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--fg-muted); }
+.label .req { color: var(--danger-fg); }
+
+.input, .select, .textarea {
+  width: 100%; font-family: var(--font-sans); font-size: var(--text-sm); color: var(--fg);
+  background: var(--bg-surface); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); height: 34px; padding: 0 11px;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.textarea { height: auto; min-height: 76px; padding: 9px 11px; line-height: var(--leading-snug); resize: vertical; }
+.input::placeholder, .textarea::placeholder { color: var(--fg-subtle); }
+.input:hover, .select:hover, .textarea:hover { border-color: var(--neutral-400); }
+.input:focus, .select:focus, .textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.select { appearance: none; padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7479' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center; }
+.input.is-error, .select.is-error, .textarea.is-error { border-color: var(--danger-fg); }
+.input.is-error:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--red-500) 28%, transparent); }
+.hint { font-size: var(--text-xs); color: var(--fg-subtle); }
+.hint.is-error { color: var(--danger-fg); }
+
+/* search field with leading icon */
+.search { position: relative; display: inline-flex; align-items: center; width: 100%; }
+.search svg { position: absolute; left: 10px; width: 16px; height: 16px; color: var(--fg-subtle); pointer-events: none; }
+.search .input { padding-left: 32px; border-radius: var(--radius-md); }
+
+/* checkbox / toggle */
+.checkbox { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-sm); color: var(--fg); cursor: pointer; }
+.checkbox input { width: 16px; height: 16px; accent-color: var(--accent-solid); }
+
+/* ---- Cards -------------------------------------------------------------- */
+.card {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-xs);
+}
+.card-pad { padding: var(--space-5); }
+
+/* record cover card */
+.record-card {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  cursor: pointer;
+}
+.record-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-strong); }
+.record-cover { aspect-ratio: 1; position: relative; background: var(--bg-inset);
+  display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.record-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.record-cover .fmt {
+  position: absolute; top: 8px; right: 8px; font-size: var(--text-2xs); font-weight: 600;
+  letter-spacing: var(--tracking-wide); text-transform: uppercase;
+  background: color-mix(in srgb, var(--neutral-950) 62%, transparent); color: #fff;
+  padding: 2px 7px; border-radius: var(--radius-full); backdrop-filter: blur(4px);
+}
+.record-meta { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+.record-title { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.record-artist { font-size: var(--text-xs); color: var(--fg-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.record-sub { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: var(--text-2xs); color: var(--fg-subtle); }
+
+/* stat card */
+.stat-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 4px;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.stat-value { font-size: var(--text-3xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); line-height: 1; }
+.stat-label { font-size: var(--text-xs); color: var(--fg-muted); }
+
+/* ---- Badges ------------------------------------------------------------- */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px;
+  font-size: var(--text-2xs); font-weight: var(--weight-semibold); line-height: 1;
+  border-radius: var(--radius-full); border: 1px solid transparent; white-space: nowrap;
+}
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge-neutral { background: var(--bg-inset); color: var(--fg-muted); border-color: var(--border); }
+.badge-accent  { background: var(--accent-subtle-bg); color: var(--accent-subtle-fg); border-color: var(--accent-subtle-bd); }
+.badge-success { background: var(--success-bg); color: var(--success-fg); border-color: var(--success-bd); }
+.badge-warning { background: var(--warning-bg); color: var(--warning-fg); border-color: var(--warning-bd); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger-fg);  border-color: var(--danger-bd); }
+.badge-info    { background: var(--info-bg);    color: var(--info-fg);    border-color: var(--info-bd); }
+
+/* Goldmine condition grades — best (green) → worst (red) */
+.grade { display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+  font-size: var(--text-2xs); font-weight: 700; letter-spacing: .02em; line-height: 1;
+  border-radius: var(--radius-sm); border: 1px solid transparent; }
+.grade-m   { background: var(--green-50);  color: var(--green-800); border-color: var(--green-200); }
+.grade-nm  { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.grade-vgp { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.grade-vg  { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.grade-g   { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.grade-f   { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.grade-p   { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+:root[data-theme="dark"] .grade-m,
+:root[data-theme="dark"] .grade-nm,
+:root[data-theme="dark"] .grade-vgp { background: rgba(16,185,129,.14); color: #6ee7b7; border-color: rgba(16,185,129,.3); }
+:root[data-theme="dark"] .grade-vg,
+:root[data-theme="dark"] .grade-g { background: rgba(245,158,11,.14); color: #fcd34d; border-color: rgba(245,158,11,.3); }
+:root[data-theme="dark"] .grade-f,
+:root[data-theme="dark"] .grade-p { background: rgba(239,68,68,.14); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+
+/* ---- Tabs --------------------------------------------------------------- */
+.tabs { display: flex; align-items: stretch; gap: 2px; border-bottom: 1px solid var(--border); }
+.tab {
+  display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 14px;
+  font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--fg-muted);
+  background: none; border: none; cursor: pointer; position: relative;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.tab svg { width: 16px; height: 16px; }
+.tab:hover { color: var(--fg); background: var(--bg-hover); }
+.tab.is-active { color: var(--accent-text); }
+.tab.is-active::after {
+  content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px;
+  background: var(--accent); border-radius: 2px 2px 0 0;
+}
+
+/* ---- Navigation chrome -------------------------------------------------- */
+.appbar { display: flex; align-items: center; gap: var(--space-4); height: 56px;
+  padding: 0 var(--space-5); background: var(--bg-surface); border-bottom: 1px solid var(--border); }
+.brand { display: inline-flex; align-items: center; gap: 9px; font-weight: var(--weight-bold);
+  font-size: var(--text-md); letter-spacing: var(--tracking-tight); color: var(--fg); }
+.brand .mark { width: 22px; height: 22px; flex: none; }
+.brand span { color: var(--fg); font-weight: var(--weight-bold); }
+
+/* ---- Modal -------------------------------------------------------------- */
+.scrim { position: fixed; inset: 0; background: rgba(8,12,14,.55); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; padding: var(--space-6); z-index: 50; }
+.modal { width: 100%; max-width: 460px; background: var(--bg-surface);
+  border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+  overflow: hidden; }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0; }
+.modal-body { padding: var(--space-3) var(--space-5) var(--space-5); color: var(--fg-muted); font-size: var(--text-sm); }
+.modal-foot { display: flex; justify-content: flex-end; gap: var(--space-2);
+  padding: var(--space-4) var(--space-5); background: var(--bg-surface-2); border-top: 1px solid var(--border); }
+.modal-danger-icon { width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md); background: var(--danger-bg); color: var(--danger-fg); }
+
+/* ---- States ------------------------------------------------------------- */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: var(--space-12) var(--space-6); text-align: center; color: var(--fg-subtle); font-size: var(--text-sm); }
+.spinner { width: 22px; height: 22px; border-radius: 50%;
+  border: 2.5px solid var(--border-strong); border-top-color: var(--accent); animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* skeleton */
+.skeleton { background: linear-gradient(90deg, var(--bg-inset) 25%, var(--bg-hover) 37%, var(--bg-inset) 63%);
+  background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: var(--radius-sm); }
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }

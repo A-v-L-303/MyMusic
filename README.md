@@ -111,7 +111,7 @@ TASK.md          Operative Arbeitsliste der nächsten Umsetzungsschritte
 | .NET SDK | 10.0 | |
 | Docker | laufender Daemon | für PostgreSQL, Seq und Keycloak |
 | Aspire CLI | 13.4.x | `dotnet tool install -g Aspire.Cli` (optional, `dotnet run` genügt) |
-| Node.js | 22 | erst für den Angular-Workspace nötig |
+| Node.js | ≥ 22.22.3 (oder ≥ 24.15.0 / ≥ 26) | von Angular CLI 22 vorausgesetzt; für den Angular-Workspace |
 
 ### Secrets einrichten
 
@@ -305,6 +305,43 @@ In Production ist die Swagger-UI aktuell **nicht** erreichbar — die laut
 CLAUDE.md §5.3 vorgesehene Freischaltung für die Admin-Rolle setzt das noch
 nicht existierende Rollenkonzept voraus und folgt mit Block 7 (siehe `TASK.md`
 und `docs/adr/0007-swagger-openapi-nur-development.md`).
+
+### Frontend (Block 0c)
+
+Der Angular-22-Workspace liegt unter `src/frontend/` und startet als eigene
+Ressource `frontend` automatisch mit dem AppHost (`builder.AddJavaScriptApp(...)`,
+Paket `Aspire.Hosting.JavaScript`) — Aspire vergibt den Port dynamisch über die
+Umgebungsvariable `PORT`, die `npm start` (via `run-script-os`, plattformabhängig
+`ng serve --port %PORT%`/`--port $PORT`) an den Dev-Server durchreicht. Ein
+direkter `ng serve` außerhalb des AppHosts benötigt daher entweder eine manuell
+gesetzte `PORT`-Variable oder den Aufruf ohne `npm start` (z. B. `ng serve`
+direkt, dann Standardport 4200).
+
+Styling erfolgt über Tailwind CSS 3 plus das MyMusic-Design-System
+(`src/frontend/src/styles/design-system/`, unverändert aus
+`../../02 Wiki/MyMusic Wiki/raw/design_system/` übernommen). Inter und
+JetBrains Mono sind self-hosted über `@fontsource/inter`/`@fontsource/jetbrains-mono`
+eingebunden (keine Google-Fonts-Laufzeitabhängigkeit).
+
+Die API-Basis-URL erreicht das Frontend nicht über Build-Zeit-Konfiguration,
+sondern über `public/runtime-config.json`, die beim App-Start per `fetch()`
+geladen wird (`RuntimeConfigService`, `provideAppInitializer()`). Ein
+`prestart`/`prebuild`-Skript (`scripts/write-runtime-config.mjs`) schreibt die
+Datei aus der vom AppHost gesetzten Umgebungsvariable `MYMUSIC_API_BASE_URL`
+neu — Details und Alternativenabwägung in
+`docs/adr/0009-angular-runtime-config-mechanismus.md`.
+
+Dieser Block liefert bewusst nur das lauffähige Grundgerüst (Marke, Wortmarke,
+Design-System-Nachweis) — Navigation, Routing-Hierarchie und die
+Feature-Ordner (`records/`, `artists/`, `labels/`, `genres/`, `dashboard/`,
+`search/`) aus `wiki/architektur/angular-projektstruktur.md` folgen erst mit
+den jeweiligen Angular-Feature-Blöcken, siehe `TASK.md`.
+
+```powershell
+cd src/frontend
+npm test -- --watch=false
+npm run build
+```
 
 ### Prüfen
 
