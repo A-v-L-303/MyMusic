@@ -54,7 +54,9 @@ builder.AddJavaScriptApp("frontend", "../frontend", runScriptName: "start")
     .WithReference(api)
     .WaitFor(api)
     .WithEnvironment("MYMUSIC_API_BASE_URL", api.GetEndpoint("https"))
-    .WithHttpEndpoint(env: "PORT")
+    .WithEnvironment("MYMUSIC_KEYCLOAK_AUTHORITY", ReferenceExpression.Create(
+        $"{keycloak.GetEndpoint("http")}/realms/mymusic"))
+    .WithHttpEndpoint(port: 4200, env: "PORT")
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();
