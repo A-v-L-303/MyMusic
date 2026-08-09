@@ -1,0 +1,9 @@
+<div class="flex flex-col items-center gap-2 p-8 text-center">
+  @if (currentUser.isLoading()) {
+    <p class="text-sm text-fg-muted">Lade Benutzerdaten…</p>
+  } @else if (currentUser.error()) {
+    <p class="text-sm text-fg-muted">Benutzerdaten konnten nicht geladen werden.</p>
+  } @else if (currentUser.hasValue()) {
+    <p class="text-sm text-fg-muted">Angemeldet als {{ currentUser.value().userId }}</p>
+  }
+</div>

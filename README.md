@@ -310,12 +310,13 @@ und `docs/adr/0007-swagger-openapi-nur-development.md`).
 
 Der Angular-22-Workspace liegt unter `src/frontend/` und startet als eigene
 Ressource `frontend` automatisch mit dem AppHost (`builder.AddJavaScriptApp(...)`,
-Paket `Aspire.Hosting.JavaScript`) — Aspire vergibt den Port dynamisch über die
-Umgebungsvariable `PORT`, die `npm start` (via `run-script-os`, plattformabhängig
-`ng serve --port %PORT%`/`--port $PORT`) an den Dev-Server durchreicht. Ein
-direkter `ng serve` außerhalb des AppHosts benötigt daher entweder eine manuell
-gesetzte `PORT`-Variable oder den Aufruf ohne `npm start` (z. B. `ng serve`
-direkt, dann Standardport 4200).
+Paket `Aspire.Hosting.JavaScript`) — der Port ist seit Block 7a fest auf `4200`
+gepinnt (`WithHttpEndpoint(port: 4200, env: "PORT")`), analog zum bereits
+bestehenden Keycloak-Port-Pinning: Der Keycloak-Realm-Client `mymusic-angular`
+hat seine `redirectUris`/`webOrigins` hart auf `localhost:4200` hinterlegt, ein
+von Aspire dynamisch vergebener Port hätte den Login-Flow beim Start über den
+AppHost gebrochen. Ein direkter `ng serve` außerhalb des AppHosts startet
+ebenfalls auf dem Standardport 4200.
 
 Styling erfolgt über Tailwind CSS 3 plus das MyMusic-Design-System
 (`src/frontend/src/styles/design-system/`, unverändert aus
@@ -342,6 +343,34 @@ cd src/frontend
 npm test -- --watch=false
 npm run build
 ```
+
+### Login-Flow (Block 7a)
+
+Der Angular-Client meldet sich über Keycloak per Authorization Code + PKCE an
+(`angular-auth-oidc-client`, Begründung und Alternativenvergleich in
+`docs/adr/0010-angular-oidc-bibliothek.md`). Die Keycloak-Authority-URL folgt
+demselben Runtime-Config-Mechanismus wie die API-Basis-URL (ADR 0009) —
+`write-runtime-config.mjs` schreibt sie zusätzlich aus der vom AppHost
+gesetzten Umgebungsvariable `MYMUSIC_KEYCLOAK_AUTHORITY` in
+`public/runtime-config.json`.
+
+`src/frontend/src/app/core/auth/` enthält die Konfigurations-Factory
+(`keycloak-config.factory.ts`), den `AuthGuard` (Re-Export von
+`autoLoginPartialRoutesGuard`) und einen projekteigenen Interceptor
+(`unauthorized-redirect.interceptor.ts`), der bei HTTP 401/403 einer
+API-Antwort zur Anmeldung umleitet. Der `scope` ist bewusst ohne
+`offline_access` gesetzt, damit der Refresh Token an die in
+`keycloak/mymusic-realm.json` hinterlegten SSO-Session-Grenzen (30 Minuten
+Sliding Expiry, 8 Stunden Hard-Cap) gebunden bleibt.
+
+Die API erlaubt CORS-Anfragen bislang nur in Development, beschränkt auf
+`localhost`-Origins (`Program.cs`, `Uri.IsLoopback`) — die Production-Whitelist
+aus `sicherheitskonzept.md` ist noch offen (`TASK.md` Abschnitt 7).
+
+Bewusst nicht Teil dieses Blocks: Rollenkonzept/`AdminGuard`, Admin-Bereich,
+Rate Limiting, Content Security Policy, Keycloak-Custom-Theme der
+Anmeldeseite — siehe `TASK.md` Abschnitt 7 und
+`wiki/user-stories/user-stories-authentifizierung.md`.
 
 ### Prüfen
 

@@ -1,15 +1,16 @@
 # Offene Aufgaben
 
-Stand: 2026-08-08 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-09 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
 vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
-verifiziert)
-Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
-Block 0c per PR #36 nach `main` gemergt)
+verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert)
+Branch: `block-7a-login-flow` (Block 6b per PR #30, Block 6c per PR #32,
+Block 6d per PR #34, Block 0c per PR #36 nach `main` gemergt; Block 7a noch
+nicht gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -27,17 +28,21 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d, 0e und 0c sind abgeschlossen. Offen aus dem MVP-Umfang der Phase 1:
+Block 0a, 0b, 0d, 0e, 0c und 7a sind abgeschlossen. Offen aus dem MVP-Umfang
+der Phase 1:
 
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
   (Block 6a), Album-Cover-Upload (Block 6b), Track-Backend (Block 6c) und die
   Nachträge aus Block 2/4/5 (Block 6d) erledigt, siehe Abschnitt 6 — damit
   vollständig abgeschlossen; Angular-Features `genres/`, `labels/`,
-  `artists/` und `records/` jetzt entsperrt, aber noch nicht umgesetzt).
+  `artists/` und `records/` jetzt entsperrt und mit gültigem Access Token
+  aufrufbar (Block 7a), aber noch nicht umgesetzt).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
-- Keycloak-Authentifizierung im Code und Mandantentrennung.
+- Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
+  Limiting, CORS-Production-Whitelist, CSP, Keycloak-Custom-Theme der
+  Anmeldeseite (siehe Abschnitt 7).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -934,7 +939,7 @@ Abnahmekriterium erfüllt:
 
 ## 7. Authentifizierung und Mandantentrennung
 
-Status: teilweise offen
+Status: teilweise offen; Block 7a (Angular-Login-Flow) abgeschlossen
 Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
@@ -948,20 +953,113 @@ Bereits umgesetzt (Block 0b, siehe oben):
   `ICurrentUserService` liest den `sub`-Claim, einmal nachgewiesen per
   Integrationstest (`/api/me`).
 
+### 7a. Angular-Login-Flow
+
+Status: **abgeschlossen** (2026-08-09)
+Arbeits-Prompt: `docs/prompts/2026-08-09-block-7a-login-flow.md`
+
+Umgesetzt:
+
+- Angular-seitiger Login-Flow gegen Keycloak (Authorization Code + PKCE) über
+  `angular-auth-oidc-client` (ADR 0010), konfiguriert über eine asynchrone
+  Factory (`core/auth/keycloak-config.factory.ts`), die die
+  Keycloak-Authority zur Laufzeit aus der um `keycloakAuthority` erweiterten
+  `RuntimeConfigService` liest (Fortsetzung des Musters aus ADR 0009).
+- `AuthGuard` (`core/auth/auth.guard.ts`, Re-Export von
+  `autoLoginPartialRoutesGuard`) auf allen Routen; projekteigener
+  `unauthorized-redirect.interceptor.ts` leitet bei HTTP 401/403 einer
+  API-Antwort zur Anmeldung um (die Bibliothek erkennt das nicht selbst).
+- `scope` bewusst ohne `offline_access`, damit der Refresh Token an die
+  Realm-Werte `ssoSessionIdleTimeout`/`ssoSessionMaxLifespan` (30 Min.
+  Sliding / 8 h Hard-Cap) gebunden bleibt (siehe ADR 0010).
+- Minimale Development-CORS-Policy im Backend (`Program.cs`,
+  `Uri.IsLoopback`) — ohne sie hätte der Interceptor nicht gegen die echte
+  API verifiziert werden können. Production-Whitelist bleibt offen (siehe
+  unten).
+- `AppHost.cs`: Frontend-Port fest auf `4200` gepinnt (der
+  Keycloak-Realm-Client `mymusic-angular` hat `redirectUris`/`webOrigins`
+  hart auf diesen Port hinterlegt, ein von Aspire dynamisch vergebener Port
+  hätte den Login-Flow beim Start über den AppHost gebrochen) und
+  `MYMUSIC_KEYCLOAK_AUTHORITY` als neue Env-Var ergänzt.
+- Minimaler Login-/Logout-Button in der bestehenden App-Shell sowie eine
+  Platzhalter-Komponente (`core/shell/home-placeholder/`), die `GET /api/me`
+  aufruft — konkreter Ende-zu-Ende-Nachweis, dass der Interceptor das Token
+  tatsächlich an einen echten, geschützten API-Aufruf anhängt. Bei
+  Anmeldung zeigt die Kopfzeile zusätzlich den `preferred_username` aus den
+  OIDC-Benutzerdaten neben dem Logout-Button (`navigation-konzept.md`,
+  Abschnitt „User-Bereich" — Profil-Modal beim Klick auf den Namen folgt
+  erst mit der echten `NavComponent`, hier bewusst nur Text ohne
+  Klick-Handler).
+- `.github/workflows/ci.yml`: neuer `frontend-check`-Job (Node, `npm ci`,
+  `npm run build`, `npm test`) — schließt die seit Block 0c bestehende Lücke,
+  dass Frontend-Code nie in CI lief.
+- Neue Unit Tests (Vitest): `RuntimeConfigService` (Erweiterung +
+  Memoisierung), `keycloak-config.factory`, `unauthorized-redirect.interceptor`,
+  `HomePlaceholder`, `App` (Login-/Logout-Button, Benutzername in der
+  Kopfzeile) — 19 Tests, alle grün.
+- Neuer Integrationstest `CorsPolicyTests.cs` (Preflight erlaubt/verweigert).
+- `keycloak/mymusic-realm.json` unverändert (ADR 0005: Auth-Code-only ist
+  bewusst so).
+
+Nachtrag (2026-08-09): Die erste Live-Verifikation im Browser (Aspire-AppHost,
+echter Keycloak-Testbenutzer) deckte eine Endlosschleife auf — nach jedem
+Rücksprung von Keycloak wurde sofort wieder zu Keycloak umgeleitet, ohne
+jemals einen Token-Austausch durchzuführen. Ursache: `autoLoginPartialRoutesGuard`
+verarbeitet den OIDC-Callback nicht selbst, sondern prüft nur vorhandene
+Tokens im Storage — ohne das Bibliotheks-Feature `withAppInitializerAuthCheck()`
+(registriert einen `APP_INITIALIZER`, der `checkAuth()` beim Start aufruft)
+wurde nie ein Token angefordert. Alle bisherigen automatisierten Tests hatten
+`OidcSecurityService` durchgängig gemockt und diese Lücke deshalb nicht
+erkannt. Fix in `app.config.ts` (samt erklärendem Kommentar) ergänzt, siehe
+ADR 0010 Nachtrag für Details. Nach dem Fix live erneut geprüft: echtes
+Login-Formular, Rückkehr zur ursprünglich aufgerufenen URL (`/records/42`),
+korrekte `userId` über `GET /api/me`, Logout beendet die reale
+Keycloak-Session. US-AU5/US-AU6 (zeitbasierte Token-Erneuerung/-Ablauf)
+bleiben mangels praktikabler Wartezeit nur über die bestehenden
+Interceptor-Unit-Tests abgedeckt, nicht live nachgewiesen.
+
+Nachtrag (2026-08-09): Nachträglich aufgefallen (Rückfrage des
+Projektinhabers), dass die Kopfzeile bei Anmeldung entgegen
+`navigation-konzept.md` („User-Bereich": `[Username]` + `[Logout-Button]`)
+nur einen nackten Logout-Button zeigte — eine bewusst minimal gehaltene, aber
+nicht klar genug kommunizierte Abweichung. Ergänzt: `App` liest
+`OidcSecurityService.userData()` und zeigt `preferred_username` neben dem
+Logout-Button. Live erneut mit einem frisch angelegten Testbenutzer geprüft
+(Kopfzeile zeigt korrekt den Benutzernamen, `GET /api/me` liefert die
+passende `userId`). Profil-Modal (Klick auf den Namen) bleibt bewusst offen
+für die echte `NavComponent`.
+
+Bewusst nicht Teil dieses Standes:
+
+- Rollenkonzept (`User`/`Admin`) und `AdminGuard`/Admin-Tab in Angular.
+- Keycloak-Custom-Theme der Anmeldeseite (US-AU8, siehe Wiki
+  `user-stories/user-stories-authentifizierung.md`) — eigener, späterer
+  Block.
+- Wildcard-Route (`'**'`) in `app.routes.ts` ist eine bewusste, temporäre
+  Verifikationshilfe für US-AU2 — entfällt mit den echten Feature-Routen.
+
+Abnahmekriterium erfüllt (live verifiziert, siehe Nachtrag oben):
+
+- Ohne Anmeldung ist keine geschützte Route erreichbar; nach Anmeldung trägt
+  jeder API-Aufruf automatisch ein gültiges Access Token; Logout beendet die
+  reale Keycloak-Sitzung. Die zeitbasierten Teile (stille Erneuerung nach
+  Ablauf des Access Tokens, Redirect nach abgelaufener Sitzung) sind nur durch
+  Unit-Tests, nicht live nachgewiesen.
+
 Aufgaben (noch offen):
 
-- Angular-Login-Flow (Authorization Code + PKCE) inkl. AuthGuard und
-  HTTP-Interceptor.
-- Rollen (`User`, `Admin`), Ownership-Prüfung in Handlern (404 statt 403) —
-  setzt Entitäten voraus, entsteht mit dem jeweiligen Slice.
+- Rollen (`User`, `Admin`) im Angular-Code (`AdminGuard`, Admin-Tab) — die
+  Ownership-Prüfung in Handlern (404 statt 403) ist bereits je CRUD-Slice
+  serverseitig umgesetzt.
 - Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
   zurückgestellt aus Block 0e, siehe
   `docs/adr/0007-swagger-openapi-nur-development.md`).
-- Rate Limiting (100 req/min pro Benutzer), CORS-Policy per Environment, CSP.
+- Rate Limiting (100 req/min pro Benutzer), CORS-Production-Whitelist, CSP.
 - Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
+- Keycloak-Custom-Theme der Anmeldeseite (US-AU8).
 
-Abnahmekriterium:
+Abnahmekriterium (Gesamtabschnitt 7):
 
 - Ohne Login ist kein fachlicher Endpunkt erreichbar; Benutzer sehen
   ausschließlich eigene Daten; der Admin kann Benutzer löschen.
