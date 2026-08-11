@@ -2,13 +2,15 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 
+import { ThemeToggle } from './core/theme/theme-toggle/theme-toggle';
+
 interface OidcUserClaims {
   preferred_username?: string;
 }
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ThemeToggle],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

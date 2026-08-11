@@ -1,15 +1,17 @@
 # Offene Aufgaben
 
-Stand: 2026-08-09 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-11 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
 vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
-verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert)
+verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert; Block 0f
+(Dark/Light-Theme-Infrastruktur) umgesetzt und verifiziert)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
-Block 0c per PR #36, Block 7a per PR #41 nach `main` gemergt)
+Block 0c per PR #36, Block 7a per PR #41 nach `main` gemergt; Block 0f auf
+`block-0f-theme-infrastruktur`, noch nicht gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -27,7 +29,7 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d, 0e, 0c und 7a sind abgeschlossen. Offen aus dem MVP-Umfang
+Block 0a, 0b, 0d, 0e, 0c, 0f und 7a sind abgeschlossen. Offen aus dem MVP-Umfang
 der Phase 1:
 
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
@@ -303,6 +305,65 @@ Bewusst nicht Teil von 0e:
 - Freischaltung der Swagger-UI in Production für die Admin-Rolle (CLAUDE.md
   §5.3) — das Rollenkonzept (`User`/`Admin`) existiert im Code noch nicht
   (siehe Abschnitt 7). Wird dort nachgezogen, sobald die Admin-Rolle entsteht.
+
+### 0f. Dark/Light-Theme-Infrastruktur
+
+Status: **abgeschlossen** (2026-08-11)
+Arbeits-Prompt: `docs/prompts/2026-08-11-block-0f-theme-infrastruktur.md`
+
+Anlass: Das Wiki (`navigation-konzept.md`, `ui-kit.md`) wurde am 2026-08-10 um
+einen Light/Dark-Toggle in der Kopfzeile ergänzt (vorher Widerspruch zwischen
+beiden Seiten). Das Design-System (`tailwind.config.js`,
+`colors_and_type.css`) war bereits vollständig auf Dark-Mode vorbereitet, die
+Angular-Anwendungsschicht hat das nie genutzt — kein Toggle, kein
+`ThemeService`, keine `data-theme`-Steuerung.
+
+Umgesetzt:
+
+- `ThemeService` (`src/frontend/src/app/core/theme/theme.service.ts`,
+  `providedIn: 'root'`, Signal-basiert): Drei-Zustands-Logik — keine
+  gespeicherte Präferenz folgt live der OS-Einstellung (`prefers-color-scheme`,
+  kein `data-theme`-Attribut gesetzt, reiner CSS-Fallback bleibt aktiv);
+  explizite Wahl (`light`/`dark`) setzt das Attribut und übersteuert die OS-
+  Einstellung dauerhaft. `toggle()` kehrt das aktuell effektive Theme um.
+- `ThemeToggle`-Komponente (`core/theme/theme-toggle/`): Icon-Button (Sonne/
+  Mond, kein Label, laut Wiki-Ausnahme vom sonstigen Label-only-Muster der
+  Kopfzeile), Inline-SVG mit den öffentlichen Lucide-Pfaddaten (kein neues
+  npm-Paket für nur zwei Icons — `lucide-angular` bleibt dem künftigen
+  `NavComponent`-Block vorbehalten, siehe ADR 0011).
+  In `app.html` zwischen Logo/Titel und dem Login/Logout-Block eingebunden,
+  unabhängig vom Anmeldestatus immer sichtbar.
+- Kleines Inline-Script in `index.html` (vor jeder Angular-Ausführung), das
+  eine gespeicherte explizite Präferenz sofort anwendet — verhindert einen
+  sichtbaren Farb-Flash beim Laden, der sonst entstünde, weil `ThemeService`
+  erst nach dem `RuntimeConfigService`-Fetch im Bootstrap existiert (ADR 0009).
+- `localStorage`-Key `mymusic-theme` (nicht die Abkürzung `mm-theme` aus dem
+  Rohprototyp — CLAUDE.md §9 verbietet Abkürzungen).
+- Neue Unit Tests (Vitest): `theme.service.spec.ts` (7 Fälle: OS-Fallback
+  Light/Dark, explizite Präferenz übersteuert OS, ungültiger gespeicherter
+  Wert wird ignoriert, Live-Reaktion auf OS-Änderung nur ohne explizite Wahl,
+  `toggle()` inkl. Persistenz), `theme-toggle.spec.ts` (3 Fälle: Icon/
+  `aria-label` je Zustand, Klick löst `toggle()` aus). `app.spec.ts` angepasst:
+  `ThemeService`-Stub ergänzt, vier `querySelector('button')`-Aufrufe auf
+  `button.btn-secondary` präzisiert (sonst hätte der neu eingefügte
+  Toggle-Button vor Login/Logout gefunden und die Assertions verfälscht).
+  29 Frontend-Tests insgesamt, alle grün.
+- ADR `docs/adr/0011-theme-infrastruktur.md` (Storage-Key, Drei-Zustands-Logik
+  vs. abweichendes Rohprototyp-Verhalten, Icon-Herkunft, FOUC-Script).
+
+Bewusst nicht Teil dieses Standes:
+
+- Favicon (`mark.svg` als Favicon einbinden), Tab-Leiste, Tabellen-Layouts,
+  Suchfeld, Admin-Button, vollständige `NavComponent` — existieren im Code
+  noch nicht und sind für einen späteren Block vorgesehen.
+- `lucide-angular` als npm-Paket (siehe oben).
+
+Abnahmekriterium erfüllt:
+
+- Ohne gespeicherte Präferenz folgt das Theme der OS-Einstellung; ein Klick
+  auf den Toggle wechselt sichtbar zwischen Light/Dark und bleibt nach einem
+  Neuladen der Seite erhalten; kein sichtbarer Farb-Flash bei abweichender
+  expliziter Wahl.
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
