@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './app';
+import { ThemeService } from './core/theme/theme.service';
 
 describe('App', () => {
   let authenticatedSignal: ReturnType<typeof signal<{ isAuthenticated: boolean }>>;
@@ -32,6 +33,7 @@ describe('App', () => {
             logoff: logoffMock,
           },
         },
+        { provide: ThemeService, useValue: { effectiveTheme: signal('light'), toggle: vi.fn() } },
       ],
     }).compileComponents();
   });
@@ -54,7 +56,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const button = compiled.querySelector('button');
+    const button = compiled.querySelector<HTMLButtonElement>('button.btn-secondary');
 
     // act
     button?.click();
@@ -70,7 +72,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const button = compiled.querySelector('button');
+    const button = compiled.querySelector<HTMLButtonElement>('button.btn-secondary');
 
     // act
     button?.click();
@@ -104,6 +106,6 @@ describe('App', () => {
 
     // assert: kein Absturz, nur der Logout-Button ohne Namenstext
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('button')?.textContent).toContain('Logout');
+    expect(compiled.querySelector('button.btn-secondary')?.textContent).toContain('Logout');
   });
 });

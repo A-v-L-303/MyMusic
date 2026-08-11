@@ -3,16 +3,17 @@
     <img src="mark.svg" alt="" class="h-6 w-6" />
     <span class="text-xl font-bold tracking-tightish text-fg">MyMusic</span>
   </div>
-  @if (authenticated().isAuthenticated) {
-    <div class="flex items-center gap-3">
+  <div class="flex items-center gap-3">
+    <app-theme-toggle />
+    @if (authenticated().isAuthenticated) {
       @if (username(); as name) {
         <span class="text-sm text-fg-muted">{{ name }}</span>
       }
       <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
-    </div>
-  } @else {
-    <button type="button" class="btn btn-secondary" (click)="login()">Login</button>
-  }
+    } @else {
+      <button type="button" class="btn btn-secondary" (click)="login()">Login</button>
+    }
+  </div>
 </header>
 
 <router-outlet />
