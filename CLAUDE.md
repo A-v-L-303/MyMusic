@@ -62,11 +62,12 @@ Ohne ausdrückliche Freigabe sind insbesondere verboten:
 Nach einer ausdrücklichen Freigabe:
 
 1. Ändere nur den freigegebenen Umfang.
-2. Halte Änderungen klein und thematisch geschlossen.
-3. Prüfe vor Beginn den Iststand erneut (Git-Status, aktueller Branch gemäß 2.4,
+2. Es wird nichts implementiert bevor ein Arbeits-Prompt erstellt und geschrieben wurde.
+3. Halte Änderungen klein und thematisch geschlossen.
+4. Prüfe vor Beginn den Iststand erneut (Git-Status, aktueller Branch gemäß 2.4,
    Build, betroffene Dateien).
-4. Führe passende Builds und Tests aus.
-5. Dokumentiere:
+5. Führe passende Builds und Tests aus.
+6. Dokumentiere:
    - geänderte Dateien,
    - fachliche und technische Auswirkungen,
    - ausgeführte Prüfungen,
@@ -178,9 +179,10 @@ echte `NavComponent` (`src/app/nav/`) samt `features/`-Ordner
 (`dashboard/`, `records/`, `artists/`, `labels/`, `genres/`, `search/`) —
 siehe TASK.md Abschnitt 0g. `genres/` ist seit Block 2 (PR #47) als
 vollständiger CRUD-Slice umgesetzt (Referenz-Slice für die Muster Signal
-Forms, `rxResource`, `ErrorModalService`, `shared/`-Bausteine); `dashboard/`,
-`records/`, `artists/`, `labels/` und `search/` enthalten weiterhin nur
-Platzhalterseiten. Die C#-Projekte
+Forms, `rxResource`, `ErrorModalService`, `shared/`-Bausteine); `labels/`
+(Block 4 Frontend, PR #49) und `artists/` (Block 5 Frontend, PR #52)
+übernehmen diese Muster 1:1; `dashboard/`, `records/` und `search/`
+enthalten weiterhin nur Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
 

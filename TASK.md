@@ -14,13 +14,13 @@ und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
 (Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — nach `main`
 gemergt; Angular-Feature `labels/` (Block 4 Frontend) umgesetzt und
 verifiziert, siehe Abschnitt 4 — nach `main` gemergt; Angular-Feature
-`artists/` (Block 5 Frontend) umgesetzt, siehe Abschnitt 5 — auf Branch
-`block-5-angular-artist`, noch nicht nach `main` gemergt)
-Branch: `block-5-angular-artist` (Block 6b per PR #30, Block 6c per PR #32,
+`artists/` (Block 5 Frontend) umgesetzt, siehe Abschnitt 5 — nach `main`
+gemergt)
+Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
 Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
 PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
-Frontend per PR #47, Block 4 Frontend per PR #49 nach `main` gemergt; Block 5
-Frontend noch offen)
+Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend per
+PR #52 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -803,9 +803,8 @@ Abnahmekriterium:
 ## 5. Slice: Artist
 
 Status: **Backend und Frontend abgeschlossen** (Backend: 2026-08-07;
-Frontend: 2026-08-13, Branch `block-5-angular-artist`, noch nicht nach
-`main` gemergt). Übernimmt die Muster aus Block 2 (Genre-Frontend,
-Referenz-Slice) 1:1, siehe Arbeits-Prompt
+Frontend: 2026-08-13, PR #52 nach `main` gemergt). Übernimmt die Muster aus
+Block 2 (Genre-Frontend, Referenz-Slice) 1:1, siehe Arbeits-Prompt
 `docs/prompts/2026-08-13-block-5-angular-artist.md`.
 Priorität: mittel
 
