@@ -202,8 +202,9 @@ siehe oben) — nie aus dem Request. Ein doppelter Name innerhalb der eigenen
 Sammlung liefert HTTP 409, eine fremde oder unbekannte Id HTTP 404 (nicht
 403). `DELETE /api/genres/{id}` liefert zusätzlich HTTP 409, wenn noch
 mindestens ein Track (Slice 6) das Genre referenziert (Nachtrag Block 6d).
-Das Angular-Feature `genres/` folgt erst mit Block 0c (Angular-Workspace),
-siehe `TASK.md`.
+Das Angular-Feature `genres/` (Block 2 Frontend, PR #47) ist als
+Referenz-Slice umgesetzt — Tabellenansicht, Namensfilter, Add/Edit als
+Modal, siehe `TASK.md`.
 
 ### Country-Slice (Block 3)
 
@@ -241,8 +242,9 @@ Die Response löst den Ländernamen serverseitig auf (`CountryName` neben
 oder unbekannte Id HTTP 404 (nicht 403) — analog Genre. `DELETE
 /api/labels/{id}` liefert zusätzlich HTTP 409, wenn noch mindestens ein
 Record (Slice 6) das Label referenziert (Nachtrag Block 6d). Das
-Angular-Feature `labels/` folgt erst mit Block 0c (Angular-Workspace), siehe
-`TASK.md`.
+Angular-Feature `labels/` (Block 4 Frontend, PR #49) ist umgesetzt —
+zusätzlich zum Namensfilter aus Genre ein Land-Filter (natives `<select>`),
+siehe `TASK.md`.
 
 ### Artist-Slice (Block 5)
 
