@@ -175,8 +175,12 @@ Der Angular-22-Workspace unter `src/frontend/` ist seit Block 0c angelegt
 Block 7a einen Login-Flow gegen Keycloak (`core/auth/`, Authorization Code +
 PKCE über `angular-auth-oidc-client`, siehe ADR 0010) und seit Block 0g eine
 echte `NavComponent` (`src/app/nav/`) samt `features/`-Ordner
-(`dashboard/`, `records/`, `artists/`, `labels/`, `genres/`, `search/`,
-aktuell nur Platzhalterseiten) — siehe TASK.md Abschnitt 0g. Die C#-Projekte
+(`dashboard/`, `records/`, `artists/`, `labels/`, `genres/`, `search/`) —
+siehe TASK.md Abschnitt 0g. `genres/` ist seit Block 2 (PR #47) als
+vollständiger CRUD-Slice umgesetzt (Referenz-Slice für die Muster Signal
+Forms, `rxResource`, `ErrorModalService`, `shared/`-Bausteine); `dashboard/`,
+`records/`, `artists/`, `labels/` und `search/` enthalten weiterhin nur
+Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
 

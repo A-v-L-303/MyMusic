@@ -11,12 +11,12 @@ verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert; Block 0f
 (Dark/Light-Theme-Infrastruktur) umgesetzt und verifiziert, dazu ein kleiner
 Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
 und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
-(Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — noch nicht
+(Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — nach `main`
 gemergt)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
 Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
-Favicon-Nachtrag per PR #44, Block 0g per PR #45 nach `main` gemergt); Block 2
-Frontend liegt auf `angular-feature-genre`, noch ohne Pull Request
+Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2 Frontend per PR #47
+nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -492,7 +492,7 @@ Abnahmekriterium:
 ## 2. Slice: Genre
 
 Status: **Backend und Frontend abgeschlossen** (Backend: 2026-08-04; Frontend:
-2026-08-13, Branch `angular-feature-genre`, noch nicht nach `main` gemergt).
+2026-08-13, per PR #47 nach `main` gemergt).
 Referenz-Slice: Das Angular-Feature etabliert die Muster (Signal Forms mit
 Validierung, `rxResource`, `ErrorModalService`, `shared/`-Bausteine), die
 Label/Artist/Record übernehmen sollen, siehe Arbeits-Prompt
