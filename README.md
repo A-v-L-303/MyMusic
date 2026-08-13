@@ -269,7 +269,12 @@ nur `record.artist_id → record.label_id`); eine fremde oder unbekannte
 bei `GET /records`). `DELETE /api/artists/{id}` liefert HTTP 409, wenn noch
 mindestens ein Record oder Track (Slice 6) den Artist referenziert (zwei
 getrennte Existenzabfragen, Nachtrag Block 6d). Das Angular-Feature
-`artists/` folgt erst mit Block 0c (Angular-Workspace), siehe `TASK.md`.
+`artists/` (Block 5 Frontend, 2026-08-13) übernimmt die Muster aus Genre
+(Referenz-Slice) 1:1 — Tabellenansicht, Namensfilter, Add/Edit als Modal.
+Ohne UI für den `labelId`-Filter: Anders als bei Country (`GET /countries`
+liefert ungefiltert alle 238 Einträge) gibt es für Label keinen
+ungefilterten Endpunkt, nur das auf 100 Einträge geklemmte paginierte
+`GET /labels` — eine Dropdown-Quelle dafür bleibt offen, siehe `TASK.md`.
 
 ### Album-Cover-Upload (Block 6b)
 

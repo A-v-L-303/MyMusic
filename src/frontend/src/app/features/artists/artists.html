@@ -1,4 +1,44 @@
-<section class="p-6">
-  <h1 class="text-lg font-bold text-fg">Artists</h1>
-  <p class="empty">Diese Ansicht folgt in einem späteren Block.</p>
+<section class="mx-auto max-w-[1080px] px-6 pb-16 pt-6">
+  <div class="flex items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <h1 class="text-lg font-bold text-fg">Artists</h1>
+      <span class="badge badge-neutral">{{ totalCount() }}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <app-artist-filter (filterChange)="onFilterChange($event)" />
+      <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+        <svg lucidePlus [size]="15" aria-hidden="true"></svg>
+        Anlegen
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-6">
+    <app-artist-table
+      [artists]="artists()"
+      [loading]="artistsResource.isLoading()"
+      [page]="page()"
+      [totalPages]="totalPages()"
+      (editRequested)="openEditForm($event)"
+      (deleteRequested)="onDeleteRequested($event)"
+      (pageChange)="onPageChange($event)"
+    />
+  </div>
 </section>
+
+@if (formOpen()) {
+  <app-artist-form
+    [artist]="editingArtist()"
+    (cancelled)="onFormCancelled()"
+    (saved)="onFormSaved()"
+  />
+}
+
+@if (pendingDelete()) {
+  <app-confirm-modal
+    title="Artist löschen"
+    [message]="pendingDeleteMessage()"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()"
+  />
+}

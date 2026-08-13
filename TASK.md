@@ -13,11 +13,14 @@ Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
 und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
 (Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — nach `main`
 gemergt; Angular-Feature `labels/` (Block 4 Frontend) umgesetzt und
-verifiziert, siehe Abschnitt 4 — nach `main` gemergt)
-Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
-Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
-Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2 Frontend per PR #47,
-Block 4 Frontend per PR #49 nach `main` gemergt)
+verifiziert, siehe Abschnitt 4 — nach `main` gemergt; Angular-Feature
+`artists/` (Block 5 Frontend) umgesetzt, siehe Abschnitt 5 — auf Branch
+`block-5-angular-artist`, noch nicht nach `main` gemergt)
+Branch: `block-5-angular-artist` (Block 6b per PR #30, Block 6c per PR #32,
+Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
+PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
+Frontend per PR #47, Block 4 Frontend per PR #49 nach `main` gemergt; Block 5
+Frontend noch offen)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -47,7 +50,8 @@ MVP-Umfang der Phase 1:
   aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g);
   `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe Abschnitt
   2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4); `artists/`
-  und `records/` enthalten weiterhin nur Platzhalterseiten).
+  umgesetzt, aber ohne UI für den `labelId`-Filter (Block 5 Frontend, siehe
+  Abschnitt 5); `records/` enthält weiterhin nur eine Platzhalterseite).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -798,9 +802,11 @@ Abnahmekriterium:
 
 ## 5. Slice: Artist
 
-Status: **Backend abgeschlossen** (2026-08-07); Angular-Feature `artists/`
-zurückgestellt bis Block 0c (Angular-Workspace) umgesetzt ist — analog
-Genre und Label.
+Status: **Backend und Frontend abgeschlossen** (Backend: 2026-08-07;
+Frontend: 2026-08-13, Branch `block-5-angular-artist`, noch nicht nach
+`main` gemergt). Übernimmt die Muster aus Block 2 (Genre-Frontend,
+Referenz-Slice) 1:1, siehe Arbeits-Prompt
+`docs/prompts/2026-08-13-block-5-angular-artist.md`.
 Priorität: mittel
 
 Ziel:
@@ -836,27 +842,45 @@ Umgesetzt (Backend):
   `GenreEndpointsTests`/`CountryEndpointsTests`/`LabelEndpointsTests`,
   6/6 grün).
 
+Umgesetzt (Frontend, 2026-08-13):
+
+- `features/artists/artist.ts` (Interfaces), `artist.service.ts`
+  (`HttpTestingController`-getestet) unter `features/artists/` — 1:1-Muster
+  von `features/genres/`.
+- `Artists`-Shell mit `rxResource` ersetzt den bisherigen Platzhalter
+  vollständig; `ArtistFilter` (Signal Form mit `debounce`, ausschließlich
+  Namensfilter), `ArtistTable` (inkl. eingebetteter `Pagination`) und
+  `ArtistForm` (Signal Forms mit `required`/`minLength(3)`/`maxLength(120)`/
+  `pattern` inkl. `.`/`/`, serverseitige 400-Fehler über `submit()` inline
+  ins Namensfeld eingehängt, `formModel` von Anfang an mit `linkedSignal`
+  statt `signal` — vermeidet den Block-2/4-Vorbefüllungsbug von vornherein)
+  sowie die `ConfirmModal`-Verdrahtung für Delete.
+- **Mit dem Projektinhaber geklärt (2026-08-13)**: Der seit Block 6d
+  serverseitig vorhandene `labelId`-Filter bei `GET /artists` bekommt in
+  diesem Block **keine** UI — Label hat anders als Country keinen
+  ungefilterten „Alle Labels"-Endpunkt, nur das auf 100 Einträge geklemmte
+  paginierte `GET /labels`. US-A2 bleibt im Frontend dadurch nicht
+  vollständig erfüllt (siehe Arbeits-Prompt
+  `docs/prompts/2026-08-13-block-5-angular-artist.md`, Abschnitt „Risiken").
+- 33 neue Frontend-Tests, 182 Frontend-Tests insgesamt, alle grün.
+  Production-Build und Prettier-Check (für die neu angelegten/geänderten
+  Dateien) grün; `ng lint` weiterhin nicht konfiguriert (wie bei Genre/Label).
+
 Bewusst nicht Teil dieses Standes:
 
-- Angular-Feature `artists/` (Tabellenansicht, Filterung, Add/Edit als
-  Modal) — braucht Block 0c.
-- **Label-Filter bei `GET /artists`**: Laut `api-endpunkte.md` vorgesehen,
-  aber fachlich erst mit Slice 6 umsetzbar — die `artist`-Tabelle hat keine
-  `label_id`-Spalte, die Beziehung zu Label besteht nur indirekt über
-  `record.artist_id → record.label_id`, siehe Wiki `domain/artist.md` und
-  `user-stories-artist.md` (US-A2).
-- Referenzprüfung gegen `record`/`record_track` in
-  `DeleteArtistCommandHandler` (siehe Slice 6 unten) — beide Tabellen
-  existieren erst dort, analog zur bereits bestehenden Nachtrag-Pflicht für
-  `DeleteGenreCommandHandler`/`DeleteLabelCommandHandler`.
+- UI für den `labelId`-Filter bei `GET /artists` (siehe oben).
+- Manuelle Live-Prüfung im Browser gegen den laufenden Aspire-AppHost steht
+  noch aus, insbesondere der 409-Referenzfall beim Löschen (mangels
+  Record-Frontend nur über Swagger nachweisbar, siehe Arbeits-Prompt).
 
 Abnahmekriterium:
 
 - Artists lassen sich anlegen, anzeigen, filtern, bearbeiten und löschen;
   fremde Benutzerdaten sind nicht sichtbar; Tests decken Happy Path,
-  Validierung und unbekannte IDs ab. **Backend erfüllt** (Filterung
-  vorerst nur nach Name, siehe oben); die UI-seitigen Teile (Tabellenansicht,
-  Filter, Modal) folgen mit dem Angular-Feature nach Block 0c.
+  Validierung und unbekannte IDs ab. **Vollständig erfüllt** (Backend seit
+  2026-08-07, Frontend seit 2026-08-13; Filterung im Frontend vorerst nur
+  nach Name, siehe oben) — die manuelle Live-Prüfung im Browser steht noch
+  aus.
 
 ## 6. Slice: Record und Tracks
 
