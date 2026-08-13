@@ -1,0 +1,30 @@
+<app-modal (closed)="onCancel()">
+  <form (submit)="$event.preventDefault(); onSubmit()">
+    <div class="modal-head">
+      <h2 class="text-base font-semibold text-fg">
+        {{ isEditMode() ? 'Artist bearbeiten' : 'Artist anlegen' }}
+      </h2>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="label" for="artist-name">Name<span class="req"> *</span></label>
+        <input
+          id="artist-name"
+          type="text"
+          class="input"
+          [class.is-error]="artistForm.name().invalid() && artistForm.name().touched()"
+          [formField]="artistForm.name"
+        />
+        @if (artistForm.name().invalid() && artistForm.name().touched()) {
+          <span class="hint is-error">{{ artistForm.name().errors()[0].message }}</span>
+        }
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Abbrechen</button>
+      <button type="submit" class="btn btn-primary" [disabled]="artistForm().submitting()">
+        Speichern
+      </button>
+    </div>
+  </form>
+</app-modal>
