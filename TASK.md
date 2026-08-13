@@ -13,12 +13,11 @@ Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
 und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
 (Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — nach `main`
 gemergt; Angular-Feature `labels/` (Block 4 Frontend) umgesetzt und
-verifiziert, siehe Abschnitt 4 — noch nicht gemergt)
+verifiziert, siehe Abschnitt 4 — nach `main` gemergt)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
 Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
-Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2 Frontend per PR #47
-nach `main` gemergt); Block 4 Frontend liegt auf `angular-feature-label`,
-noch ohne Pull Request
+Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2 Frontend per PR #47,
+Block 4 Frontend per PR #49 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -47,9 +46,8 @@ MVP-Umfang der Phase 1:
   `artists/` und `records/` jetzt entsperrt und mit gültigem Access Token
   aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g);
   `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe Abschnitt
-  2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4, noch nicht
-  gemergt); `artists/` und `records/` enthalten weiterhin nur
-  Platzhalterseiten).
+  2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4); `artists/`
+  und `records/` enthalten weiterhin nur Platzhalterseiten).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -683,9 +681,9 @@ Abnahmekriterium:
 ## 4. Slice: Label
 
 Status: **Backend und Frontend abgeschlossen** (Backend: 2026-08-07; Frontend:
-2026-08-13, Branch `angular-feature-label`, noch nicht nach `main` gemergt).
-Übernimmt die Muster aus Block 2 (Genre-Frontend, Referenz-Slice) 1:1, siehe
-Arbeits-Prompt `docs/prompts/2026-08-13-block-4-angular-label.md`.
+2026-08-13, per PR #49 nach `main` gemergt). Übernimmt die Muster aus
+Block 2 (Genre-Frontend, Referenz-Slice) 1:1, siehe Arbeits-Prompt
+`docs/prompts/2026-08-13-block-4-angular-label.md`.
 Priorität: mittel
 
 Ziel:
@@ -787,8 +785,6 @@ Bewusst nicht Teil dieses Standes:
 - Manuelle Live-Prüfung im Browser gegen den laufenden Aspire-AppHost steht
   noch aus, insbesondere der 409-Referenzfall beim Löschen (mangels
   Record-Frontend nur über Swagger nachweisbar, siehe Arbeits-Prompt).
-- Kein PR/Merge nach `main` — Branch `angular-feature-label` liegt noch
-  unabhängig vor.
 
 Abnahmekriterium:
 
