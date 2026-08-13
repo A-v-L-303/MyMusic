@@ -1,0 +1,79 @@
+<header class="appbar">
+  <div class="mx-auto flex w-full max-w-[1080px] items-center gap-4">
+    <a routerLink="/dashboard" class="brand">
+      <img src="mark.svg" alt="" class="mark" />
+      <span>MyMusic</span>
+    </a>
+
+    <nav class="flex items-center gap-0.5">
+      <a routerLink="/dashboard" routerLinkActive="is-active" class="tab">
+        <svg lucideLayoutDashboard [size]="16" aria-hidden="true"></svg>
+        Dashboard
+      </a>
+      <a routerLink="/records" routerLinkActive="is-active" class="tab">
+        <svg lucideDisc3 [size]="16" aria-hidden="true"></svg>
+        Records
+      </a>
+      <div class="relative">
+        <button
+          type="button"
+          class="tab"
+          [class.is-active]="optionMenuActive()"
+          [attr.aria-expanded]="optionMenuOpen()"
+          (click)="toggleOptionMenu()"
+        >
+          Option
+          <svg lucideChevronDown [size]="16" aria-hidden="true"></svg>
+        </button>
+        @if (optionMenuOpen()) {
+          <div
+            class="absolute left-0 top-full z-10 mt-1 min-w-[160px] rounded border border-line
+              bg-surface py-1 shadow-md"
+          >
+            <a
+              routerLink="/artists"
+              class="flex items-center gap-2 px-3 py-2 text-sm text-fg hover:bg-hover"
+              (click)="closeOptionMenu()"
+            >
+              <svg lucideUsers [size]="16" aria-hidden="true"></svg>
+              Artists
+            </a>
+            <a
+              routerLink="/labels"
+              class="flex items-center gap-2 px-3 py-2 text-sm text-fg hover:bg-hover"
+              (click)="closeOptionMenu()"
+            >
+              <svg lucideTag [size]="16" aria-hidden="true"></svg>
+              Labels
+            </a>
+            <a
+              routerLink="/genres"
+              class="flex items-center gap-2 px-3 py-2 text-sm text-fg hover:bg-hover"
+              (click)="closeOptionMenu()"
+            >
+              <svg lucideMusic [size]="16" aria-hidden="true"></svg>
+              Genres
+            </a>
+          </div>
+        }
+      </div>
+    </nav>
+
+    <form class="search max-w-sm" (submit)="$event.preventDefault(); submitSearch()">
+      <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+      <input type="search" class="input" placeholder="Suche" [formField]="searchForm.query" />
+    </form>
+
+    <div class="ml-auto flex items-center gap-3">
+      <app-theme-toggle />
+      @if (authenticated().isAuthenticated) {
+        @if (username(); as name) {
+          <span class="text-sm text-fg-muted">{{ name }}</span>
+        }
+        <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+      } @else {
+        <button type="button" class="btn btn-secondary" (click)="login()">Login</button>
+      }
+    </div>
+  </div>
+</header>

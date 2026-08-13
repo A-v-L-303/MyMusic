@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-11 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-13 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -8,10 +8,13 @@ Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
 vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
 verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert; Block 0f
-(Dark/Light-Theme-Infrastruktur) umgesetzt und verifiziert)
+(Dark/Light-Theme-Infrastruktur) umgesetzt und verifiziert, dazu ein kleiner
+Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
+und Routing-Skelett) umgesetzt und verifiziert)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
-Block 0c per PR #36, Block 7a per PR #41 nach `main` gemergt; Block 0f auf
-`block-0f-theme-infrastruktur`, noch nicht gemergt)
+Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
+Favicon-Nachtrag per PR #44 nach `main` gemergt; Block 0g auf
+`nav-routing-skeleton`, noch nicht committet/gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -29,8 +32,8 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d, 0e, 0c, 0f und 7a sind abgeschlossen. Offen aus dem MVP-Umfang
-der Phase 1:
+Block 0a, 0b, 0d, 0e, 0c, 0f, 0g und 7a sind abgeschlossen. Offen aus dem
+MVP-Umfang der Phase 1:
 
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
@@ -38,7 +41,9 @@ der Phase 1:
   Nachträge aus Block 2/4/5 (Block 6d) erledigt, siehe Abschnitt 6 — damit
   vollständig abgeschlossen; Angular-Features `genres/`, `labels/`,
   `artists/` und `records/` jetzt entsperrt und mit gültigem Access Token
-  aufrufbar (Block 7a), aber noch nicht umgesetzt).
+  aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g),
+  aber die eigentlichen Feature-Inhalte sind noch nicht umgesetzt —
+  `features/*` enthält bislang nur Platzhalterseiten).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -364,6 +369,90 @@ Abnahmekriterium erfüllt:
   auf den Toggle wechselt sichtbar zwischen Light/Dark und bleibt nach einem
   Neuladen der Seite erhalten; kein sichtbarer Farb-Flash bei abweichender
   expliziter Wahl.
+
+### 0g. NavComponent und Routing-Skelett
+
+Status: **abgeschlossen** (2026-08-13)
+Arbeits-Prompt: `docs/prompts/2026-08-13-block-0g-nav-routing-skeleton.md`
+
+Anlass: Das Wiki (`navigation-konzept.md`) wurde am 2026-08-13 final
+abgeschlossen. Die Angular-Anwendungsschicht hatte bis dahin weder
+`features/`-Ordner noch eine echte `NavComponent` — `app.routes.ts` zeigte
+für `''` und `'**'` gleichermaßen auf die provisorische `HomePlaceholder`
+aus Block 0c. Bevor die eigentlichen CRUD-Features (Genre/Label/Artist/
+Record) ans Frontend angebunden werden, sollte die Navigation samt
+Routing-Skelett einmal zentral stehen, statt in jedem der vier kommenden
+Feature-Blöcke einzeln nachgezogen zu werden.
+
+Mit dem Projektinhaber geklärter Scope: kein Admin-Button/AdminGuard (bleibt
+Teil des noch offenen Rollenkonzepts, Abschnitt 7), kein responsives
+Hamburger-Menü, Suchfeld funktional ans Routing angebunden, kein
+Benutzerprofil-Modal (Username bleibt reiner Text ohne Klick-Handler).
+
+Umgesetzt:
+
+- `app.routes.ts`: verschachtelte Route mit `canActivate: [authGuard]` auf
+  dem Eltern-Knoten, sechs `loadChildren`-Einträge auf
+  `features/{dashboard,records,artists,labels,genres,search}/*.routes.ts`;
+  `''` und `'**'` redirecten auf `/dashboard` (kein eigenes 404-Konzept im
+  Wiki, ein Redirect ist wartungsfrei).
+- Sechs neue, minimale Platzhalter-Komponenten unter `features/`, je mit
+  eigener `*.routes.ts` — kein gemeinsames `shared/feature-placeholder/`,
+  da `shared/` laut Wiki für dauerhaft wiederverwendbare Bausteine reserviert
+  ist und ein Platzhalter reiner, pro Feature-Block vollständig zu
+  ersetzender Wegwerfcode ist. `search/` liest den `q`-Query-Parameter
+  bereits funktional über `toSignal(route.queryParamMap...)`.
+- `core/shell/home-placeholder/` entfernt (durch echte Feature-Routen
+  ersetzt).
+- Neue `NavComponent` (`src/app/nav/`): Brand mit den bis dahin ungenutzten
+  Design-System-Klassen `.appbar`/`.brand`, Tabs Dashboard/Records
+  (`.tab`/`.tab.is-active`, `routerLinkActive`), Option-Dropdown
+  (Artists/Labels/Genres, Zustand direkt in `Nav` statt eigener
+  Sub-Komponente, Schließen bei Klick außerhalb per
+  `@HostListener('document:click', ...)`), funktionales Suchfeld über
+  **Signal Forms** (`form()`/`[formField]`, erste Verwendung im Projekt —
+  `@angular/forms/signals` war bereits installiert, aber ungenutzt),
+  Theme-Toggle (nur Positionswechsel), Login/Logout/Username (unverändert
+  aus `App` übernommen).
+- `App`/`app.html`/`app.css` auf reine Shell reduziert
+  (`<app-nav /><router-outlet />`).
+- Paket `@lucide/angular` installiert (Version 1.31.0) — siehe
+  Nachtrag unten und ADR 0012.
+- Neue/angepasste Tests (Vitest): `nav.spec.ts` (11 Fälle), reduziertes
+  `app.spec.ts`, neues `app.routes.spec.ts` (`RouterTestingHarness`,
+  `angular-auth-oidc-client` per `vi.mock` neutralisiert, da nur die eigene
+  Routing-Verdrahtung geprüft wird, nicht das Bibliotheks-Guard-Verhalten),
+  sechs `features/*/*.spec.ts`. 50 Frontend-Tests insgesamt, alle grün.
+
+Nachtrag (2026-08-13): Bei der Paketprüfung vor der Installation (CLAUDE.md
+§12) stellte sich heraus, dass `lucide-angular` — der in ADR 0011 für einen
+späteren Block vorgesehene Paketname — inzwischen laut Hersteller deprecated
+ist. Installiert wurde stattdessen der aktiv gepflegte Nachfolger
+`@lucide/angular` (gleiche ISC-Lizenz, Peer-Deps `>=17.0.0`, kompatibel mit
+Angular 22.1). API-Unterschied: einzelne Standalone-Icon-Komponenten statt
+`LucideAngularModule.pick(...)`. Details und Alternativenabwägung in ADR
+0012. Die Icon-Zuordnung aus `wiki/glossar.md` (dashboard, records, artists,
+labels, genres, search) wurde unverändert übernommen; `chevron-down` für den
+Option-Dropdown-Trigger war dort nicht benannt, aber durch den bereits
+bestehenden Chevron in der `.select`-Klasse (`components.css`) als
+Präzedenzfall begründet.
+
+Bewusst nicht Teil dieses Standes:
+
+- Admin-Button, `AdminGuard`, `/admin`-Route (Rollenkonzept, Abschnitt 7).
+- Responsives Verhalten (Icon-only-Tabs, Hamburger-Menü bei schmalem
+  Viewport) — nur normales Desktop/Tablet-Verhalten umgesetzt.
+- Benutzerprofil-Modal (Klick auf Username ohne Funktion, wie bisher).
+- Fachlicher Inhalt der sechs Feature-Seiten selbst — reine Platzhalter,
+  die echte Umsetzung folgt mit den jeweiligen CRUD-Feature-Blöcken.
+
+Abnahmekriterium erfüllt:
+
+- Nach Login zeigt die Kopfzeile Brand, Tabs, Suchfeld, Theme-Toggle,
+  Username/Logout; Klick auf Dashboard/Records/Option-Einträge navigiert
+  korrekt und markiert den aktiven Tab; Suche mit Eingabe+Enter navigiert zu
+  `/search?q=...`; direkter Aufruf einer unbekannten URL landet auf
+  `/dashboard`.
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 

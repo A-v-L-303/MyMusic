@@ -1,0 +1,8 @@
+<section class="p-6">
+  <h1 class="text-lg font-bold text-fg">Search</h1>
+  @if (query(); as q) {
+    <p class="empty">Die Suche nach „{{ q }}" folgt in einem späteren Block.</p>
+  } @else {
+    <p class="empty">Diese Ansicht folgt in einem späteren Block.</p>
+  }
+</section>
