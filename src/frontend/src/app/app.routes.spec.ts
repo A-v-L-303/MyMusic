@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -9,12 +11,20 @@ vi.mock('angular-auth-oidc-client', () => ({
 
 import { authGuard } from './core/auth/auth.guard';
 import { routes } from './app.routes';
+import { RuntimeConfigService } from './core/runtime-config/runtime-config.service';
 import { Artists } from './features/artists/artists';
 import { Dashboard } from './features/dashboard/dashboard';
 import { Genres } from './features/genres/genres';
 import { Labels } from './features/labels/labels';
 import { Records } from './features/records/records';
 import { Search } from './features/search/search';
+
+const routingTestProviders = [
+  provideRouter(routes),
+  provideHttpClient(),
+  provideHttpClientTesting(),
+  { provide: RuntimeConfigService, useValue: { apiBaseUrl: 'https://api.test' } },
+];
 
 describe('app.routes', () => {
   it('verdrahtet authGuard auf dem Eltern-Knoten', () => {
@@ -27,7 +37,7 @@ describe('app.routes', () => {
 
   it('redirectet den Wurzelpfad auf /dashboard', async () => {
     // arrange
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({ providers: routingTestProviders });
     const harness = await RouterTestingHarness.create();
 
     // act
@@ -39,7 +49,7 @@ describe('app.routes', () => {
 
   it('redirectet einen unbekannten Pfad auf /dashboard', async () => {
     // arrange
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({ providers: routingTestProviders });
     const harness = await RouterTestingHarness.create();
 
     // act & assert: wirft, falls nicht Dashboard geladen wird
@@ -57,7 +67,7 @@ describe('app.routes', () => {
     ['/search', Search],
   ])('lädt für %s die erwartete Feature-Komponente', async (url, componentType) => {
     // arrange
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({ providers: routingTestProviders });
     const harness = await RouterTestingHarness.create();
 
     // act

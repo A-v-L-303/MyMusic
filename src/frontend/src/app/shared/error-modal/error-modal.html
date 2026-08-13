@@ -1,0 +1,21 @@
+@if (state(); as current) {
+  <app-modal (closed)="onClosed()">
+    <div class="modal-head">
+      <div class="flex items-start gap-3">
+        <div class="modal-danger-icon">
+          <svg lucideCircleAlert [size]="20" aria-hidden="true"></svg>
+        </div>
+        <h2 class="text-base font-semibold text-fg">{{ title() }}</h2>
+      </div>
+    </div>
+    <div class="modal-body">{{ current.message }}</div>
+    <div class="modal-foot">
+      @if (current.kind === 'network') {
+        <button type="button" class="btn btn-secondary" (click)="onClosed()">Schließen</button>
+        <button type="button" class="btn btn-primary" (click)="onRetry()">Erneut versuchen</button>
+      } @else {
+        <button type="button" class="btn btn-primary" (click)="onClosed()">OK</button>
+      }
+    </div>
+  </app-modal>
+}
