@@ -13,8 +13,7 @@ Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
 und Routing-Skelett) umgesetzt und verifiziert)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
 Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
-Favicon-Nachtrag per PR #44 nach `main` gemergt; Block 0g auf
-`nav-routing-skeleton`, noch nicht committet/gemergt)
+Favicon-Nachtrag per PR #44, Block 0g per PR #45 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
