@@ -171,12 +171,14 @@ tests/
 ```
 
 Der Angular-22-Workspace unter `src/frontend/` ist seit Block 0c angelegt
-(Tailwind CSS 3, Design-System-Anbindung, `RuntimeConfigService`) und hat seit
+(Tailwind CSS 3, Design-System-Anbindung, `RuntimeConfigService`), hat seit
 Block 7a einen Login-Flow gegen Keycloak (`core/auth/`, Authorization Code +
-PKCE über `angular-auth-oidc-client`, siehe ADR 0010) — weiterhin noch ohne
-Feature-Ordner/Navigation (`NavComponent`), siehe TASK.md Abschnitt 7a. Die
-C#-Projekte sind überwiegend leere Gerüste — vorhandene Dateien vor jeder
-Änderung prüfen, nichts blind erzeugen.
+PKCE über `angular-auth-oidc-client`, siehe ADR 0010) und seit Block 0g eine
+echte `NavComponent` (`src/app/nav/`) samt `features/`-Ordner
+(`dashboard/`, `records/`, `artists/`, `labels/`, `genres/`, `search/`,
+aktuell nur Platzhalterseiten) — siehe TASK.md Abschnitt 0g. Die C#-Projekte
+sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
+prüfen, nichts blind erzeugen.
 
 ### 4.2 Abhängigkeitsrichtung
 
