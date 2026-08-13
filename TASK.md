@@ -592,21 +592,23 @@ Proxy dafür erzeugen (empirisch geprüft, dieselbe Einschränkungsklasse wie
 bei `GetAllAsync`). Verifiziert wird der Erfolgsfall stattdessen über
 `GenreEndpointsTests` gegen echtes PostgreSQL.
 
-**Offener Nachtrag (entdeckt 2026-08-13 während Block 4 Label-Frontend)**:
-`GenreForm` (`features/genres/genre-form/genre-form.ts`) initialisiert das
+**Nachtrag, behoben (entdeckt und behoben 2026-08-13, Branch
+`fix-genreform-vorbefuellung`, Arbeits-Prompt
+`docs/prompts/2026-08-13-fix-genreform-vorbefuellung.md`)**: `GenreForm`
+(`features/genres/genre-form/genre-form.ts`) initialisierte das
 Formularmodell mit `signal<GenreFormModel>({ name: this.genre()?.name ?? ''
-})` als reinem Feld-Initialisierer. Bei `LabelForm` verursachte exakt dieses
-Muster einen echten Bug: Der `label`-Input ist zum Konstruktionszeitpunkt
-noch nicht gesetzt, wodurch das Formular im Bearbeiten-Modus mit einem
-leeren statt vorbefüllten Feld startete (Fix dort: `linkedSignal(() =>
-this.buildInitialModel())` statt `signal(...)`). Ob `GenreForm` denselben
-Fehler hat, ist unverifiziert, aber wahrscheinlich — der bestehende Test
-(`genre-form.spec.ts`, „Bearbeiten-Modus") überschreibt das Namensfeld immer
-unbedingt und würde eine fehlende Vorbefüllung nicht bemerken. Noch nicht
-behoben (auf Wunsch des Projektinhabers zurückgestellt, 2026-08-13) —
-voraussichtlicher Fix: gleiches `linkedSignal`-Muster wie bei `LabelForm`,
-plus ein Test, der die Vorbefüllung tatsächlich prüft statt sie zu
-überschreiben.
+})` als reinem Feld-Initialisierer. Entdeckt während Block 4
+(Label-Frontend): Bei `LabelForm` verursachte exakt dieses Muster einen
+echten Bug — der `label`-Input ist zum Konstruktionszeitpunkt noch nicht
+gesetzt, wodurch das Formular im Bearbeiten-Modus mit einem leeren statt
+vorbefüllten Feld startete. Bestätigt auch für `GenreForm`: Der bestehende
+Test (`genre-form.spec.ts`, „Bearbeiten-Modus") überschrieb das Namensfeld
+immer unbedingt und bemerkte die fehlende Vorbefüllung nicht. Fix:
+`linkedSignal(() => ({ name: this.genre()?.name ?? '' }))` statt
+`signal(...)`. Neuer Test „befüllt das Namensfeld im Bearbeiten-Modus mit
+dem bestehenden Namen vor" ergänzt, der genau das prüft, statt das Feld
+sofort zu überschreiben — schlägt ohne den Fix fehl (verifiziert). 149
+Frontend-Tests insgesamt, alle grün.
 
 ## CI-Gate für Integrationstests (2026-08-05)
 

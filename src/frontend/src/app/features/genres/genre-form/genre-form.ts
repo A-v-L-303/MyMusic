@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, output } from '@angular/core';
 import {
   FieldTree,
   FormField,
@@ -41,7 +41,9 @@ export class GenreForm {
 
   protected readonly isEditMode = computed(() => this.genre() !== null);
 
-  protected readonly formModel = signal<GenreFormModel>({ name: this.genre()?.name ?? '' });
+  protected readonly formModel = linkedSignal<GenreFormModel>(() => ({
+    name: this.genre()?.name ?? '',
+  }));
   protected readonly genreForm = form(this.formModel, (path) => {
     required(path.name, { message: 'Der Name ist erforderlich.' });
     minLength(path.name, 3, { message: 'Der Name muss mindestens 3 Zeichen lang sein.' });
