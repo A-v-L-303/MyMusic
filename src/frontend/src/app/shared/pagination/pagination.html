@@ -1,0 +1,34 @@
+@if (totalPages() > 1) {
+  <nav class="flex items-center justify-end gap-1" aria-label="Seiten">
+    <button
+      type="button"
+      class="btn btn-ghost btn-icon btn-sm"
+      [disabled]="page() === 1"
+      (click)="goTo(page() - 1)"
+      aria-label="Vorherige Seite"
+    >
+      <svg lucideChevronLeft [size]="16" aria-hidden="true"></svg>
+    </button>
+    @for (p of pages(); track p) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-secondary]="p !== page()"
+        [class.btn-primary]="p === page()"
+        [attr.aria-current]="p === page() ? 'page' : null"
+        (click)="goTo(p)"
+      >
+        {{ p }}
+      </button>
+    }
+    <button
+      type="button"
+      class="btn btn-ghost btn-icon btn-sm"
+      [disabled]="page() === totalPages()"
+      (click)="goTo(page() + 1)"
+      aria-label="Nächste Seite"
+    >
+      <svg lucideChevronRight [size]="16" aria-hidden="true"></svg>
+    </button>
+  </nav>
+}

@@ -10,10 +10,13 @@ vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
 verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert; Block 0f
 (Dark/Light-Theme-Infrastruktur) umgesetzt und verifiziert, dazu ein kleiner
 Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
-und Routing-Skelett) umgesetzt und verifiziert)
+und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
+(Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — noch nicht
+gemergt)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
 Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
-Favicon-Nachtrag per PR #44, Block 0g per PR #45 nach `main` gemergt)
+Favicon-Nachtrag per PR #44, Block 0g per PR #45 nach `main` gemergt); Block 2
+Frontend liegt auf `angular-feature-genre`, noch ohne Pull Request
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -40,9 +43,10 @@ MVP-Umfang der Phase 1:
   Nachträge aus Block 2/4/5 (Block 6d) erledigt, siehe Abschnitt 6 — damit
   vollständig abgeschlossen; Angular-Features `genres/`, `labels/`,
   `artists/` und `records/` jetzt entsperrt und mit gültigem Access Token
-  aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g),
-  aber die eigentlichen Feature-Inhalte sind noch nicht umgesetzt —
-  `features/*` enthält bislang nur Platzhalterseiten).
+  aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g);
+  `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe Abschnitt
+  2), `labels/`, `artists/` und `records/` enthalten weiterhin nur
+  Platzhalterseiten).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -487,9 +491,12 @@ Abnahmekriterium:
 
 ## 2. Slice: Genre
 
-Status: **Backend abgeschlossen** (2026-08-04); Angular-Feature `genres/`
-zurückgestellt bis Block 0c (Angular-Workspace) umgesetzt ist — siehe Klärung
-im Arbeits-Prompt `docs/prompts/2026-08-04-block-2-genre.md`.
+Status: **Backend und Frontend abgeschlossen** (Backend: 2026-08-04; Frontend:
+2026-08-13, Branch `angular-feature-genre`, noch nicht nach `main` gemergt).
+Referenz-Slice: Das Angular-Feature etabliert die Muster (Signal Forms mit
+Validierung, `rxResource`, `ErrorModalService`, `shared/`-Bausteine), die
+Label/Artist/Record übernehmen sollen, siehe Arbeits-Prompt
+`docs/prompts/2026-08-13-block-2-angular-genre.md`.
 Priorität: hoch, erster fachlicher Durchstich
 
 Ziel:
@@ -532,20 +539,40 @@ Umgesetzt (Backend):
   Einschränkung, sondern um die Ausführung über Git Bash statt PowerShell.
 - ADR `docs/adr/0006-domain-entity-materialisierung-und-namenskollision.md`.
 
+Umgesetzt (Frontend, 2026-08-13):
+
+- `shared/`-Basisbausteine (neu angelegt, ab sofort für alle künftigen
+  CRUD-Slices vorgesehen): `shared/http/problem-details.ts`, `shared/modal/`,
+  `shared/confirm-modal/`, `shared/error-modal/` (Service + Komponente,
+  global in `app.html` gemountet), `shared/pagination/`.
+- `features/genres/genre.ts` (Interfaces), `genre.service.ts`
+  (`HttpTestingController`-getestet) unter `features/genres/`.
+- `Genres`-Shell mit `rxResource` ersetzt den bisherigen Platzhalter
+  vollständig; `GenreFilter` (Signal Form mit `debounce`), `GenreTable`
+  (inkl. eingebetteter `Pagination`) und `GenreForm` (Signal Forms mit
+  `required`/`minLength`/`maxLength`/`pattern`, serverseitige 400-Fehler
+  über `submit()` inline ins Namensfeld eingehängt) sowie die
+  `ConfirmModal`-Verdrahtung für Delete.
+- 105 Frontend-Tests grün (`npm test`), Production-Build und Prettier-Check
+  grün; `ng lint` ist im Projekt (noch) nicht als Zielkonfiguration
+  vorhanden (kein `lint`-Target in `angular.json`, kein ESLint-Setup) —
+  daher nicht ausführbar, stattdessen Prettier (`printWidth: 100`) als
+  Formatierungsprüfung verwendet.
+
 Bewusst nicht Teil dieses Standes:
 
-- Angular-Feature `genres/` (Tabellenansicht, Filterung, Add/Edit als
-  Modal) — braucht Block 0c.
 - Referenzprüfung gegen `record_track` in `DeleteGenreCommandHandler` (siehe
   Slice 6 unten) — die Tabelle existiert erst dort.
+- Manuelle Live-Prüfung im Browser gegen den laufenden Aspire-AppHost (siehe
+  Arbeits-Prompt, Abschnitt „Verifikation") steht noch aus.
 
 Abnahmekriterium:
 
 - Genres lassen sich anlegen, anzeigen, filtern, bearbeiten und löschen;
   fremde Benutzerdaten sind nicht sichtbar; Tests decken Happy Path,
-  Validierung und unbekannte IDs ab. **Backend erfüllt**; die UI-seitigen
-  Teile des Kriteriums (Tabellenansicht, Modal) folgen mit dem
-  Angular-Feature nach Block 0c.
+  Validierung und unbekannte IDs ab. **Vollständig erfüllt** (Backend seit
+  2026-08-04, Frontend seit 2026-08-13) — die manuelle Live-Prüfung im
+  Browser steht noch aus.
 
 Nachtrag (2026-08-05): `GenreEndpointsTests` lief seit der Umsetzung nie
 erfolgreich durch — Ursache war die Ausführung über Git Bash statt PowerShell,
