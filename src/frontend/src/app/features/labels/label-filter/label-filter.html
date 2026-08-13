@@ -1,0 +1,17 @@
+<div class="flex items-center gap-2">
+  <div class="search max-w-xs">
+    <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+    <input
+      type="text"
+      class="input"
+      placeholder="Nach Name filtern"
+      [formField]="filterForm.name"
+    />
+  </div>
+  <select class="select" aria-label="Nach Land filtern" [formField]="filterForm.countryId">
+    <option value="">Alle Länder</option>
+    @for (country of countries(); track country.id) {
+      <option [value]="country.id">{{ country.name }}</option>
+    }
+  </select>
+</div>
