@@ -12,11 +12,13 @@ verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert; Block 0f
 Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
 und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
 (Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — nach `main`
-gemergt)
+gemergt; Angular-Feature `labels/` (Block 4 Frontend) umgesetzt und
+verifiziert, siehe Abschnitt 4 — noch nicht gemergt)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32, Block 6d per PR #34,
 Block 0c per PR #36, Block 7a per PR #41, Block 0f per PR #43, der
 Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2 Frontend per PR #47
-nach `main` gemergt)
+nach `main` gemergt); Block 4 Frontend liegt auf `angular-feature-label`,
+noch ohne Pull Request
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -45,7 +47,8 @@ MVP-Umfang der Phase 1:
   `artists/` und `records/` jetzt entsperrt und mit gültigem Access Token
   aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g);
   `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe Abschnitt
-  2), `labels/`, `artists/` und `records/` enthalten weiterhin nur
+  2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4, noch nicht
+  gemergt); `artists/` und `records/` enthalten weiterhin nur
   Platzhalterseiten).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
@@ -591,6 +594,22 @@ Proxy dafür erzeugen (empirisch geprüft, dieselbe Einschränkungsklasse wie
 bei `GetAllAsync`). Verifiziert wird der Erfolgsfall stattdessen über
 `GenreEndpointsTests` gegen echtes PostgreSQL.
 
+**Offener Nachtrag (entdeckt 2026-08-13 während Block 4 Label-Frontend)**:
+`GenreForm` (`features/genres/genre-form/genre-form.ts`) initialisiert das
+Formularmodell mit `signal<GenreFormModel>({ name: this.genre()?.name ?? ''
+})` als reinem Feld-Initialisierer. Bei `LabelForm` verursachte exakt dieses
+Muster einen echten Bug: Der `label`-Input ist zum Konstruktionszeitpunkt
+noch nicht gesetzt, wodurch das Formular im Bearbeiten-Modus mit einem
+leeren statt vorbefüllten Feld startete (Fix dort: `linkedSignal(() =>
+this.buildInitialModel())` statt `signal(...)`). Ob `GenreForm` denselben
+Fehler hat, ist unverifiziert, aber wahrscheinlich — der bestehende Test
+(`genre-form.spec.ts`, „Bearbeiten-Modus") überschreibt das Namensfeld immer
+unbedingt und würde eine fehlende Vorbefüllung nicht bemerken. Noch nicht
+behoben (auf Wunsch des Projektinhabers zurückgestellt, 2026-08-13) —
+voraussichtlicher Fix: gleiches `linkedSignal`-Muster wie bei `LabelForm`,
+plus ein Test, der die Vorbefüllung tatsächlich prüft statt sie zu
+überschreiben.
+
 ## CI-Gate für Integrationstests (2026-08-05)
 
 `MyMusic.IntegrationTests` lief bislang nur lokal und blieb über mehrere
@@ -663,8 +682,10 @@ Abnahmekriterium:
 
 ## 4. Slice: Label
 
-Status: **Backend abgeschlossen** (2026-08-07); Angular-Feature `labels/`
-zurückgestellt bis Block 0c (Angular-Workspace) umgesetzt ist — analog Genre.
+Status: **Backend und Frontend abgeschlossen** (Backend: 2026-08-07; Frontend:
+2026-08-13, Branch `angular-feature-label`, noch nicht nach `main` gemergt).
+Übernimmt die Muster aus Block 2 (Genre-Frontend, Referenz-Slice) 1:1, siehe
+Arbeits-Prompt `docs/prompts/2026-08-13-block-4-angular-label.md`.
 Priorität: mittel
 
 Ziel:
@@ -718,21 +739,64 @@ Umgesetzt (Backend):
   Muster `GenreEndpointsTests`; grün (gemeinsamer Lauf mit
   `MeEndpointTests`/`GenreEndpointsTests`/`CountryEndpointsTests`, 5/5 grün).
 
+Umgesetzt (Frontend, 2026-08-13):
+
+- `features/labels/country.ts`/`country.service.ts` (neu, feature-lokal statt
+  in `shared/`, da Country aktuell nur von Label konsumiert wird) gegen
+  `GET /api/countries`; `features/labels/label.ts`/`label.service.ts` analog
+  zu Genre, zusätzlich mit `countryId`-Filterparameter.
+- `Labels`-Shell mit zwei `rxResource`-Aufrufen (Labels paginiert, Länder
+  einmalig), `LabelFilter` (Namensfeld mit 300-ms-Debounce wie Genre, Land als
+  natives `<select>` ohne Debounce — sofortige Filterung bei Auswahl),
+  `LabelTable` (Spalten Name/Land/Information/Aktionen — lange Information
+  wird per CSS gekürzt mit vollem Text im `title`-Tooltip, jedes Feld hat
+  aber immer eine eigene Spalte) und `LabelForm` (Name, Herkunftsland,
+  optionales Freitextfeld `information`; serverseitige 400-Fehlerzuordnung
+  jetzt für drei mögliche Feldschlüssel statt einem).
+- **Mit dem Projektinhaber geklärt (2026-08-13)**: Länderauswahl als natives
+  HTML-`<select>` (nutzt die bereits vorhandene `.select`-Klasse aus
+  `components.css`) statt einer neuen Searchable-Combobox-Komponente —
+  löst eine zuvor offene Planungslücke (weder Wiki noch bisheriger Code
+  hatten dafür ein Muster).
+- **Nachtrag/Bugfix während der Umsetzung**: `LabelForm` befüllte das
+  Länderfeld im Bearbeiten-Modus zunächst nicht vor (Signal-Formularmodell
+  wurde mit `signal(this.buildInitialModel())` als reiner Feld-Initialisierer
+  gelesen, bevor der `label`-Input tatsächlich gesetzt war — leeres Feld
+  verhinderte durch die `required`-Regel sogar das Absenden). Durch eigene,
+  über den Genre-Testumfang hinausgehende Tests aufgedeckt (Genres
+  Formular-Tests überschreiben das Namensfeld immer unbedingt und hätten den
+  gleichen Fehler nicht bemerkt). Fix: `formModel` nutzt jetzt `linkedSignal
+  (() => this.buildInitialModel())` statt `signal(...)` — reaktiv, korrekt
+  ausgewertet, sobald der Input tatsächlich vorliegt. **Offener Verdacht**:
+  `GenreForm` (Block 2 Frontend) verwendet dasselbe
+  `signal(this.genre()?.name ?? '')`-Muster und könnte denselben Fehler beim
+  Vorbefüllen im Bearbeiten-Modus haben — dort unentdeckt, weil der
+  bestehende Test das Namensfeld ebenfalls immer überschreibt. Nicht im
+  Rahmen dieses Blocks behoben (Scope-Grenze), dem Projektinhaber gemeldet.
+- 30 neue Frontend-Tests (`country.service.spec.ts`, `label.service.spec.ts`,
+  `label-filter.spec.ts`, `label-table.spec.ts`, `label-form.spec.ts`,
+  `labels.spec.ts`), 146 Frontend-Tests insgesamt, alle grün. Production-Build
+  und Prettier-Check grün; `ng lint` weiterhin nicht konfiguriert (wie bei
+  Genre).
+
 Bewusst nicht Teil dieses Standes:
 
-- Angular-Feature `labels/` (Tabellenansicht, Filterung, Add/Edit als Modal)
-  — braucht Block 0c.
-- Referenzprüfung gegen `record` in `DeleteLabelCommandHandler` (siehe
-  Slice 6 unten) — die Tabelle existiert erst dort, analog zur bereits
-  bestehenden Nachtrag-Pflicht für `DeleteGenreCommandHandler`.
+- Referenzprüfung gegen `record` in `DeleteLabelCommandHandler` — bereits mit
+  Block 6d (PR #34) umgesetzt, siehe dortige Notiz; im Frontend nicht erneut
+  aufgeführt.
+- Manuelle Live-Prüfung im Browser gegen den laufenden Aspire-AppHost steht
+  noch aus, insbesondere der 409-Referenzfall beim Löschen (mangels
+  Record-Frontend nur über Swagger nachweisbar, siehe Arbeits-Prompt).
+- Kein PR/Merge nach `main` — Branch `angular-feature-label` liegt noch
+  unabhängig vor.
 
 Abnahmekriterium:
 
 - Labels lassen sich anlegen, anzeigen, filtern, bearbeiten und löschen;
   fremde Benutzerdaten sind nicht sichtbar; Tests decken Happy Path,
-  Validierung und unbekannte IDs ab. **Backend erfüllt**; die UI-seitigen
-  Teile (Tabellenansicht, Filter, Modal) folgen mit dem Angular-Feature nach
-  Block 0c.
+  Validierung und unbekannte IDs ab. **Vollständig erfüllt** (Backend seit
+  2026-08-07, Frontend seit 2026-08-13) — die manuelle Live-Prüfung im
+  Browser steht noch aus.
 
 ## 5. Slice: Artist
 
