@@ -332,11 +332,11 @@ Datei aus der vom AppHost gesetzten Umgebungsvariable `MYMUSIC_API_BASE_URL`
 neu — Details und Alternativenabwägung in
 `docs/adr/0009-angular-runtime-config-mechanismus.md`.
 
-Dieser Block liefert bewusst nur das lauffähige Grundgerüst (Marke, Wortmarke,
-Design-System-Nachweis) — Navigation, Routing-Hierarchie und die
-Feature-Ordner (`records/`, `artists/`, `labels/`, `genres/`, `dashboard/`,
-`search/`) aus `wiki/architektur/angular-projektstruktur.md` folgen erst mit
-den jeweiligen Angular-Feature-Blöcken, siehe `TASK.md`.
+Block 0c lieferte bewusst nur das lauffähige Grundgerüst (Marke, Wortmarke,
+Design-System-Nachweis); Navigation, Routing-Hierarchie und die
+Feature-Ordner sind seit Block 0g vorhanden (siehe unten) — der fachliche
+Inhalt der einzelnen Feature-Seiten folgt weiterhin erst mit den jeweiligen
+Angular-Feature-Blöcken, siehe `TASK.md`.
 
 ```powershell
 cd src/frontend
@@ -371,6 +371,28 @@ Bewusst nicht Teil dieses Blocks: Rollenkonzept/`AdminGuard`, Admin-Bereich,
 Rate Limiting, Content Security Policy, Keycloak-Custom-Theme der
 Anmeldeseite — siehe `TASK.md` Abschnitt 7 und
 `wiki/user-stories/user-stories-authentifizierung.md`.
+
+### Navigation und Routing-Skelett (Block 0g)
+
+`src/frontend/src/app/nav/` enthält die `NavComponent` (Brand, Tabs
+Dashboard/Records, Option-Dropdown mit Artists/Labels/Genres, funktionales
+Suchfeld, Theme-Toggle, Login/Logout/Username) — sie ersetzt die bisherige,
+in `app.html` fest verdrahtete Kopfzeile aus Block 0c/7a/0f. `app.routes.ts`
+lädt jedes Feature (`dashboard/`, `records/`, `artists/`, `labels/`,
+`genres/`, `search/`) lazy über eine eigene `*.routes.ts`; `''` und
+unbekannte Pfade redirecten auf `/dashboard`. Die sechs Feature-Seiten sind
+aktuell reine Platzhalter — der fachliche Inhalt folgt mit den jeweiligen
+CRUD-Feature-Blöcken.
+
+Icons stammen aus `@lucide/angular` (Nachfolger des in
+`docs/adr/0011-theme-infrastruktur.md` erwähnten, mittlerweile deprecated
+`lucide-angular` — Details in `docs/adr/0012-icon-bibliothek-lucide-angular.md`).
+Das Suchfeld ist die erste Verwendung von Signal Forms
+(`@angular/forms/signals`) im Projekt.
+
+Bewusst nicht Teil dieses Blocks: Admin-Button/`AdminGuard` (Rollenkonzept,
+`TASK.md` Abschnitt 7), responsives Icon-only-/Hamburger-Verhalten,
+Benutzerprofil-Modal.
 
 ### Prüfen
 
