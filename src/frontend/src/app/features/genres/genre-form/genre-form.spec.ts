@@ -119,6 +119,18 @@ describe('GenreForm', () => {
     expect(savedHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('befüllt das Namensfeld im Bearbeiten-Modus mit dem bestehenden Namen vor', () => {
+    // arrange
+    // act
+    const fixture = createFixture({ id: 5, name: 'Rock' });
+
+    // assert
+    const input = (fixture.nativeElement as HTMLElement).querySelector(
+      '#genre-name',
+    ) as HTMLInputElement;
+    expect(input.value).toBe('Rock');
+  });
+
   it('ruft im Bearbeiten-Modus GenreService.update mit der Id des übergebenen Genres auf', async () => {
     // arrange
     genreServiceMock.update.mockReturnValue(of({ id: 5, name: 'Jazz' }));
