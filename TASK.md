@@ -20,16 +20,17 @@ nach `main` gemergt; die Records-Frontend-Planung (Block 6 Frontend) wurde
 fortgesetzt und auf Wunsch des Projektinhabers in fünf einzeln abnehmbare
 Teilblöcke 6f–6j zerlegt (analog zur Backend-Aufteilung 6a–6e), siehe
 Abschnitt 6f; Block 6f (Record-Liste: Card-Ansicht, Filter, Sortierung,
-Paginierung, inkl. eines neuen `format`-Filters bei `GET /api/records` und
-der Verschiebung von `Country` nach `shared/`) umgesetzt und verifiziert;
+Paginierung, inkl. eines neuen `format`-Filters bei `GET /api/records`,
+der Verschiebung von `Country` nach `shared/` und eines serverseitigen
+Freitext-Autosuggest für Artist/Label statt Dropdown) umgesetzt, live
+verifiziert und nach `main` gemergt;
 Blöcke 6g–6j (Anlegen/Bearbeiten/Löschen, Detailansicht, Cover-Upload,
 Tracks) sind geplant, aber noch nicht begonnen)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
 Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
 PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend per
-PR #52, Block 6e per PR #54 nach `main` gemergt); Block 6f auf Branch
-`block-6f-angular-records-liste` (noch nicht gemergt)
+PR #52, Block 6e per PR #54, Block 6f per PR #55 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -1325,10 +1326,11 @@ Umgesetzt (Frontend):
   `features/labels/` hierher verschoben, da Records jetzt ein zweiter
   Konsument neben Label ist (Import-Pfade in `features/labels/*`
   angepasst, keine Verhaltensänderung).
-- `LabelService`/`ArtistService` um `getAll()` ergänzt (`GET /api/labels/all`
-  bzw. `/api/artists/all`, Rückgabe als flaches Array) — konsumiert jetzt
-  erstmals die mit Block 6e geschaffenen `/all`-Endpunkte, wie dort als
-  Vorbereitung angekündigt.
+- `shared/autocomplete/` (neu): generische Freitext-Autosuggest-Komponente
+  (Debounce 300 ms, serverseitige Vorschläge über `input()`, Tastatur-
+  Navigation Pfeiltasten/Enter/Escape, Klick-Auswahl per `mousedown` mit
+  `preventDefault()` gegen die Blur-Race-Condition) — siehe Korrektur
+  unten.
 - `features/records/record.ts` (Interfaces `Record`/`RecordListResponse`,
   Union-Types `RecordFormat`/`RecordCondition` mit den exakten
   Wire-Strings der `JsonStringEnumConverter`-Serialisierung, Anzeige-
@@ -1336,20 +1338,43 @@ Umgesetzt (Frontend):
   für die Card-Pille, Zustands-Bezeichnungen und Grade-Badge-Klassen
   (`zustandsbewertung.md`)), `record.service.ts` (`getPaged(...)` mit allen
   Filtern inkl. `format`).
-- `features/records/record-filter/` (Signal Form: Name mit Debounce,
-  Artist/Label/Land/Format als native `<select>`, Jahr-von/-bis als
-  Zahlenfelder, Sortierfeld-Auswahl plus separater Auf/Ab-Umschalter-Button
-  für die Sortierrichtung).
+- `features/records/record-filter/` (Signal Form für Name mit Debounce,
+  Land/Format/Sortierfeld als native `<select>`, Jahr-von/-bis als
+  Zahlenfelder, separater Auf/Ab-Umschalter-Button mit `title`-Tooltip für
+  die Sortierrichtung; Artist/Label über `app-autocomplete`, siehe unten).
 - `features/records/record-card/` (Card-Darstellung nach
   `komponenten-klassen.md`: Cover oder Platzhalter-Icon, Format-Pille
   LP/CD, Albumname, Künstler falls vorhanden, Jahr · Label, Grade-Badge).
 - `features/records/records.ts`/`.html` ersetzt die bisherige
-  Platzhalterseite vollständig: vier `rxResource`-Aufrufe (Records
-  paginiert, Artists/Labels/Countries je einmalig für die Dropdowns),
-  Ladezustand/Empty-State/Card-Grid/Paginierung nach dem Muster der
-  Tabellen-Slices, `ErrorModalService`-Anbindung für alle vier Resources.
-- 42 neue Frontend-Tests gegenüber dem Stand nach Block 5 (182 → 224),
+  Platzhalterseite vollständig: `rxResource` für Records paginiert,
+  Countries einmalig (Dropdown) sowie Artist-/Label-Vorschläge
+  query-gesteuert (debounced, kein Volllisten-Ladevorgang), Ladezustand/
+  Empty-State/Card-Grid/Paginierung nach dem Muster der Tabellen-Slices,
+  `ErrorModalService`-Anbindung für Records- und Country-Resource
+  (Fehler bei den Autosuggest-Anfragen bewusst nicht modal, sondern
+  stille leere Trefferliste — ein Tippfehler-bedingter 0-Treffer-Zustand
+  soll den Nutzer nicht unterbrechen).
+- 47 neue Frontend-Tests gegenüber dem Stand nach Block 5 (182 → 229),
   alle grün. Production-Build grün.
+
+**Korrektur während der Umsetzung (Live-Test durch den Projektinhaber)**:
+Der ursprüngliche Entwurf band Artist/Label als natives `<select>` ein,
+befüllt über neu ergänzte `LabelService.getAll()`/`ArtistService.getAll()`
+gegen die mit Block 6e geschaffenen `/all`-Endpunkte. Bei der Live-Prüfung
+im Browser bemängelt: Diese Listen können hunderte oder tausende
+Datensätze umfassen — ein Dropdown ist dafür nicht bedienbar. Ersetzt durch
+das oben beschriebene serverseitige Freitext-Autosuggest (`shared/
+autocomplete/`) gegen den bereits bestehenden `getPaged`-Endpoint mit
+kleinem `pageSize` — kein neuer Backend-Endpunkt nötig. Die zunächst
+ergänzten `getAll()`-Methoden auf `LabelService`/`ArtistService` wurden
+wieder entfernt, da nach der Korrektur ungenutzt (die Dateien sind dadurch
+wieder byte-identisch mit dem Stand vor Block 6f). Bei derselben
+Gelegenheit zusätzlich behoben: Die Filter-Dropdowns (Land/Format/
+Sortierung) waren zunächst ohne Breitenbegrenzung und dadurch volle
+Zeilenbreite (`.select`/`.input` sind im Design System auf `width: 100%`
+gesetzt) — jetzt mit `max-w-[...]`-Klassen versehen; der Sortierrichtungs-
+Button hatte keinen sichtbaren Tooltip — jetzt zusätzlich zum
+`aria-label` ein natives `title`-Attribut.
 
 **Entdeckte und korrigierte Wiki-Abweichung**: `wiki/design/komponenten-klassen.md`
 dokumentierte für die Zustandsstufe „Good Plus" die CSS-Klasse
@@ -1366,17 +1391,16 @@ Bewusst nicht Teil dieses Standes:
   ein `opened`-Output, aber noch keine Navigation ist verdrahtet.
 - Album-Cover-Upload (US-R8, Block 6i).
 - Tracks (US-T1–T3, Block 6j).
-- Manuelle Live-Prüfung im Browser gegen den laufenden Aspire-AppHost steht
-  noch aus.
 
 Abnahmekriterium:
 
 - Records lassen sich als Cards anzeigen, nach Name/Artist/Label/Jahr-
   Zeitraum/Land/Format filtern (einzeln oder kombiniert), nach Name/
   Erscheinungsjahr/Format auf- oder absteigend sortieren und sind
-  paginiert; Empty- und Loading-State korrekt. **Erfüllt** laut
-  automatisierten Tests — die manuelle Live-Prüfung im Browser steht noch
-  aus.
+  paginiert; Empty- und Loading-State korrekt. **Vollständig erfüllt** —
+  automatisierte Tests grün und zusätzlich live im Browser gegen den
+  laufenden Aspire-AppHost verifiziert (Filter-Zeile, Artist-Autosuggest
+  gegen echtes Backend, Tooltip, keine Konsolenfehler).
 
 ## 7. Authentifizierung und Mandantentrennung
 
