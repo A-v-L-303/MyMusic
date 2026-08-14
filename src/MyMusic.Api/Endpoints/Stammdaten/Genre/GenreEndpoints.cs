@@ -8,6 +8,8 @@ public static class GenreEndpoints
 
         group.MapGet(string.Empty, GetPagedGenresAsync);
 
+        group.MapGet("/all", GetAllGenresAsync);
+
         group.MapGet("/{id:int}", GetGenreByIdAsync);
 
         group.MapPost(string.Empty, CreateGenreAsync);
@@ -37,6 +39,17 @@ public static class GenreEndpoints
         var query = new GetPagedGenresQuery(currentUserService.UserId, normalizedPage, normalizedPageSize, name);
 
         return await mediator.SendAsync(query, cancellationToken);
+    }
+
+    /// <summary>
+    /// Gibt die vollständige, alphabetisch sortierte Genre-Liste des angemeldeten Benutzers zurück.
+    /// </summary>
+    private static async Task<IEnumerable<GenreResponse>> GetAllGenresAsync(
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        return await mediator.SendAsync(new GetAllGenresQuery(currentUserService.UserId), cancellationToken);
     }
 
     /// <summary>
