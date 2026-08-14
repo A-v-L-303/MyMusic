@@ -12,10 +12,10 @@ import {
 } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 
+import { Country } from '../../../shared/country/country';
 import { ErrorModalService } from '../../../shared/error-modal/error-modal.service';
 import { ValidationProblemDetails } from '../../../shared/http/problem-details';
 import { Modal } from '../../../shared/modal/modal';
-import { Country } from '../country';
 import { Label } from '../label';
 import { LabelService } from '../label.service';
 

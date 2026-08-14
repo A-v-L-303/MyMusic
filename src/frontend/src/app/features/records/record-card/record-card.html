@@ -1,0 +1,20 @@
+<div class="record-card" (click)="opened.emit()">
+  <div class="record-cover">
+    @if (record().albumCoverDataUrl) {
+      <img [src]="record().albumCoverDataUrl" [alt]="record().albumName" />
+    } @else {
+      <svg lucideDisc3 [size]="28" class="text-fg-subtle" aria-hidden="true"></svg>
+    }
+    <span class="fmt">{{ formatPill() }}</span>
+  </div>
+  <div class="record-meta">
+    <div class="record-title">{{ record().albumName }}</div>
+    @if (record().artistName) {
+      <div class="record-artist">{{ record().artistName }}</div>
+    }
+    <div class="record-sub tnum">
+      {{ record().releaseYear }} · {{ record().labelName }}
+      <span class="grade ml-auto" [class]="gradeClass()">{{ gradeText() }}</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,88 @@
+<div class="flex flex-wrap items-center gap-2">
+  <div class="search max-w-xs">
+    <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+    <input
+      type="text"
+      class="input"
+      placeholder="Nach Albumname filtern"
+      [formField]="filterForm.name"
+    />
+  </div>
+
+  <div class="max-w-[220px]">
+    <app-autocomplete
+      placeholder="Nach Künstler filtern"
+      ariaLabel="Nach Künstler filtern"
+      [options]="artistSuggestions()"
+      (queryChange)="artistQueryChange.emit($event)"
+      (selected)="onArtistSelected($event)"
+    />
+  </div>
+
+  <div class="max-w-[220px]">
+    <app-autocomplete
+      placeholder="Nach Label filtern"
+      ariaLabel="Nach Label filtern"
+      [options]="labelSuggestions()"
+      (queryChange)="labelQueryChange.emit($event)"
+      (selected)="onLabelSelected($event)"
+    />
+  </div>
+
+  <input
+    type="number"
+    class="input w-24"
+    placeholder="Jahr von"
+    aria-label="Erscheinungsjahr von"
+    [formField]="filterForm.yearFrom"
+  />
+  <input
+    type="number"
+    class="input w-24"
+    placeholder="Jahr bis"
+    aria-label="Erscheinungsjahr bis"
+    [formField]="filterForm.yearTo"
+  />
+
+  <select
+    class="select max-w-[180px]"
+    aria-label="Nach Herkunftsland filtern"
+    [formField]="filterForm.countryId"
+  >
+    <option value="">Alle Länder</option>
+    @for (country of countries(); track country.id) {
+      <option [value]="country.id">{{ country.name }}</option>
+    }
+  </select>
+
+  <select
+    class="select max-w-[160px]"
+    aria-label="Nach Format filtern"
+    [formField]="filterForm.format"
+  >
+    <option value="">Alle Formate</option>
+    @for (option of formatOptions; track option[0]) {
+      <option [value]="option[0]">{{ option[1] }}</option>
+    }
+  </select>
+
+  <select class="select max-w-[160px]" aria-label="Sortieren nach" [formField]="filterForm.sortBy">
+    <option value="name">Name</option>
+    <option value="releaseYear">Erscheinungsjahr</option>
+    <option value="format">Format</option>
+  </select>
+
+  <button
+    type="button"
+    class="btn btn-ghost btn-icon btn-sm"
+    [attr.aria-label]="sortDirection() === 'asc' ? 'Absteigend sortieren' : 'Aufsteigend sortieren'"
+    [title]="sortDirection() === 'asc' ? 'Absteigend sortieren' : 'Aufsteigend sortieren'"
+    (click)="toggleSortDirection()"
+  >
+    @if (sortDirection() === 'asc') {
+      <svg lucideArrowUp [size]="15" aria-hidden="true"></svg>
+    } @else {
+      <svg lucideArrowDown [size]="15" aria-hidden="true"></svg>
+    }
+  </button>
+</div>

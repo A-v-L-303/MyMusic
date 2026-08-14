@@ -10,5 +10,6 @@ public sealed record GetPagedRecordsQuery(
     int? YearFrom,
     int? YearTo,
     int? CountryId,
+    string? Format,
     string? SortBy,
     string? SortDirection) : IQuery<RecordListResponse>;

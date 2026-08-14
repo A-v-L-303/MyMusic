@@ -16,17 +16,20 @@ Angular-Feature `genres/` (Block 2 Frontend) umgesetzt und verifiziert, siehe
 Abschnitt 2 — nach `main` gemergt; Angular-Feature `labels/` (Block 4 Frontend)
 umgesetzt und verifiziert, siehe Abschnitt 4 — nach `main` gemergt;
 Angular-Feature `artists/` (Block 5 Frontend) umgesetzt, siehe Abschnitt 5 —
-nach `main` gemergt; Angular-Frontend-Planung für `records/` (Block 6
-Frontend) wurde begonnen und pausiert, nachdem sich beim Entwurf des
-RecordForm/RecordFilter herausstellte, dass die dafür nötigen `/all`-Endpunkte
-fehlten — Block 6e schließt diese Lücke, die eigentliche Records-Frontend-
-Planung ist noch nicht fortgesetzt)
+nach `main` gemergt; die Records-Frontend-Planung (Block 6 Frontend) wurde
+fortgesetzt und auf Wunsch des Projektinhabers in fünf einzeln abnehmbare
+Teilblöcke 6f–6j zerlegt (analog zur Backend-Aufteilung 6a–6e), siehe
+Abschnitt 6f; Block 6f (Record-Liste: Card-Ansicht, Filter, Sortierung,
+Paginierung, inkl. eines neuen `format`-Filters bei `GET /api/records` und
+der Verschiebung von `Country` nach `shared/`) umgesetzt und verifiziert;
+Blöcke 6g–6j (Anlegen/Bearbeiten/Löschen, Detailansicht, Cover-Upload,
+Tracks) sind geplant, aber noch nicht begonnen)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
 Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
 PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend per
-PR #52 nach `main` gemergt); Block 6e auf Branch
-`nachtrag-getall-genre-label-artist` (noch nicht gemergt)
+PR #52, Block 6e per PR #54 nach `main` gemergt); Block 6f auf Branch
+`block-6f-angular-records-liste` (noch nicht gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -58,9 +61,11 @@ MVP-Umfang der Phase 1:
   (Block 0g); `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe
   Abschnitt 2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4);
   `artists/` umgesetzt, aber ohne UI für den `labelId`-Filter (Block 5
-  Frontend, siehe Abschnitt 5); `records/` enthält weiterhin nur eine
-  Platzhalterseite, die Angular-Planung dafür ist begonnen, aber pausiert
-  (siehe Abschnitt 6e)).
+  Frontend, siehe Abschnitt 5); `records/` hat mit Block 6f (Record-Liste:
+  Card-Ansicht, Filter, Sortierung, Paginierung) die Platzhalterseite
+  ersetzt, siehe Abschnitt 6f; Anlegen/Bearbeiten/Löschen (Block 6g),
+  Detailansicht (Block 6h), Cover-Upload (Block 6i) und Tracks (Block 6j)
+  sind geplant, aber noch offen).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -892,10 +897,13 @@ Abnahmekriterium:
 
 ## 6. Slice: Record und Tracks
 
-Status: **abgeschlossen** (2026-08-08); aufgeteilt in vier einzeln
+Status: **Backend abgeschlossen** (2026-08-08); aufgeteilt in vier einzeln
 prüfbare Teilblöcke (analog Block 0), da das Abnahmekriterium des
 Gesamtblocks erst ganz am Ende messbar wäre. Block 6a, 6b, 6c und 6d
-abgeschlossen.
+abgeschlossen. Dazu Block 6e (Nachtrag, siehe dortiger Abschnitt). Das
+Angular-Frontend für `records/` wurde auf Wunsch des Projektinhabers
+zusätzlich in fünf einzeln abnehmbare Teilblöcke 6f–6j zerlegt (analog zur
+Backend-Aufteilung); Block 6f abgeschlossen, 6g–6j noch offen.
 Priorität: hoch, fachlicher Kern
 
 Ziel:
@@ -1268,6 +1276,107 @@ Abnahmekriterium erfüllt:
   liefern ohne Token 401, mit Token die vollständige, alphabetisch
   sortierte und mandantengefilterte Liste des angemeldeten Benutzers, ohne
   Cap bei mehr als 100 Einträgen.
+
+### 6f. Record-Liste (Card-Ansicht, Filter, Sortierung, Paginierung)
+
+Status: **abgeschlossen** (2026-08-14)
+Arbeits-Prompt: `docs/prompts/2026-08-14-block-6f-angular-records-liste.md`
+
+Anlass: Erster von fünf Teilblöcken, in die das Angular-Frontend für
+`records/` auf Wunsch des Projektinhabers zerlegt wurde (Records ist laut
+Wiki „der fachlich umfangreichste Slice"). Dieser Block deckt US-R1–R3 ab
+(Card-Ansicht, Filter, Sortierung, Paginierung) — ohne Anlegen/Bearbeiten/
+Löschen, ohne Detailseite, ohne Cover-Upload, ohne Tracks.
+
+Bei der Planung stellte sich heraus, dass die im Wiki
+(`architektur/ui-ux-konzept.md`) nur namentlich erwähnte Formatfilterung
+("Format-Umschalter") weder Werte noch Backend-Verhalten festlegte und das
+Backend keinen Format-Filter kannte. Ein erster Entwurf (Gruppierung
+Alle/Vinyl/CD) wurde vom Projektinhaber verworfen, da diese Gruppierung im
+Datenmodell nicht existiert. Geklärt: Der Filter arbeitet direkt und exakt
+auf dem `format`-Feld (den zehn `RecordFormat`-Werten), als natives
+Dropdown-Filterfeld — dieselbe Bauart wie `artistId`/`labelId`/`countryId`.
+
+Umgesetzt (Backend, kleine, eng begrenzte Ausnahme von der Regel
+„Frontend-Blöcke fassen keine Backend-Änderungen an", da Record-Backend mit
+6a–6e als abgeschlossen markiert war):
+
+- `GetPagedRecordsQuery`/`GetPagedRecordsQueryHandler`
+  (`Application/Features/Sammlung/Record/Queries/GetPaged/`) um einen
+  `Format`-Parameter erweitert — Gleichheitsfilter auf `RecordFormat`, roher
+  Query-String-Wert wird per `Enum.TryParse(..., ignoreCase: true)` im
+  Handler interpretiert (analog zum bestehenden `sortBy`/`sortDirection`-
+  Muster). Bewusst kein neuer FluentValidation-Validator: Das
+  CQRS-Framework validiert grundsätzlich nur Commands, nie Queries
+  (`Mediator.cs`) — ein unbekannter/nicht parsebarer `format`-Wert wirkt wie
+  „kein Filter", liefert kein HTTP 400 (konsistent mit dem bestehenden
+  Verhalten aller anderen GET-Filter des Endpunkts).
+- `RecordEndpoints.GetPagedRecordsAsync` um den Query-Parameter `format`
+  erweitert.
+- Unit Tests (`GetPagedRecordsQueryHandlerTests`, 4 neue Fälle: Filter
+  case-insensitive wirksam in drei Schreibweisen, unbekannter Wert wirkt
+  wie kein Filter) und Integrationstest (`RecordEndpointsTests`, neue
+  Prüfungen für `format=cdalbum` und einen unbekannten Format-Wert ohne
+  400) — 240 Application-Unit-Tests insgesamt, alle grün.
+
+Umgesetzt (Frontend):
+
+- `shared/country/` (neu): `country.ts`/`country.service.ts` von
+  `features/labels/` hierher verschoben, da Records jetzt ein zweiter
+  Konsument neben Label ist (Import-Pfade in `features/labels/*`
+  angepasst, keine Verhaltensänderung).
+- `LabelService`/`ArtistService` um `getAll()` ergänzt (`GET /api/labels/all`
+  bzw. `/api/artists/all`, Rückgabe als flaches Array) — konsumiert jetzt
+  erstmals die mit Block 6e geschaffenen `/all`-Endpunkte, wie dort als
+  Vorbereitung angekündigt.
+- `features/records/record.ts` (Interfaces `Record`/`RecordListResponse`,
+  Union-Types `RecordFormat`/`RecordCondition` mit den exakten
+  Wire-Strings der `JsonStringEnumConverter`-Serialisierung, Anzeige-
+  Konstanten für Format-Bezeichnungen (`glossar.md`), Vinyl/CD-Zuordnung
+  für die Card-Pille, Zustands-Bezeichnungen und Grade-Badge-Klassen
+  (`zustandsbewertung.md`)), `record.service.ts` (`getPaged(...)` mit allen
+  Filtern inkl. `format`).
+- `features/records/record-filter/` (Signal Form: Name mit Debounce,
+  Artist/Label/Land/Format als native `<select>`, Jahr-von/-bis als
+  Zahlenfelder, Sortierfeld-Auswahl plus separater Auf/Ab-Umschalter-Button
+  für die Sortierrichtung).
+- `features/records/record-card/` (Card-Darstellung nach
+  `komponenten-klassen.md`: Cover oder Platzhalter-Icon, Format-Pille
+  LP/CD, Albumname, Künstler falls vorhanden, Jahr · Label, Grade-Badge).
+- `features/records/records.ts`/`.html` ersetzt die bisherige
+  Platzhalterseite vollständig: vier `rxResource`-Aufrufe (Records
+  paginiert, Artists/Labels/Countries je einmalig für die Dropdowns),
+  Ladezustand/Empty-State/Card-Grid/Paginierung nach dem Muster der
+  Tabellen-Slices, `ErrorModalService`-Anbindung für alle vier Resources.
+- 42 neue Frontend-Tests gegenüber dem Stand nach Block 5 (182 → 224),
+  alle grün. Production-Build grün.
+
+**Entdeckte und korrigierte Wiki-Abweichung**: `wiki/design/komponenten-klassen.md`
+dokumentierte für die Zustandsstufe „Good Plus" die CSS-Klasse
+`.grade-gplus` — diese Klasse existiert in
+`src/frontend/src/styles/design-system/components.css` nicht. Die
+tatsächlich vorhandene, farblich passende Klasse heißt `.grade-f`. Die
+Anwendung nutzt die reale Klasse `.grade-f`; die Wiki-Tabelle wurde
+entsprechend korrigiert (siehe Wiki `log.md`).
+
+Bewusst nicht Teil dieses Standes:
+
+- Anlegen/Bearbeiten/Löschen (US-R4–R6, Block 6g).
+- Detailseite `/records/:id` (US-R7, Block 6h) — `RecordCard` hat bereits
+  ein `opened`-Output, aber noch keine Navigation ist verdrahtet.
+- Album-Cover-Upload (US-R8, Block 6i).
+- Tracks (US-T1–T3, Block 6j).
+- Manuelle Live-Prüfung im Browser gegen den laufenden Aspire-AppHost steht
+  noch aus.
+
+Abnahmekriterium:
+
+- Records lassen sich als Cards anzeigen, nach Name/Artist/Label/Jahr-
+  Zeitraum/Land/Format filtern (einzeln oder kombiniert), nach Name/
+  Erscheinungsjahr/Format auf- oder absteigend sortieren und sind
+  paginiert; Empty- und Loading-State korrekt. **Erfüllt** laut
+  automatisierten Tests — die manuelle Live-Prüfung im Browser steht noch
+  aus.
 
 ## 7. Authentifizierung und Mandantentrennung
 
