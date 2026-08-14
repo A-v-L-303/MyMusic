@@ -56,6 +56,27 @@ describe('ConfirmModal', () => {
     expect(cancelledHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('zeigt ein alternatives Bestätigen-Label und eine alternative Variante an', () => {
+    // arrange
+    const fixture = TestBed.createComponent(ConfirmModal);
+    fixture.componentRef.setInput('title', 'Künstler anlegen');
+    fixture.componentRef.setInput('message', 'Soll der Künstler „Neu" neu angelegt werden?');
+    fixture.componentRef.setInput('confirmLabel', 'Anlegen');
+    fixture.componentRef.setInput('confirmVariant', 'primary');
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const button = Array.from(compiled.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Anlegen',
+    );
+
+    // assert
+    expect(button).toBeDefined();
+    expect(button?.classList.contains('btn-primary')).toBe(true);
+    expect(button?.classList.contains('btn-danger')).toBe(false);
+  });
+
   it('emittiert cancelled, wenn das Modal geschlossen wird (Escape/Scrim)', () => {
     // arrange
     const fixture = createFixture();

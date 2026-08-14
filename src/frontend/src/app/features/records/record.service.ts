@@ -3,7 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { RuntimeConfigService } from '../../core/runtime-config/runtime-config.service';
-import { RecordFormat, RecordListResponse } from './record';
+import {
+  CreateRecordRequest,
+  Record,
+  RecordFormat,
+  RecordListResponse,
+  UpdateRecordRequest,
+} from './record';
 
 @Injectable({ providedIn: 'root' })
 export class RecordService {
@@ -66,5 +72,17 @@ export class RecordService {
     }
 
     return this.http.get<RecordListResponse>(this.baseUrl, { params });
+  }
+
+  create(request: CreateRecordRequest): Observable<Record> {
+    return this.http.post<Record>(this.baseUrl, request);
+  }
+
+  update(id: number, request: UpdateRecordRequest): Observable<Record> {
+    return this.http.put<Record>(`${this.baseUrl}/${id}`, request);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }

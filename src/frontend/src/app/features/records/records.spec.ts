@@ -83,6 +83,44 @@ describe('Records', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  function findButton(root: HTMLElement, text: string): HTMLButtonElement {
+    return Array.from(root.querySelectorAll('button')).find((button) =>
+      button.textContent?.trim().includes(text),
+    ) as HTMLButtonElement;
+  }
+
+  async function selectFormLabel(
+    fixture: {
+      nativeElement: unknown;
+      detectChanges: () => void;
+      whenStable: () => Promise<unknown>;
+    },
+    name: string,
+    id: number,
+  ): Promise<void> {
+    const formHost = compiled(fixture).querySelector('app-record-form') as HTMLElement;
+    const input = formHost.querySelectorAll('app-autocomplete input')[0] as HTMLInputElement;
+    input.value = name;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await wait(350);
+    const request = httpTesting.expectOne(
+      (req) => req.url === 'https://api.test/api/labels' && req.params.get('name') === name,
+    );
+    request.flush({
+      items: [{ id, name, countryId: 1, countryName: 'USA', information: null }],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const option = formHost.querySelector('li[role="option"]') as HTMLLIElement;
+    option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+  }
+
   async function createLoadedFixture(response: RecordListResponse = onePage) {
     const fixture = TestBed.createComponent(Records);
     fixture.detectChanges();
@@ -268,6 +306,172 @@ describe('Records', () => {
     fixture.detectChanges();
     expectListRequest().flush(onePage);
     expectCountriesRequest().flush(
+      { title: 'Serverfehler', status: 500 },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+    await fixture.whenStable();
+
+    // assert
+    expect(errorModalService.current()).toEqual(expect.objectContaining({ kind: 'server' }));
+  });
+
+  it('legt einen neuen Record an und lädt die Liste danach neu', async () => {
+    // arrange
+    const fixture = await createLoadedFixture(emptyPage);
+    findButton(compiled(fixture), 'Anlegen').click();
+    fixture.detectChanges();
+    expectCountriesRequest().flush(countries);
+    await selectFormLabel(fixture, 'Apple Records', 1);
+    const formatSelect = compiled(fixture).querySelector('#record-format') as HTMLSelectElement;
+    formatSelect.value = 'Album';
+    formatSelect.dispatchEvent(new Event('input'));
+    const albumInput = compiled(fixture).querySelector('#record-album-name') as HTMLInputElement;
+    albumInput.value = 'Abbey Road';
+    albumInput.dispatchEvent(new Event('input'));
+    const yearInput = compiled(fixture).querySelector('#record-release-year') as HTMLInputElement;
+    yearInput.value = '1969';
+    yearInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const form = compiled(fixture).querySelector('form') as HTMLFormElement;
+
+    // act
+    form.dispatchEvent(new Event('submit', { cancelable: true }));
+    const createRequest = httpTesting.expectOne(
+      (req) => req.method === 'POST' && req.url === 'https://api.test/api/records',
+    );
+    createRequest.flush(abbeyRoad);
+    // Ein Tick für die Promise-Kette (firstValueFrom → saved.emit → onFormSaved → reload()),
+    // bevor der dadurch ausgelöste Neuladen-Request erwartet werden kann.
+    await wait(0);
+    fixture.detectChanges();
+    expectListRequest().flush(onePage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(createRequest.request.body).toEqual({
+      labelId: 1,
+      artistId: null,
+      format: 'Album',
+      albumName: 'Abbey Road',
+      releaseYear: 1969,
+      condition: 'Vg',
+      information: null,
+    });
+    expect(compiled(fixture).querySelector('#record-album-name')).toBeNull();
+    expect(compiled(fixture).textContent).toContain('Abbey Road');
+  });
+
+  it('bearbeitet einen bestehenden Record und übernimmt Label/Künstler vorbefüllt', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Record Abbey Road bearbeiten"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+    expectCountriesRequest().flush(countries);
+    const formHost = compiled(fixture).querySelector('app-record-form') as HTMLElement;
+    const autocompleteInputs = formHost.querySelectorAll(
+      'app-autocomplete input',
+    ) as NodeListOf<HTMLInputElement>;
+    const albumInput = compiled(fixture).querySelector('#record-album-name') as HTMLInputElement;
+    albumInput.value = 'Abbey Road (Remastered)';
+    albumInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const form = compiled(fixture).querySelector('form') as HTMLFormElement;
+
+    // act
+    form.dispatchEvent(new Event('submit', { cancelable: true }));
+    const updateRequest = httpTesting.expectOne(
+      (req) => req.method === 'PUT' && req.url === 'https://api.test/api/records/1',
+    );
+    updateRequest.flush({ ...abbeyRoad, albumName: 'Abbey Road (Remastered)' });
+    await wait(0);
+    fixture.detectChanges();
+    expectListRequest().flush({
+      ...onePage,
+      items: [{ ...abbeyRoad, albumName: 'Abbey Road (Remastered)' }],
+    });
+    await fixture.whenStable();
+
+    // assert: keine HTTP-Anfrage für Label/Künstler nötig, da über initialQuery vorbefüllt
+    expect(autocompleteInputs[0].value).toBe('Apple Records');
+    expect(autocompleteInputs[1].value).toBe('The Beatles');
+    expect(updateRequest.request.body).toEqual({
+      labelId: 1,
+      artistId: 10,
+      format: 'Album',
+      albumName: 'Abbey Road (Remastered)',
+      releaseYear: 1969,
+      condition: 'Nm',
+      information: null,
+    });
+  });
+
+  it('löscht einen Record nach Bestätigung und lädt die Liste danach neu', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Record Abbey Road löschen"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Löschen').click();
+    const deleteRequest = httpTesting.expectOne(
+      (req) => req.method === 'DELETE' && req.url === 'https://api.test/api/records/1',
+    );
+    deleteRequest.flush(null);
+    await wait(0);
+    fixture.detectChanges();
+    expectListRequest().flush(emptyPage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(compiled(fixture).querySelector('.btn-danger')).toBeNull();
+    expect(compiled(fixture).querySelector('.empty')).not.toBeNull();
+  });
+
+  it('bricht das Löschen ohne HTTP-Aufruf ab', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Record Abbey Road löschen"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Abbrechen').click();
+    fixture.detectChanges();
+
+    // assert
+    // httpTesting.verify() im afterEach deckt einen unerwarteten DELETE-Request auf.
+    expect(compiled(fixture).querySelector('.btn-danger')).toBeNull();
+  });
+
+  it('zeigt einen Serverfehler beim Löschen über den ErrorModalService an', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Record Abbey Road löschen"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Löschen').click();
+    const deleteRequest = httpTesting.expectOne(
+      (req) => req.method === 'DELETE' && req.url === 'https://api.test/api/records/1',
+    );
+    deleteRequest.flush(
       { title: 'Serverfehler', status: 500 },
       { status: 500, statusText: 'Internal Server Error' },
     );

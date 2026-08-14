@@ -1,12 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { LucidePlus } from '@lucide/angular';
 import { of } from 'rxjs';
 
 import { ArtistService } from '../artists/artist.service';
 import { LabelService } from '../labels/label.service';
 import { CountryService } from '../../shared/country/country.service';
 import { AutocompleteOption } from '../../shared/autocomplete/autocomplete';
+import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 import { ErrorModalService } from '../../shared/error-modal/error-modal.service';
 import { Pagination } from '../../shared/pagination/pagination';
 import { RecordCard } from './record-card/record-card';
@@ -16,7 +18,8 @@ import {
   RecordSortBy,
   RecordSortDirection,
 } from './record-filter/record-filter';
-import { RecordFormat } from './record';
+import { RecordForm } from './record-form/record-form';
+import { Record, RecordFormat } from './record';
 import { RecordService } from './record.service';
 
 const PAGE_SIZE = 20;
@@ -24,7 +27,7 @@ const SUGGESTION_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-records',
-  imports: [RecordFilter, RecordCard, Pagination],
+  imports: [RecordFilter, RecordCard, Pagination, RecordForm, ConfirmModal, LucidePlus],
   templateUrl: './records.html',
 })
 export class Records {
@@ -128,6 +131,15 @@ export class Records {
     this.recordsResource.hasValue() ? this.recordsResource.value().totalCount : 0,
   );
 
+  protected readonly formOpen = signal(false);
+  protected readonly editingRecord = signal<Record | null>(null);
+
+  protected readonly pendingDelete = signal<Record | null>(null);
+  protected readonly pendingDeleteMessage = computed(() => {
+    const record = this.pendingDelete();
+    return record ? `Soll „${record.albumName}" wirklich gelöscht werden?` : '';
+  });
+
   constructor() {
     effect(() => {
       const error = this.recordsResource.error();
@@ -173,5 +185,51 @@ export class Records {
 
   protected onLabelQueryChange(query: string): void {
     this.labelQuery.set(query);
+  }
+
+  protected openCreateForm(): void {
+    this.editingRecord.set(null);
+    this.formOpen.set(true);
+  }
+
+  protected openEditForm(record: Record): void {
+    this.editingRecord.set(record);
+    this.formOpen.set(true);
+  }
+
+  protected onFormCancelled(): void {
+    this.formOpen.set(false);
+  }
+
+  protected onFormSaved(): void {
+    this.formOpen.set(false);
+    this.recordsResource.reload();
+  }
+
+  protected onDeleteRequested(record: Record): void {
+    this.pendingDelete.set(record);
+  }
+
+  protected onDeleteCancelled(): void {
+    this.pendingDelete.set(null);
+  }
+
+  protected onDeleteConfirmed(): void {
+    const record = this.pendingDelete();
+
+    if (!record) {
+      return;
+    }
+
+    this.recordService.delete(record.id).subscribe({
+      next: () => {
+        this.pendingDelete.set(null);
+        this.recordsResource.reload();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.pendingDelete.set(null);
+        this.errorModalService.showFromHttpError(error, 'Record');
+      },
+    });
   }
 }

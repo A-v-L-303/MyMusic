@@ -12,11 +12,12 @@ const options: AutocompleteOption[] = [
   { id: 2, label: 'Miles Davis' },
 ];
 
-function createFixture(optionsInput: AutocompleteOption[] = []) {
+function createFixture(optionsInput: AutocompleteOption[] = [], initialQuery = '') {
   const fixture = TestBed.createComponent(Autocomplete);
   fixture.componentRef.setInput('placeholder', 'Nach Künstler filtern');
   fixture.componentRef.setInput('ariaLabel', 'Nach Künstler filtern');
   fixture.componentRef.setInput('options', optionsInput);
+  fixture.componentRef.setInput('initialQuery', initialQuery);
   fixture.detectChanges();
   return fixture;
 }
@@ -128,5 +129,78 @@ describe('Autocomplete', () => {
 
     // assert
     expect(fixture.nativeElement.querySelector('li[role="option"]')).toBeNull();
+  });
+
+  it('zeigt initialQuery beim Rendern im Eingabefeld an', () => {
+    // arrange & act
+    const fixture = createFixture([], 'Columbia');
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    // assert
+    expect(input.value).toBe('Columbia');
+  });
+
+  it('behält eigene Eingabe bei, solange sich initialQuery nicht ändert', () => {
+    // arrange
+    const fixture = createFixture([], 'Columbia');
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    // act
+    input.value = 'Warner';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // assert: erneutes Setzen desselben initialQuery-Werts überschreibt die Eingabe nicht
+    fixture.componentRef.setInput('initialQuery', 'Columbia');
+    fixture.detectChanges();
+    expect(input.value).toBe('Warner');
+  });
+
+  it('emittiert blur mit dem aktuellen Eingabetext', () => {
+    // arrange
+    const fixture = createFixture();
+    const blurHandler = vi.fn();
+    fixture.componentInstance.blur.subscribe(blurHandler);
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    input.value = 'Neues Label';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // act
+    input.dispatchEvent(new Event('blur'));
+
+    // assert
+    expect(blurHandler).toHaveBeenCalledWith('Neues Label');
+  });
+
+  it('setQuery() setzt den Anzeigetext programmatisch und schließt die Vorschlagsliste', () => {
+    // arrange
+    const fixture = createFixture(options);
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    input.value = 'Beatl';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('li[role="option"]')).not.toBeNull();
+
+    // act
+    fixture.componentInstance.setQuery('Miles Davis');
+    fixture.detectChanges();
+
+    // assert
+    expect(input.value).toBe('Miles Davis');
+    expect(fixture.nativeElement.querySelector('li[role="option"]')).toBeNull();
+  });
+
+  it('setQuery() kann den Anzeigetext auch leeren', () => {
+    // arrange
+    const fixture = createFixture([], 'Columbia');
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+
+    // act
+    fixture.componentInstance.setQuery('');
+    fixture.detectChanges();
+
+    // assert
+    expect(input.value).toBe('');
   });
 });

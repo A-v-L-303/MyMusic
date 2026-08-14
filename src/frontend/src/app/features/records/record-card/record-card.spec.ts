@@ -129,4 +129,44 @@ describe('RecordCard', () => {
     // assert
     expect(openedHandler).toHaveBeenCalled();
   });
+
+  it('emittiert editRequested bei Klick auf den Bearbeiten-Button, ohne opened auszulösen', () => {
+    // arrange
+    const record = buildRecord();
+    const fixture = createFixture(record);
+    const editHandler = vi.fn();
+    const openedHandler = vi.fn();
+    fixture.componentInstance.editRequested.subscribe(editHandler);
+    fixture.componentInstance.opened.subscribe(openedHandler);
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Record Abbey Road bearbeiten"]',
+    ) as HTMLButtonElement;
+
+    // act
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    // assert
+    expect(editHandler).toHaveBeenCalledWith(record);
+    expect(openedHandler).not.toHaveBeenCalled();
+  });
+
+  it('emittiert deleteRequested bei Klick auf den Löschen-Button, ohne opened auszulösen', () => {
+    // arrange
+    const record = buildRecord();
+    const fixture = createFixture(record);
+    const deleteHandler = vi.fn();
+    const openedHandler = vi.fn();
+    fixture.componentInstance.deleteRequested.subscribe(deleteHandler);
+    fixture.componentInstance.opened.subscribe(openedHandler);
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Record Abbey Road löschen"]',
+    ) as HTMLButtonElement;
+
+    // act
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    // assert
+    expect(deleteHandler).toHaveBeenCalledWith(record);
+    expect(openedHandler).not.toHaveBeenCalled();
+  });
 });

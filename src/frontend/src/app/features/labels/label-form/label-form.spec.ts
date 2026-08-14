@@ -138,15 +138,14 @@ describe('LabelForm', () => {
 
   it('ruft im Anlegen-Modus LabelService.create mit name, countryId und information auf', async () => {
     // arrange
-    labelServiceMock.create.mockReturnValue(
-      of({
-        id: 1,
-        name: 'Rough Trade',
-        countryId: 2,
-        countryName: 'Vereinigtes Königreich',
-        information: null,
-      }),
-    );
+    const created: Label = {
+      id: 1,
+      name: 'Rough Trade',
+      countryId: 2,
+      countryName: 'Vereinigtes Königreich',
+      information: null,
+    };
+    labelServiceMock.create.mockReturnValue(of(created));
     const fixture = createFixture();
     const savedHandler = vi.fn();
     fixture.componentInstance.saved.subscribe(savedHandler);
@@ -163,7 +162,7 @@ describe('LabelForm', () => {
       countryId: 2,
       information: null,
     });
-    expect(savedHandler).toHaveBeenCalledTimes(1);
+    expect(savedHandler).toHaveBeenCalledWith(created);
   });
 
   it('wandelt eine leere Information in null um', async () => {
@@ -201,7 +200,8 @@ describe('LabelForm', () => {
       countryName: 'Vereinigtes Königreich',
       information: 'Unabhängiges Label',
     };
-    labelServiceMock.update.mockReturnValue(of({ ...existing, name: 'Rough Trade Records' }));
+    const updated: Label = { ...existing, name: 'Rough Trade Records' };
+    labelServiceMock.update.mockReturnValue(of(updated));
     const fixture = createFixture(existing);
     const savedHandler = vi.fn();
     fixture.componentInstance.saved.subscribe(savedHandler);
@@ -221,7 +221,7 @@ describe('LabelForm', () => {
       countryId: 2,
       information: 'Unabhängiges Label',
     });
-    expect(savedHandler).toHaveBeenCalledTimes(1);
+    expect(savedHandler).toHaveBeenCalledWith(updated);
   });
 
   it('hängt eine 400-Serverantwort für CountryId inline ins Land-Feld ein, ohne das ErrorModal zu öffnen', async () => {

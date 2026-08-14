@@ -6,6 +6,24 @@
       <svg lucideDisc3 [size]="28" class="text-fg-subtle" aria-hidden="true"></svg>
     }
     <span class="fmt">{{ formatPill() }}</span>
+    <div class="absolute left-1 top-1 flex gap-1 rounded-md bg-black/40 p-0.5 backdrop-blur-sm">
+      <button
+        type="button"
+        class="btn btn-ghost btn-icon btn-sm !text-white hover:!bg-white/20"
+        (click)="onEditClicked($event)"
+        [attr.aria-label]="'Record ' + record().albumName + ' bearbeiten'"
+      >
+        <svg lucidePencil [size]="15" aria-hidden="true"></svg>
+      </button>
+      <button
+        type="button"
+        class="btn btn-ghost btn-icon btn-sm !text-white hover:!bg-white/20"
+        (click)="onDeleteClicked($event)"
+        [attr.aria-label]="'Record ' + record().albumName + ' löschen'"
+      >
+        <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
+      </button>
+    </div>
   </div>
   <div class="record-meta">
     <div class="record-title">{{ record().albumName }}</div>

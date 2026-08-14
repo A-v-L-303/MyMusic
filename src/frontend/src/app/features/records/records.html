@@ -1,7 +1,13 @@
 <section class="mx-auto max-w-[1080px] px-6 pb-16 pt-6">
-  <div class="flex items-center gap-2">
-    <h1 class="text-lg font-bold text-fg">Records</h1>
-    <span class="badge badge-neutral">{{ totalCount() }}</span>
+  <div class="flex items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <h1 class="text-lg font-bold text-fg">Records</h1>
+      <span class="badge badge-neutral">{{ totalCount() }}</span>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+      <svg lucidePlus [size]="15" aria-hidden="true"></svg>
+      Anlegen
+    </button>
   </div>
 
   <div class="mt-4">
@@ -25,7 +31,11 @@
     } @else {
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         @for (record of records(); track record.id) {
-          <app-record-card [record]="record" />
+          <app-record-card
+            [record]="record"
+            (editRequested)="openEditForm($event)"
+            (deleteRequested)="onDeleteRequested($event)"
+          />
         }
       </div>
       <div class="mt-4">
@@ -38,3 +48,20 @@
     }
   </div>
 </section>
+
+@if (formOpen()) {
+  <app-record-form
+    [record]="editingRecord()"
+    (cancelled)="onFormCancelled()"
+    (saved)="onFormSaved()"
+  />
+}
+
+@if (pendingDelete()) {
+  <app-confirm-modal
+    title="Record löschen"
+    [message]="pendingDeleteMessage()"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()"
+  />
+}

@@ -23,9 +23,12 @@ Abschnitt 6f; Block 6f (Record-Liste: Card-Ansicht, Filter, Sortierung,
 Paginierung, inkl. eines neuen `format`-Filters bei `GET /api/records`,
 der Verschiebung von `Country` nach `shared/` und eines serverseitigen
 Freitext-Autosuggest für Artist/Label statt Dropdown) umgesetzt, live
-verifiziert und nach `main` gemergt;
-Blöcke 6g–6j (Anlegen/Bearbeiten/Löschen, Detailansicht, Cover-Upload,
-Tracks) sind geplant, aber noch nicht begonnen)
+verifiziert und nach `main` gemergt; Block 6g (Record anlegen/bearbeiten/
+löschen als Modal, Edit/Delete-Icons auf der RecordCard, Vorbefüll-Erweiterung
+von `shared/autocomplete/`) umgesetzt und live verifiziert — Commit/Push/PR
+noch ausstehend.
+Blöcke 6h–6j (Detailansicht, Cover-Upload, Tracks) sind geplant, aber noch
+nicht begonnen)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
 Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
 PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
@@ -64,9 +67,9 @@ MVP-Umfang der Phase 1:
   `artists/` umgesetzt, aber ohne UI für den `labelId`-Filter (Block 5
   Frontend, siehe Abschnitt 5); `records/` hat mit Block 6f (Record-Liste:
   Card-Ansicht, Filter, Sortierung, Paginierung) die Platzhalterseite
-  ersetzt, siehe Abschnitt 6f; Anlegen/Bearbeiten/Löschen (Block 6g),
-  Detailansicht (Block 6h), Cover-Upload (Block 6i) und Tracks (Block 6j)
-  sind geplant, aber noch offen).
+  ersetzt, siehe Abschnitt 6f, und mit Block 6g Anlegen/Bearbeiten/Löschen
+  erhalten, siehe Abschnitt 6g; Detailansicht (Block 6h), Cover-Upload
+  (Block 6i) und Tracks (Block 6j) sind geplant, aber noch offen).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -1401,6 +1404,154 @@ Abnahmekriterium:
   automatisierte Tests grün und zusätzlich live im Browser gegen den
   laufenden Aspire-AppHost verifiziert (Filter-Zeile, Artist-Autosuggest
   gegen echtes Backend, Tooltip, keine Konsolenfehler).
+
+### 6g. Record anlegen/bearbeiten/löschen
+
+Status: **abgeschlossen** (2026-08-14) — Commit/Push/PR noch ausstehend
+Arbeits-Prompt: `docs/prompts/2026-08-14-block-6g-angular-records-crud.md`
+
+Anlass: Zweiter der fünf Teilblöcke 6f–6j (siehe Abschnitt 6f). Deckt
+US-R4–R6 (Anlegen, Bearbeiten, Löschen) ab — ohne Detailseite, ohne
+Cover-Upload, ohne Tracks. Reiner Frontend-Block: Das Backend
+(`POST`/`PUT`/`DELETE /api/records/{id}`) war seit Block 6a bereits
+vollständig vorhanden, keine Backend-Änderung nötig.
+
+Zwei Design-Lücken vorab mit dem Projektinhaber geklärt (2026-08-14):
+
+- **Edit/Delete-Trigger**: Die Card-Ansicht hat anders als die
+  Tabellen-Slices keine Aktionsspalte. Entschieden: Icon-Buttons
+  (Stift/Papierkorb) direkt auf der `RecordCard`, analog zur
+  Aktionsspalte der Tabellen-Slices.
+- **Autocomplete-Vorbefüllung**: Label/Artist im Formular nutzen dieselbe
+  `app-autocomplete`-Komponente wie im Filter (Block 6f), statt eines
+  nativen `<select>` (Listen können beliebig groß werden). Entschieden:
+  `shared/autocomplete/` um ein optionales Prefill-Input erweitern statt
+  den Namen separat als Text anzuzeigen oder auf ein natives Dropdown
+  auszuweichen.
+
+Umgesetzt:
+
+- `shared/autocomplete/autocomplete.ts`: neues optionales Input
+  `initialQuery`, `queryText` von `signal('')` auf
+  `linkedSignal(() => this.initialQuery())` umgestellt — vorbefüllt das
+  Feld im Bearbeiten-Modus mit dem bisherigen Namen, ohne das bestehende
+  Verhalten im Filter (kein `initialQuery` gesetzt) zu ändern. Zwei neue
+  Testfälle in `autocomplete.spec.ts`.
+- `features/records/record.ts`/`record.service.ts`: `CreateRecordRequest`/
+  `UpdateRecordRequest` sowie `create()`/`update()`/`delete()` ergänzt,
+  1:1 nach dem Muster aus `LabelService`.
+- `features/records/record-form/` (neu): Signal-Form-Komponente analog
+  `LabelForm` — Label (Pflicht, Autocomplete), Künstler (optional,
+  Autocomplete), Format (Pflicht, natives `<select>`), Albumname (Pflicht,
+  1–150 Zeichen, exaktes Backend-Pattern aus `Record.cs` inkl. Klammern),
+  Erscheinungsjahr (Pflicht, 1860 bis aktuelles Jahr über
+  `validate()`-Bereichsprüfung, da das Formularmodell wie im gesamten
+  Projekt durchgängig String-Felder verwendet — `min`/`max` aus
+  `@angular/forms/signals` hätte einen abweichenden, numerisch typisierten
+  Formularpfad erfordert), Zustand (natives `<select>`, Default `Vg`),
+  Information (optional, max. 255 Zeichen). Serverseitige 400-Fehler
+  feldweise zugeordnet wie bei `LabelForm`. Kein „Discogs-Suche"-Button —
+  das verschachtelte Discogs-Modal aus `ui-ux-konzept.md` gehört zu
+  Block 8 (weiterhin offen).
+- `features/records/record-card/`: neue Outputs `editRequested`/
+  `deleteRequested`, zwei Icon-Buttons (`btn btn-ghost btn-icon btn-sm`,
+  `LucidePencil`/`LucideTrash2`) mit `stopPropagation()`, damit das
+  bestehende `opened`-Output nicht mitausgelöst wird. Platzierung oben
+  links im Cover (die `.fmt`-Formatpille belegt oben rechts), mit
+  halbtransparentem, dunklem Hintergrund (`bg-black/40`, `!text-white`)
+  für Lesbarkeit über beliebigen Cover-Bildern — rein im Template gelöst,
+  keine Änderung an `components.css` (Design-System bleibt 1:1-Kopie aus
+  dem Wiki).
+- `features/records/records.ts`/`records.html`: Formular-Modal,
+  `ConfirmModal` für Löschen, „+ Anlegen"-Button in der Toolbar — 1:1 nach
+  dem Muster aus `Labels`/`labels.html`.
+- Neue/erweiterte Tests: `record-form.spec.ts` (neu, 16 Fälle),
+  `record-card.spec.ts`, `record.service.spec.ts`, `records.spec.ts`
+  (Anlegen/Bearbeiten inkl. Vorbefüllung/Löschen inkl. Bestätigen/
+  Abbrechen/Serverfehler) — 257 Frontend-Tests insgesamt, alle grün.
+  Production-Build und Prettier-Check grün.
+
+Bewusst nicht Teil dieses Standes:
+
+- Detailseite `/records/:id` (US-R7, Block 6h).
+- Album-Cover-Upload (US-R8, Block 6i).
+- Tracks (US-T1–T3, Block 6j).
+- Discogs-Integration/-Modal (Block 8).
+
+Abnahmekriterium:
+
+- Ein Record lässt sich anlegen, bearbeiten (inkl. korrekt vorbefülltem
+  Label/Künstler) und mit Bestätigungsdialog löschen; Validierungsfehler
+  erscheinen inline am jeweiligen Feld. **Vollständig erfüllt** —
+  automatisierte Tests grün und zusätzlich live im Browser gegen den
+  laufenden Aspire-AppHost verifiziert (Anlegen mit Autosuggest gegen
+  echtes Backend, Bearbeiten mit vorbefülltem Label-Feld, Pflichtfeld- und
+  Jahresbereichs-Validierung inline, Löschen mit Bestätigungsdialog, keine
+  Konsolenfehler).
+
+Nachtrag (2026-08-14): Label/Artist direkt aus dem Record-Formular anlegen.
+Beim Live-Test fiel auf: Wählte man ein noch nicht existierendes Label oder
+einen noch nicht existierenden Artist, blieb das Feld ungültig — der
+Benutzer hätte die Ansicht wechseln müssen. Mit dem Projektinhaber geklärt,
+unterschiedlich je Entität (Artist hat nur ein Pflichtfeld, Label zwingend
+auch `countryId`):
+
+- **Artist**: Verlässt der Benutzer das Künstler-Feld (Blur) mit einem
+  gültigen, aber unbekannten Namen (Regeln aus `Artist.cs`: 3–120 Zeichen,
+  Pattern `^[\p{L}\p{N} \-&'./]+$`), fragt ein `ConfirmModal` „Soll der
+  Künstler '…' neu angelegt werden?". Bestätigen legt den Artist mit nur
+  dem Namen an und übernimmt ihn; Ablehnen leert das Feld.
+- **Label**: Icon-Button (`LucidePlus`, `title` **und** `aria-label`
+  „Neues Label anlegen") neben dem Feld öffnet das bestehende `LabelForm`
+  als zweites, verschachteltes Modal (ohne `[label]`-Input, also im
+  Anlegen-Modus); nach dem Speichern wird die neue Auswahl automatisch
+  übernommen.
+
+Dafür notwendige Erweiterungen an gemeinsam genutzten Bausteinen:
+
+- `shared/modal/modal.ts`: `@HostListener('document:keydown.escape')`
+  wirkte bisher global auf jede offene `Modal`-Instanz — bei zwei
+  gleichzeitig offenen Modals (verschachteltes `LabelForm` bzw.
+  `ConfirmModal` über dem `RecordForm`) hätte Escape beide gleichzeitig
+  geschlossen. Fix: modulweiter Stack (`openModalStack`), nur die oberste
+  Instanz reagiert auf Escape. Neuer Test in `modal.spec.ts`.
+- `shared/autocomplete/autocomplete.ts`: neuer Output `blur = output<string>()`
+  und neue öffentliche Methode `setQuery(value: string)` zum
+  programmatischen Setzen des Anzeigetexts von außen (Leeren nach
+  Ablehnen, Setzen nach Quick-Create) — das bestehende
+  `initialQuery`/`linkedSignal`-Muster reicht dafür nicht: Ein erneutes
+  Setzen auf denselben vorherigen Wert (z. B. wieder `''`) wird von
+  Angular nicht als Signaländerung erkannt und hätte den zuvor getippten,
+  abgelehnten Text stehen lassen. Neue Tests in `autocomplete.spec.ts`.
+- `shared/confirm-modal/confirm-modal.ts`: Der Bestätigen-Button war fest
+  auf Text „Löschen" und `.btn-danger` verdrahtet — für eine
+  Anlegen-Rückfrage inhaltlich falsch (rot = destruktiv). Neue optionale
+  Inputs `confirmLabel` (Default `'Löschen'`) und `confirmVariant`
+  (`'danger' | 'primary'`, Default `'danger'`) ergänzt, bestehende
+  Aufrufer unverändert kompatibel. Neuer Test in `confirm-modal.spec.ts`.
+- `features/labels/label-form/label-form.ts`: `saved` von `output<void>()`
+  auf `output<Label>()` umgestellt, damit der Aufrufer weiß, welches Label
+  entstanden ist — bisher wurde nach dem Anlegen gar kein Ergebnis
+  zurückgegeben. Bestehender Aufrufer `Labels` bleibt kompatibel (Angular
+  ignoriert den zusätzlichen Payload-Parameter). Tests in
+  `label-form.spec.ts` ergänzt.
+- `features/records/record-form/`: neuer `countriesResource` (für das
+  verschachtelte `LabelForm`), `viewChild()`-Referenzen auf beide
+  Autocomplete-Felder, Handler für Label-Button/verschachteltes Modal und
+  Artist-Blur-Rückfrage. 8 neue Testfälle in `record-form.spec.ts`;
+  `records.spec.ts` um den zusätzlichen `/api/countries`-Request beim
+  Öffnen des Formulars ergänzt (eigene Ressource von `RecordForm`, nicht
+  die von `Records`).
+- 271 Frontend-Tests insgesamt, alle grün. Production-Build und
+  Prettier-Check grün.
+
+Live verifiziert: Tooltip am Label-Button (native `title`-Anzeige — im
+automatisierten Browser-Screenshot nicht sichtbar, vom Projektinhaber
+selbst am echten Cursor bestätigt), verschachteltes Label-Formular inkl.
+Übernahme der neuen Auswahl, Escape schließt bei zwei offenen Modals nur
+das obere (verschachteltes Label-Formular schließt, Record-Formular bleibt
+offen), Artist-Rückfrage mit grünem „Anlegen"-Button (nicht „Löschen"),
+Bestätigen legt an und übernimmt, keine Konsolenfehler.
 
 ## 7. Authentifizierung und Mandantentrennung
 

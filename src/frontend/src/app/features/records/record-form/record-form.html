@@ -1,0 +1,148 @@
+<app-modal (closed)="onCancel()">
+  <form (submit)="$event.preventDefault(); onSubmit()">
+    <div class="modal-head">
+      <h2 class="text-base font-semibold text-fg">
+        {{ isEditMode() ? 'Record bearbeiten' : 'Record anlegen' }}
+      </h2>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <span class="label">Label<span class="req"> *</span></span>
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <app-autocomplete
+              #labelAutocomplete
+              placeholder="Label suchen"
+              ariaLabel="Label"
+              [options]="labelSuggestions()"
+              [initialQuery]="record()?.labelName ?? ''"
+              (queryChange)="onLabelQueryChange($event)"
+              (selected)="onLabelSelected($event)"
+            />
+          </div>
+          <button
+            type="button"
+            class="btn btn-ghost btn-icon btn-sm"
+            title="Neues Label anlegen"
+            aria-label="Neues Label anlegen"
+            (click)="openLabelCreate()"
+          >
+            <svg lucidePlus [size]="15" aria-hidden="true"></svg>
+          </button>
+        </div>
+        @if (
+          recordForm.labelId().invalid() && (recordForm.labelId().touched() || attemptedSubmit())
+        ) {
+          <span class="hint is-error">{{ recordForm.labelId().errors()[0].message }}</span>
+        }
+      </div>
+      <div class="field">
+        <span class="label">Künstler</span>
+        <app-autocomplete
+          #artistAutocomplete
+          placeholder="Künstler suchen"
+          ariaLabel="Künstler"
+          [options]="artistSuggestions()"
+          [initialQuery]="record()?.artistName ?? ''"
+          (queryChange)="onArtistQueryChange($event)"
+          (selected)="onArtistSelected($event)"
+          (blur)="onArtistBlur($event)"
+        />
+      </div>
+      <div class="field">
+        <label class="label" for="record-format">Format<span class="req"> *</span></label>
+        <select
+          id="record-format"
+          class="select"
+          [class.is-error]="recordForm.format().invalid() && recordForm.format().touched()"
+          [formField]="recordForm.format"
+        >
+          <option value="">Bitte wählen</option>
+          @for (option of formatOptions; track option[0]) {
+            <option [value]="option[0]">{{ option[1] }}</option>
+          }
+        </select>
+        @if (recordForm.format().invalid() && recordForm.format().touched()) {
+          <span class="hint is-error">{{ recordForm.format().errors()[0].message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label class="label" for="record-album-name">Albumname<span class="req"> *</span></label>
+        <input
+          id="record-album-name"
+          type="text"
+          class="input"
+          [class.is-error]="recordForm.albumName().invalid() && recordForm.albumName().touched()"
+          [formField]="recordForm.albumName"
+        />
+        @if (recordForm.albumName().invalid() && recordForm.albumName().touched()) {
+          <span class="hint is-error">{{ recordForm.albumName().errors()[0].message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label class="label" for="record-release-year"
+          >Erscheinungsjahr<span class="req"> *</span></label
+        >
+        <input
+          id="record-release-year"
+          type="number"
+          class="input"
+          [class.is-error]="
+            recordForm.releaseYear().invalid() && recordForm.releaseYear().touched()
+          "
+          [formField]="recordForm.releaseYear"
+        />
+        @if (recordForm.releaseYear().invalid() && recordForm.releaseYear().touched()) {
+          <span class="hint is-error">{{ recordForm.releaseYear().errors()[0].message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label class="label" for="record-condition">Zustand</label>
+        <select id="record-condition" class="select" [formField]="recordForm.condition">
+          @for (option of conditionOptions; track option[0]) {
+            <option [value]="option[0]">{{ option[1] }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="record-information">Information</label>
+        <textarea
+          id="record-information"
+          class="textarea"
+          [class.is-error]="
+            recordForm.information().invalid() && recordForm.information().touched()
+          "
+          [formField]="recordForm.information"
+        ></textarea>
+        @if (recordForm.information().invalid() && recordForm.information().touched()) {
+          <span class="hint is-error">{{ recordForm.information().errors()[0].message }}</span>
+        }
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Abbrechen</button>
+      <button type="submit" class="btn btn-primary" [disabled]="recordForm().submitting()">
+        Speichern
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+@if (labelCreateOpen()) {
+  <app-label-form
+    [countries]="countries()"
+    (cancelled)="onLabelCreateCancelled()"
+    (saved)="onLabelCreateSaved($event)"
+  />
+}
+
+@if (pendingNewArtistName(); as newArtistName) {
+  <app-confirm-modal
+    title="Künstler anlegen"
+    [message]="'Soll der Künstler „' + newArtistName + '“ neu angelegt werden?'"
+    confirmLabel="Anlegen"
+    confirmVariant="primary"
+    (confirmed)="onCreateArtistConfirmed()"
+    (cancelled)="onCreateArtistCancelled()"
+  />
+}

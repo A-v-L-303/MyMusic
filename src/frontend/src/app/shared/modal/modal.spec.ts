@@ -48,4 +48,31 @@ describe('Modal', () => {
     // assert
     expect(closedHandler).toHaveBeenCalledTimes(1);
   });
+
+  it('schließt bei zwei gleichzeitig offenen Modals per Escape nur das zuletzt geöffnete', () => {
+    // arrange
+    const outerFixture = TestBed.createComponent(Modal);
+    outerFixture.detectChanges();
+    const outerClosedHandler = vi.fn();
+    outerFixture.componentInstance.closed.subscribe(outerClosedHandler);
+
+    const innerFixture = TestBed.createComponent(Modal);
+    innerFixture.detectChanges();
+    const innerClosedHandler = vi.fn();
+    innerFixture.componentInstance.closed.subscribe(innerClosedHandler);
+
+    // act: erstes Escape trifft nur das obere (zuletzt erzeugte) Modal
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    // assert
+    expect(innerClosedHandler).toHaveBeenCalledTimes(1);
+    expect(outerClosedHandler).not.toHaveBeenCalled();
+
+    // act: nach dem Entfernen des oberen Modals trifft Escape jetzt das untere
+    innerFixture.destroy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    // assert
+    expect(outerClosedHandler).toHaveBeenCalledTimes(1);
+  });
 });
