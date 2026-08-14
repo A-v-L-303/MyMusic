@@ -25,15 +25,18 @@ der Verschiebung von `Country` nach `shared/` und eines serverseitigen
 Freitext-Autosuggest für Artist/Label statt Dropdown) umgesetzt, live
 verifiziert und nach `main` gemergt; Block 6g (Record anlegen/bearbeiten/
 löschen als Modal, Edit/Delete-Icons auf der RecordCard, Vorbefüll-Erweiterung
-von `shared/autocomplete/`) umgesetzt und live verifiziert — Commit/Push/PR
-noch ausstehend.
+von `shared/autocomplete/`, dazu die Erweiterung „Label/Artist direkt aus dem
+Record-Formular anlegen" mit Anpassungen an `shared/modal/`,
+`shared/autocomplete/`, `shared/confirm-modal/` und `LabelForm.saved`)
+umgesetzt, live verifiziert und nach `main` gemergt.
 Blöcke 6h–6j (Detailansicht, Cover-Upload, Tracks) sind geplant, aber noch
 nicht begonnen)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
 Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
 PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend per
-PR #52, Block 6e per PR #54, Block 6f per PR #55 nach `main` gemergt)
+PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57
+nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -1407,7 +1410,7 @@ Abnahmekriterium:
 
 ### 6g. Record anlegen/bearbeiten/löschen
 
-Status: **abgeschlossen** (2026-08-14) — Commit/Push/PR noch ausstehend
+Status: **abgeschlossen** (2026-08-14), PR #57 nach `main` gemergt
 Arbeits-Prompt: `docs/prompts/2026-08-14-block-6g-angular-records-crud.md`
 
 Anlass: Zweiter der fünf Teilblöcke 6f–6j (siehe Abschnitt 6f). Deckt
