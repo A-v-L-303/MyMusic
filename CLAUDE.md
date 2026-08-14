@@ -182,13 +182,17 @@ vollständiger CRUD-Slice umgesetzt (Referenz-Slice für die Muster Signal
 Forms, `rxResource`, `ErrorModalService`, `shared/`-Bausteine); `labels/`
 (Block 4 Frontend, PR #49) und `artists/` (Block 5 Frontend, PR #52)
 übernehmen diese Muster 1:1; `records/` hat mit Block 6f (PR #55) die
-Card-Ansicht mit Filter, Sortierung und Paginierung erhalten (US-R1–R3;
-Anlegen/Bearbeiten/Löschen, Detailseite, Cover-Upload und Tracks folgen mit
-Block 6g–6j) — erste Entität mit Card- statt Tabellenansicht und mit dem
-neuen `shared/autocomplete/`-Baustein (serverseitiges Freitext-Autosuggest
-für potenziell große Fremdschlüssel-Listen wie Artist/Label, statt eines
-vollständig geladenen `<select>`); `dashboard/` und `search/` enthalten
-weiterhin nur Platzhalterseiten. Die C#-Projekte
+Card-Ansicht mit Filter, Sortierung und Paginierung erhalten (US-R1–R3) —
+erste Entität mit Card- statt Tabellenansicht und mit dem neuen
+`shared/autocomplete/`-Baustein (serverseitiges Freitext-Autosuggest für
+potenziell große Fremdschlüssel-Listen wie Artist/Label, statt eines
+vollständig geladenen `<select>`) — und mit Block 6g (PR #57)
+Anlegen/Bearbeiten/Löschen (US-R4–R6) als Modal, inklusive Möglichkeit,
+ein noch nicht existierendes Label oder Artist direkt aus dem
+Record-Formular anzulegen (verschachteltes `LabelForm`-Modal bzw.
+`ConfirmModal`-Rückfrage für Artist); Detailseite, Cover-Upload und Tracks
+folgen mit Block 6h–6j; `dashboard/` und `search/` enthalten weiterhin nur
+Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
 
