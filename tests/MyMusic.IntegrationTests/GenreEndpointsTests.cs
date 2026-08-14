@@ -36,6 +36,12 @@ public class GenreEndpointsTests
         // assert
         Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedResponse.StatusCode);
 
+        // act: unpaginierte Liste ohne Token -> 401
+        var unauthorizedAllResponse = await apiClient.GetAsync("/api/genres/all", cancellationToken);
+
+        // assert
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedAllResponse.StatusCode);
+
         // arrange
         var owner = await KeycloakTestClient.CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
 
@@ -104,6 +110,32 @@ public class GenreEndpointsTests
             // Sortierung nach Name: "Jazz-..." kommt alphabetisch vor "Metal-...".
             Assert.Equal(jazzName, list.Items[0].Name);
             Assert.Equal(metalName, list.Items[1].Name);
+
+            // act: vollständige, unpaginierte Liste des Besitzers (GetAll statt GetPaged)
+            var allOwnerResponse = await GetAllGenresAsync(apiClient, ownerToken, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, allOwnerResponse.StatusCode);
+
+            var allOwner = await allOwnerResponse.Content
+                .ReadFromJsonAsync<List<GenreResponseDto>>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(allOwner);
+            Assert.Contains(allOwner, genre => genre.Name == jazzName);
+            Assert.Contains(allOwner, genre => genre.Name == metalName);
+
+            // act: dieselbe vollständige Liste ist mandantengetrennt
+            var allOtherResponse = await GetAllGenresAsync(apiClient, otherToken, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, allOtherResponse.StatusCode);
+
+            var allOther = await allOtherResponse.Content
+                .ReadFromJsonAsync<List<GenreResponseDto>>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(allOther);
+            Assert.Single(allOther);
+            Assert.Equal(jazzName, allOther[0].Name);
 
             // act: Get-by-Id des Besitzers -> 200
             var getOwnResponse = await GetGenreAsync(apiClient, ownerToken, jazz.Id, cancellationToken);
@@ -217,6 +249,16 @@ public class GenreEndpointsTests
         CancellationToken cancellationToken)
     {
         using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/genres?name={nameFilter}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> GetAllGenresAsync(
+        HttpClient apiClient,
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/genres/all", accessToken);
 
         return await apiClient.SendAsync(request, cancellationToken);
     }

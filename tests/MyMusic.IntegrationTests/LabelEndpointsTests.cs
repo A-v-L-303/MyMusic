@@ -36,6 +36,12 @@ public class LabelEndpointsTests
         // assert
         Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedResponse.StatusCode);
 
+        // act: unpaginierte Liste ohne Token -> 401
+        var unauthorizedAllResponse = await apiClient.GetAsync("/api/labels/all", cancellationToken);
+
+        // assert
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedAllResponse.StatusCode);
+
         // arrange
         var owner = await KeycloakTestClient.CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
 
@@ -139,6 +145,32 @@ public class LabelEndpointsTests
             Assert.NotNull(listByCountry);
             Assert.Equal(1, listByCountry.TotalCount);
             Assert.Equal(subPopName, listByCountry.Items[0].Name);
+
+            // act: vollständige, unpaginierte Liste des Besitzers (GetAll statt GetPaged)
+            var allOwnerResponse = await GetAllLabelsAsync(apiClient, ownerToken, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, allOwnerResponse.StatusCode);
+
+            var allOwner = await allOwnerResponse.Content
+                .ReadFromJsonAsync<List<LabelResponseDto>>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(allOwner);
+            Assert.Contains(allOwner, label => label.Name == roughTradeName);
+            Assert.Contains(allOwner, label => label.Name == subPopName);
+
+            // act: dieselbe vollständige Liste ist mandantengetrennt
+            var allOtherResponse = await GetAllLabelsAsync(apiClient, otherToken, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, allOtherResponse.StatusCode);
+
+            var allOther = await allOtherResponse.Content
+                .ReadFromJsonAsync<List<LabelResponseDto>>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(allOther);
+            Assert.Single(allOther);
+            Assert.Equal(roughTradeName, allOther[0].Name);
 
             // act: Get-by-Id des Besitzers -> 200
             var getOwnResponse = await GetLabelAsync(apiClient, ownerToken, roughTrade.Id, cancellationToken);
@@ -285,6 +317,16 @@ public class LabelEndpointsTests
             : $"/api/labels?name={nameFilter}&countryId={countryId}";
 
         using var request = CreateAuthorizedRequest(HttpMethod.Get, url, accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> GetAllLabelsAsync(
+        HttpClient apiClient,
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/labels/all", accessToken);
 
         return await apiClient.SendAsync(request, cancellationToken);
     }

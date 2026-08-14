@@ -36,6 +36,12 @@ public class ArtistEndpointsTests
         // assert
         Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedResponse.StatusCode);
 
+        // act: unpaginierte Liste ohne Token -> 401
+        var unauthorizedAllResponse = await apiClient.GetAsync("/api/artists/all", cancellationToken);
+
+        // assert
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedAllResponse.StatusCode);
+
         // arrange
         var owner = await KeycloakTestClient.CreateTestUserAsync(keycloakClient, appHost, cancellationToken);
 
@@ -131,6 +137,32 @@ public class ArtistEndpointsTests
             Assert.NotNull(listByLabel);
             Assert.Equal(1, listByLabel.TotalCount);
             Assert.Equal(pinkFloydName, listByLabel.Items[0].Name);
+
+            // act: vollständige, unpaginierte Liste des Besitzers (GetAll statt GetPaged)
+            var allOwnerResponse = await GetAllArtistsAsync(apiClient, ownerToken, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, allOwnerResponse.StatusCode);
+
+            var allOwner = await allOwnerResponse.Content
+                .ReadFromJsonAsync<List<ArtistResponseDto>>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(allOwner);
+            Assert.Contains(allOwner, artist => artist.Name == pinkFloydName);
+            Assert.Contains(allOwner, artist => artist.Name == genesisName);
+
+            // act: dieselbe vollständige Liste ist mandantengetrennt
+            var allOtherResponse = await GetAllArtistsAsync(apiClient, otherToken, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, allOtherResponse.StatusCode);
+
+            var allOther = await allOtherResponse.Content
+                .ReadFromJsonAsync<List<ArtistResponseDto>>(_jsonOptions, cancellationToken);
+
+            Assert.NotNull(allOther);
+            Assert.Single(allOther);
+            Assert.Equal(pinkFloydName, allOther[0].Name);
 
             // act: Get-by-Id des Besitzers -> 200
             var getOwnResponse = await GetArtistAsync(apiClient, ownerToken, pinkFloyd.Id, cancellationToken);
@@ -251,6 +283,16 @@ public class ArtistEndpointsTests
 
         using var request = CreateAuthorizedRequest(
             HttpMethod.Get, $"/api/artists?{string.Join('&', query)}", accessToken);
+
+        return await apiClient.SendAsync(request, cancellationToken);
+    }
+
+    private static async Task<HttpResponseMessage> GetAllArtistsAsync(
+        HttpClient apiClient,
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/artists/all", accessToken);
 
         return await apiClient.SendAsync(request, cancellationToken);
     }

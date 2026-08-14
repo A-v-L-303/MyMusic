@@ -1,26 +1,32 @@
 # Offene Aufgaben
 
-Stand: 2026-08-13 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-14 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
 Block 6b (Album-Cover-Upload), Block 6c (Track-Backend) und Block 6d
 (Nachträge aus Block 2/4/5) umgesetzt und verifiziert — Block 6 damit
-vollständig abgeschlossen; Block 0c (Angular-Workspace) umgesetzt und
-verifiziert; Block 7a (Angular-Login-Flow) umgesetzt und verifiziert; Block 0f
-(Dark/Light-Theme-Infrastruktur) umgesetzt und verifiziert, dazu ein kleiner
-Nachtrag (Favicon auf `mark.svg` umgestellt, PR #44); Block 0g (NavComponent
-und Routing-Skelett) umgesetzt und verifiziert; Angular-Feature `genres/`
-(Block 2 Frontend) umgesetzt und verifiziert, siehe Abschnitt 2 — nach `main`
-gemergt; Angular-Feature `labels/` (Block 4 Frontend) umgesetzt und
-verifiziert, siehe Abschnitt 4 — nach `main` gemergt; Angular-Feature
-`artists/` (Block 5 Frontend) umgesetzt, siehe Abschnitt 5 — nach `main`
-gemergt)
+vollständig abgeschlossen; Block 6e (Nachtrag: unpaginierte GetAll-Endpunkte
+für Genre/Label/Artist, siehe Abschnitt 6e) umgesetzt und verifiziert; Block 0c
+(Angular-Workspace) umgesetzt und verifiziert; Block 7a (Angular-Login-Flow)
+umgesetzt und verifiziert; Block 0f (Dark/Light-Theme-Infrastruktur) umgesetzt
+und verifiziert, dazu ein kleiner Nachtrag (Favicon auf `mark.svg` umgestellt,
+PR #44); Block 0g (NavComponent und Routing-Skelett) umgesetzt und verifiziert;
+Angular-Feature `genres/` (Block 2 Frontend) umgesetzt und verifiziert, siehe
+Abschnitt 2 — nach `main` gemergt; Angular-Feature `labels/` (Block 4 Frontend)
+umgesetzt und verifiziert, siehe Abschnitt 4 — nach `main` gemergt;
+Angular-Feature `artists/` (Block 5 Frontend) umgesetzt, siehe Abschnitt 5 —
+nach `main` gemergt; Angular-Frontend-Planung für `records/` (Block 6
+Frontend) wurde begonnen und pausiert, nachdem sich beim Entwurf des
+RecordForm/RecordFilter herausstellte, dass die dafür nötigen `/all`-Endpunkte
+fehlten — Block 6e schließt diese Lücke, die eigentliche Records-Frontend-
+Planung ist noch nicht fortgesetzt)
 Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
 Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
 PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend per
-PR #52 nach `main` gemergt)
+PR #52 nach `main` gemergt); Block 6e auf Branch
+`nachtrag-getall-genre-label-artist` (noch nicht gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -45,13 +51,16 @@ MVP-Umfang der Phase 1:
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
   (Block 6a), Album-Cover-Upload (Block 6b), Track-Backend (Block 6c) und die
   Nachträge aus Block 2/4/5 (Block 6d) erledigt, siehe Abschnitt 6 — damit
-  vollständig abgeschlossen; Angular-Features `genres/`, `labels/`,
-  `artists/` und `records/` jetzt entsperrt und mit gültigem Access Token
-  aufrufbar (Block 7a), Navigation und Routing-Skelett stehen (Block 0g);
-  `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe Abschnitt
-  2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4); `artists/`
-  umgesetzt, aber ohne UI für den `labelId`-Filter (Block 5 Frontend, siehe
-  Abschnitt 5); `records/` enthält weiterhin nur eine Platzhalterseite).
+  vollständig abgeschlossen; dazu Block 6e (unpaginierte GetAll-Endpunkte für
+  Genre/Label/Artist, siehe Abschnitt 6e); Angular-Features `genres/`,
+  `labels/`, `artists/` und `records/` jetzt entsperrt und mit gültigem
+  Access Token aufrufbar (Block 7a), Navigation und Routing-Skelett stehen
+  (Block 0g); `genres/` als Referenz-Slice umgesetzt (Block 2 Frontend, siehe
+  Abschnitt 2); `labels/` umgesetzt (Block 4 Frontend, siehe Abschnitt 4);
+  `artists/` umgesetzt, aber ohne UI für den `labelId`-Filter (Block 5
+  Frontend, siehe Abschnitt 5); `records/` enthält weiterhin nur eine
+  Platzhalterseite, die Angular-Planung dafür ist begonnen, aber pausiert
+  (siehe Abschnitt 6e)).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -1196,6 +1205,69 @@ Abnahmekriterium erfüllt:
 - `DeleteGenreCommandHandler`, `DeleteLabelCommandHandler` und
   `DeleteArtistCommandHandler` verhindern das Löschen real referenzierter
   Datensätze (HTTP 409); `GET /artists` unterstützt den `labelId`-Filter.
+
+### 6e. Nachtrag: Unpaginierte GetAll-Endpunkte für Genre, Label, Artist
+
+Status: **abgeschlossen** (2026-08-14)
+
+Anlass: Beim Vorbereiten der Angular-Planung für den Records-Frontend-Slice
+(Fortsetzung von Abschnitt 6) fiel auf, dass `RecordForm` eine vollständige
+Auswahlliste für Label (Pflicht) und Artist (optional) braucht, die
+RecordTrack-Formulare zusätzlich für Artist und Genre. Anders als bei
+[[country]] (`GET /countries`, unpaginiert) gab es für Genre, Label und
+Artist bislang nur den paginierten `GetPaged`-Endpunkt mit hartem
+`pageSize`-Limit von 100 — für Dropdown-/Referenzzwecke fachlich falsch,
+vom Projektinhaber als Fehler benannt und als Voraussetzung für die
+Fortsetzung der Records-Frontend-Planung verlangt.
+
+Umgesetzt:
+
+- Je Entität ein neues `GetAll{Entität}Query`/`-QueryHandler`-Paar
+  (`Application/Features/Stammdaten/{Genre,Label,Artist}/Queries/GetAll/`),
+  analog zu `GetAllCountriesQuery`, aber mit `userId`-Filterung (Country ist
+  laut `wiki/architektur/cqrs-framework.md` die einzige Ausnahme ohne
+  Mandantenbezug). Implementiert über das bereits etablierte Muster
+  `IRepository<T>.GetPagedAsync(filter, orderBy, page: 1, pageSize:
+  int.MaxValue, ct)` (siehe `GetPagedRecordsQueryHandler
+  .ResolveLabelIdsForCountryAsync`) — kein Repository-Änderung nötig, kein
+  Risiko einer mandantenübergreifenden Datenpanne durch das ungefilterte
+  `GetAllAsync()`.
+- Neue Endpunkte `GET /api/genres/all`, `GET /api/labels/all`,
+  `GET /api/artists/all` (Muster: `CountryEndpoints.GetAllCountriesAsync`,
+  zusätzlich mit `ICurrentUserService`), Registrierung in `GenreEndpoints`,
+  `LabelEndpoints`, `ArtistEndpoints`; `GlobalUsing.cs` (Api und
+  Application.Tests) um die drei neuen `Queries.GetAll`-Namespaces ergänzt.
+- Unit Tests je Entität (Mapping, leere Liste, Mandantentrennung über
+  kompilierte Filter-Expression) — 8 neue Tests, alle grün (Application
+  gesamt 236).
+- Bestehende Integrationstests (`GenreEndpointsTests`, `LabelEndpointsTests`,
+  `ArtistEndpointsTests`) um Prüfungen für die neuen `/all`-Endpunkte
+  erweitert (401 ohne Token, 200 mit vollständiger eigener Liste, sichtbare
+  Mandantentrennung) — keine zusätzlichen, kostspieligen Aspire-Testläufe,
+  sondern Erweiterung der bestehenden CRUD-Testfälle.
+- Wiki `architektur/api-endpunkte.md` um die drei neuen Zeilen und eine
+  Klärungsnotiz (2026-08-14) ergänzt; `wiki/log.md` aktualisiert.
+
+Bewusst nicht Teil dieses Nachtrags:
+
+- Keine Änderung an den bestehenden `GetPaged`-Endpunkten oder ihrem
+  100er-Limit — die Tabellenansichten (Genres/Labels/Artists) bleiben
+  paginiert.
+- Keine Frontend-Anbindung (`genre.service.ts`/`label.service.ts`/
+  `artist.service.ts` bekommen noch keine `getAll()`-Methode) — die neuen
+  Endpunkte werden erst konsumiert, wenn die Records-Frontend-Planung
+  fortgesetzt wird.
+- Keine Nachrüstung der im Artist-Block (Abschnitt 5) bewusst ausgelassenen
+  `labelId`-Filter-UI bei `GET /artists` — bleibt ein separater,
+  nicht angeforderter Punkt, ist mit `GET /labels/all` jetzt aber ohne
+  Weiteres nachrüstbar.
+
+Abnahmekriterium erfüllt:
+
+- `GET /api/genres/all`, `GET /api/labels/all`, `GET /api/artists/all`
+  liefern ohne Token 401, mit Token die vollständige, alphabetisch
+  sortierte und mandantengefilterte Liste des angemeldeten Benutzers, ohne
+  Cap bei mehr als 100 Einträgen.
 
 ## 7. Authentifizierung und Mandantentrennung
 

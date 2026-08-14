@@ -8,6 +8,8 @@ public static class ArtistEndpoints
 
         group.MapGet(string.Empty, GetPagedArtistsAsync);
 
+        group.MapGet("/all", GetAllArtistsAsync);
+
         group.MapGet("/{id:int}", GetArtistByIdAsync);
 
         group.MapPost(string.Empty, CreateArtistAsync);
@@ -39,6 +41,17 @@ public static class ArtistEndpoints
             currentUserService.UserId, normalizedPage, normalizedPageSize, name, labelId);
 
         return await mediator.SendAsync(query, cancellationToken);
+    }
+
+    /// <summary>
+    /// Gibt die vollständige, alphabetisch sortierte Artist-Liste des angemeldeten Benutzers zurück.
+    /// </summary>
+    private static async Task<IEnumerable<ArtistResponse>> GetAllArtistsAsync(
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        return await mediator.SendAsync(new GetAllArtistsQuery(currentUserService.UserId), cancellationToken);
     }
 
     /// <summary>

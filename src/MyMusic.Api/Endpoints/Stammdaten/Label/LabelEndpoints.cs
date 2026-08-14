@@ -8,6 +8,8 @@ public static class LabelEndpoints
 
         group.MapGet(string.Empty, GetPagedLabelsAsync);
 
+        group.MapGet("/all", GetAllLabelsAsync);
+
         group.MapGet("/{id:int}", GetLabelByIdAsync);
 
         group.MapPost(string.Empty, CreateLabelAsync);
@@ -43,6 +45,17 @@ public static class LabelEndpoints
             countryId);
 
         return await mediator.SendAsync(query, cancellationToken);
+    }
+
+    /// <summary>
+    /// Gibt die vollständige, alphabetisch sortierte Label-Liste des angemeldeten Benutzers zurück.
+    /// </summary>
+    private static async Task<IEnumerable<LabelResponse>> GetAllLabelsAsync(
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        return await mediator.SendAsync(new GetAllLabelsQuery(currentUserService.UserId), cancellationToken);
     }
 
     /// <summary>
