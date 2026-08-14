@@ -40,7 +40,7 @@ export class LabelForm {
   readonly countries = input.required<Country[]>();
 
   readonly cancelled = output<void>();
-  readonly saved = output<void>();
+  readonly saved = output<Label>();
 
   protected readonly isEditMode = computed(() => this.label() !== null);
 
@@ -85,13 +85,11 @@ export class LabelForm {
     const label = this.label();
 
     try {
-      if (label) {
-        await firstValueFrom(this.labelService.update(label.id, request));
-      } else {
-        await firstValueFrom(this.labelService.create(request));
-      }
+      const saved = label
+        ? await firstValueFrom(this.labelService.update(label.id, request))
+        : await firstValueFrom(this.labelService.create(request));
 
-      this.saved.emit();
+      this.saved.emit(saved);
 
       return;
     } catch (error) {

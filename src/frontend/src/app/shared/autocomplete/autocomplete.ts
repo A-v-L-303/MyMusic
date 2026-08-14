@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, linkedSignal, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { LucideSearch } from '@lucide/angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -17,11 +17,13 @@ export class Autocomplete {
   readonly placeholder = input.required<string>();
   readonly ariaLabel = input.required<string>();
   readonly options = input<AutocompleteOption[]>([]);
+  readonly initialQuery = input<string>('');
 
   readonly queryChange = output<string>();
   readonly selected = output<AutocompleteOption | undefined>();
+  readonly blur = output<string>();
 
-  protected readonly queryText = signal('');
+  protected readonly queryText = linkedSignal(() => this.initialQuery());
   protected readonly isOpen = signal(false);
   protected readonly highlightedIndex = signal(-1);
 
@@ -47,6 +49,10 @@ export class Autocomplete {
     if (this.queryText().trim().length > 0 && this.options().length > 0) {
       this.isOpen.set(true);
     }
+  }
+
+  protected onBlur(): void {
+    this.blur.emit(this.queryText());
   }
 
   protected onKeydown(event: KeyboardEvent): void {
@@ -97,5 +103,11 @@ export class Autocomplete {
     this.isOpen.set(false);
     this.highlightedIndex.set(-1);
     this.selected.emit(option);
+  }
+
+  setQuery(value: string): void {
+    this.queryText.set(value);
+    this.isOpen.set(false);
+    this.highlightedIndex.set(-1);
   }
 }

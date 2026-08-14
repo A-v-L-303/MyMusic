@@ -317,8 +317,38 @@ Baustein `shared/autocomplete/`: Artist und Label werden per serverseitigem
 Freitext-Autosuggest gegen den bestehenden `getPaged`-Endpoint gesucht
 (debounced, kleines `pageSize`) statt als Dropdown — diese Listen können
 beliebig groß werden, ein vollständig geladenes `<select>` wäre nicht
-bedienbar. Anlegen/Bearbeiten/Löschen, Detailseite, Cover-Upload und Tracks
-folgen mit den Blöcken 6g–6j, siehe `TASK.md`.
+bedienbar. Detailseite, Cover-Upload und Tracks folgen mit den Blöcken
+6h–6j, siehe `TASK.md`.
+
+### Record anlegen/bearbeiten/löschen (Block 6g)
+
+Reiner Frontend-Block — das Backend (`POST`/`PUT`/`DELETE /api/records/{id}`)
+war seit Block 6a bereits vollständig vorhanden. Anlegen/Bearbeiten laufen
+als Modal (`features/records/record-form/`, Signal Forms, analog zum
+Label-Formular), Löschen über das bestehende `shared/confirm-modal/`. Da die
+Card-Ansicht (anders als die Tabellen-Slices) keine Aktionsspalte hat,
+tragen die Cards jetzt Bearbeiten-/Löschen-Icons (`RecordCard`, mit
+`stopPropagation()` gegen das bestehende `opened`-Output). Label und Artist
+werden im Formular über dieselbe `shared/autocomplete/`-Komponente wie im
+Filter (Block 6f) gewählt, statt eines nativen `<select>` — dafür wurde die
+Komponente um ein optionales `initialQuery`-Input erweitert, das im
+Bearbeiten-Modus den bisherigen Namen vorbefüllt (`linkedSignal`, analog dem
+Vorbefüll-Muster aus `LabelForm`). Kein "Discogs-Suche"-Button — der im
+Wiki (`ui-ux-konzept.md`) beschriebene verschachtelte Discogs-Modal-Flow
+gehört zum weiterhin offenen Block 8.
+
+Direkt aus dem Formular lassen sich unbekannte Label/Artist anlegen, ohne
+die Ansicht zu wechseln: Beim Künstler fragt ein `ConfirmModal` nach
+Verlassen des Feldes mit einem gültigen, unbekannten Namen nach ("Soll der
+Künstler '…' neu angelegt werden?"), beim Label öffnet ein Icon-Button
+(mit Tooltip) das bestehende `LabelForm` als zweites, verschachteltes
+Modal. Dafür wurden drei gemeinsam genutzte Bausteine erweitert:
+`shared/modal/` schließt bei mehreren gleichzeitig offenen Modals über
+Escape jetzt nur noch das oberste (modulweiter Stack), `shared/autocomplete/`
+bekam einen `blur`-Output und eine öffentliche `setQuery()`-Methode für
+programmatische Textänderungen von außen, und `shared/confirm-modal/`
+akzeptiert jetzt ein alternatives `confirmLabel`/`confirmVariant` statt
+fest "Löschen"/`.btn-danger` zu verwenden.
 
 ### Swagger/OpenAPI (Block 0e)
 

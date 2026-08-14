@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { RuntimeConfigService } from '../../core/runtime-config/runtime-config.service';
-import { RecordListResponse } from './record';
+import { Record, RecordListResponse } from './record';
 import { RecordService } from './record.service';
 
 describe('RecordService', () => {
@@ -168,6 +168,96 @@ describe('RecordService', () => {
     // assert
     expect(request.request.params.has('sortBy')).toBe(true);
     expect(request.request.params.has('sortDirection')).toBe(true);
+  });
+
+  it('sendet create als POST mit allen Feldern im Body', () => {
+    // arrange
+    const created: Record = {
+      id: 1,
+      labelId: 1,
+      labelName: 'Columbia',
+      artistId: 2,
+      artistName: 'Miles Davis',
+      format: 'Album',
+      albumName: 'Kind of Blue',
+      releaseYear: 1959,
+      condition: 'Vg',
+      information: null,
+      albumCoverDataUrl: null,
+      tracks: [],
+    };
+    const request_ = {
+      labelId: 1,
+      artistId: 2,
+      format: 'Album' as const,
+      albumName: 'Kind of Blue',
+      releaseYear: 1959,
+      condition: 'Vg' as const,
+      information: null,
+    };
+    let result: Record | undefined;
+
+    // act
+    service.create(request_).subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/records');
+    request.flush(created);
+
+    // assert
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(request_);
+    expect(result).toEqual(created);
+  });
+
+  it('sendet update als PUT gegen die Id-Route', () => {
+    // arrange
+    const updated: Record = {
+      id: 1,
+      labelId: 1,
+      labelName: 'Columbia',
+      artistId: 2,
+      artistName: 'Miles Davis',
+      format: 'Album',
+      albumName: 'Kind of Blue (Deluxe)',
+      releaseYear: 1959,
+      condition: 'Vg',
+      information: null,
+      albumCoverDataUrl: null,
+      tracks: [],
+    };
+    let result: Record | undefined;
+
+    // act
+    service
+      .update(1, {
+        labelId: 1,
+        artistId: 2,
+        format: 'Album',
+        albumName: 'Kind of Blue (Deluxe)',
+        releaseYear: 1959,
+        condition: 'Vg',
+        information: null,
+      })
+      .subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/records/1');
+    request.flush(updated);
+
+    // assert
+    expect(request.request.method).toBe('PUT');
+    expect(result).toEqual(updated);
+  });
+
+  it('sendet delete als DELETE gegen die Id-Route', () => {
+    // arrange
+    let completed = false;
+
+    // act
+    service.delete(1).subscribe({ complete: () => (completed = true) });
+    const request = httpTesting.expectOne('https://api.test/api/records/1');
+    request.flush(null);
+
+    // assert
+    expect(request.request.method).toBe('DELETE');
+    expect(completed).toBe(true);
   });
 
   it('propagiert HTTP-Fehler an den Aufrufer', () => {

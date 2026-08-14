@@ -48,6 +48,18 @@ export interface RecordListResponse {
   totalPages: number;
 }
 
+export interface CreateRecordRequest {
+  labelId: number;
+  artistId: number | null;
+  format: RecordFormat;
+  albumName: string;
+  releaseYear: number;
+  condition: RecordCondition;
+  information: string | null;
+}
+
+export interface UpdateRecordRequest extends CreateRecordRequest {}
+
 export const RECORD_FORMAT_LABELS: { [format in RecordFormat]: string } = {
   Album: 'Album',
   MaxiSingle: 'MaxiSingle',

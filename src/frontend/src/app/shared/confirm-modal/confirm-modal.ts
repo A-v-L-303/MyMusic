@@ -11,6 +11,8 @@ import { Modal } from '../modal/modal';
 export class ConfirmModal {
   readonly title = input.required<string>();
   readonly message = input.required<string>();
+  readonly confirmLabel = input('Löschen');
+  readonly confirmVariant = input<'danger' | 'primary'>('danger');
 
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();
