@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Country } from '../country';
+import { Country } from '../../../shared/country/country';
 import { LabelFilter } from './label-filter';
 
 function wait(ms: number): Promise<void> {

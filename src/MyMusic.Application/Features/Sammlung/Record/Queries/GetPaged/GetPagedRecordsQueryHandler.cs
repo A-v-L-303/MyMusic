@@ -14,6 +14,8 @@ public sealed class GetPagedRecordsQueryHandler(
             query.CountryId,
             cancellationToken);
 
+        var formatFilter = ResolveFormatFilter(query.Format);
+
         var (items, totalCount) = await repository.GetPagedAsync(
             record => record.UserId == query.UserId
                 && (query.Name == null || record.AlbumName.ToLower().Contains(query.Name.ToLower()))
@@ -21,7 +23,8 @@ public sealed class GetPagedRecordsQueryHandler(
                 && (query.LabelId == null || record.LabelId == query.LabelId)
                 && (query.YearFrom == null || record.ReleaseYear >= query.YearFrom)
                 && (query.YearTo == null || record.ReleaseYear <= query.YearTo)
-                && (labelIdsForCountry == null || labelIdsForCountry.Contains(record.LabelId)),
+                && (labelIdsForCountry == null || labelIdsForCountry.Contains(record.LabelId))
+                && (formatFilter == null || record.Format == formatFilter),
             BuildOrderBy(query.SortBy, query.SortDirection),
             query.Page,
             query.PageSize,
@@ -64,6 +67,13 @@ public sealed class GetPagedRecordsQueryHandler(
                 ? queryable => queryable.OrderByDescending(record => record.AlbumName)
                 : queryable => queryable.OrderBy(record => record.AlbumName)
         };
+    }
+
+    private static RecordFormat? ResolveFormatFilter(string? format)
+    {
+        return Enum.TryParse<RecordFormat>(format, ignoreCase: true, out var parsedFormat)
+            ? parsedFormat
+            : null;
     }
 
     private async Task<HashSet<int>?> ResolveLabelIdsForCountryAsync(

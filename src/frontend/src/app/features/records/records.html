@@ -1,4 +1,40 @@
-<section class="p-6">
-  <h1 class="text-lg font-bold text-fg">Records</h1>
-  <p class="empty">Diese Ansicht folgt in einem späteren Block.</p>
+<section class="mx-auto max-w-[1080px] px-6 pb-16 pt-6">
+  <div class="flex items-center gap-2">
+    <h1 class="text-lg font-bold text-fg">Records</h1>
+    <span class="badge badge-neutral">{{ totalCount() }}</span>
+  </div>
+
+  <div class="mt-4">
+    <app-record-filter
+      [artistSuggestions]="artistSuggestions()"
+      [labelSuggestions]="labelSuggestions()"
+      [countries]="countries()"
+      (artistQueryChange)="onArtistQueryChange($event)"
+      (labelQueryChange)="onLabelQueryChange($event)"
+      (filterChange)="onFilterChange($event)"
+    />
+  </div>
+
+  <div class="mt-6">
+    @if (recordsResource.isLoading()) {
+      <div class="flex justify-center py-12">
+        <div class="spinner"></div>
+      </div>
+    } @else if (records().length === 0) {
+      <p class="empty">Keine Daten vorhanden.</p>
+    } @else {
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        @for (record of records(); track record.id) {
+          <app-record-card [record]="record" />
+        }
+      </div>
+      <div class="mt-4">
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          (pageChange)="onPageChange($event)"
+        />
+      </div>
+    }
+  </div>
 </section>

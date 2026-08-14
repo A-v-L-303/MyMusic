@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Country } from '../../../shared/country/country';
 import { ErrorModalService } from '../../../shared/error-modal/error-modal.service';
-import { Country } from '../country';
 import { Label } from '../label';
 import { LabelService } from '../label.service';
 import { LabelForm } from './label-form';

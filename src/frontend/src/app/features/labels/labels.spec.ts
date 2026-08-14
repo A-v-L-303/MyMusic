@@ -4,8 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { RuntimeConfigService } from '../../core/runtime-config/runtime-config.service';
+import { Country } from '../../shared/country/country';
 import { ErrorModalService } from '../../shared/error-modal/error-modal.service';
-import { Country } from './country';
 import { Label, LabelListResponse } from './label';
 import { Labels } from './labels';
 

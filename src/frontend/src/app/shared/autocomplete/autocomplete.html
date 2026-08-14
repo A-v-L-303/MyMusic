@@ -1,0 +1,36 @@
+<div class="relative">
+  <div class="search">
+    <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+    <input
+      type="text"
+      class="input"
+      role="combobox"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="isOpen()"
+      [attr.aria-label]="ariaLabel()"
+      [placeholder]="placeholder()"
+      [value]="queryText()"
+      (input)="onInput($event)"
+      (focus)="onFocus()"
+      (keydown)="onKeydown($event)"
+    />
+  </div>
+  @if (isOpen() && options().length > 0) {
+    <ul
+      class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-line-strong bg-surface py-1 text-sm shadow-lg"
+      role="listbox"
+    >
+      @for (option of options(); track option.id; let i = $index) {
+        <li
+          role="option"
+          [attr.aria-selected]="i === highlightedIndex()"
+          class="cursor-pointer px-3 py-2 text-fg"
+          [class.bg-hover]="i === highlightedIndex()"
+          (mousedown)="onOptionMouseDown($event, option)"
+        >
+          {{ option.label }}
+        </li>
+      }
+    </ul>
+  }
+</div>

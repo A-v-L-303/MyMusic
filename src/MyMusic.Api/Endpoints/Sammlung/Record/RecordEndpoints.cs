@@ -41,6 +41,7 @@ public static class RecordEndpoints
         int? yearFrom,
         int? yearTo,
         int? countryId,
+        string? format,
         string? sortBy,
         string? sortDirection,
         ICurrentUserService currentUserService,
@@ -61,6 +62,7 @@ public static class RecordEndpoints
             yearFrom,
             yearTo,
             countryId,
+            format,
             sortBy ?? "name",
             sortDirection ?? "asc");
 

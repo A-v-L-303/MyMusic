@@ -4,8 +4,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { LucidePlus } from '@lucide/angular';
 
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { CountryService } from '../../shared/country/country.service';
 import { ErrorModalService } from '../../shared/error-modal/error-modal.service';
-import { CountryService } from './country.service';
 import { Label } from './label';
 import { LabelFilter, LabelFilterValue } from './label-filter/label-filter';
 import { LabelForm } from './label-form/label-form';

@@ -2,7 +2,7 @@ import { Component, effect, input, output, signal } from '@angular/core';
 import { FormField, debounce, form } from '@angular/forms/signals';
 import { LucideSearch } from '@lucide/angular';
 
-import { Country } from '../country';
+import { Country } from '../../../shared/country/country';
 
 export interface LabelFilterValue {
   name: string;

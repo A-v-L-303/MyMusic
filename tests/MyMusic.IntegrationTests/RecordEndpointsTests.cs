@@ -226,6 +226,30 @@ public class RecordEndpointsTests
             Assert.Equal(1, listByCountry.TotalCount);
             Assert.Equal(letItBeName, listByCountry.Items[0].AlbumName);
 
+            // act: Liste nach Format gefiltert (case-insensitive) -> nur Let It Be (CdAlbum)
+            var listByFormatResponse = await GetRecordsAsync(
+                apiClient, ownerToken, suffix, format: "cdalbum", cancellationToken: cancellationToken);
+
+            var listByFormat = await listByFormatResponse.Content
+                .ReadFromJsonAsync<RecordListResponseDto>(_jsonOptions, cancellationToken);
+
+            // assert
+            Assert.NotNull(listByFormat);
+            Assert.Equal(1, listByFormat.TotalCount);
+            Assert.Equal(letItBeName, listByFormat.Items[0].AlbumName);
+
+            // act: Liste mit unbekanntem Format-Wert -> wirkt wie kein Filter (kein 400)
+            var listByUnknownFormatResponse = await GetRecordsAsync(
+                apiClient, ownerToken, suffix, format: "nicht-existent", cancellationToken: cancellationToken);
+
+            var listByUnknownFormat = await listByUnknownFormatResponse.Content
+                .ReadFromJsonAsync<RecordListResponseDto>(_jsonOptions, cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.OK, listByUnknownFormatResponse.StatusCode);
+            Assert.NotNull(listByUnknownFormat);
+            Assert.Equal(3, listByUnknownFormat.TotalCount);
+
             // act: Liste absteigend nach Erscheinungsjahr sortiert -> Let It Be (1970) zuerst
             var listSortedResponse = await GetRecordsAsync(
                 apiClient, ownerToken, suffix, sortBy: "releaseYear", sortDirection: "desc",
@@ -991,6 +1015,7 @@ public class RecordEndpointsTests
         int? yearFrom = null,
         int? yearTo = null,
         int? countryId = null,
+        string? format = null,
         string? sortBy = null,
         string? sortDirection = null,
         CancellationToken cancellationToken = default)
@@ -1011,6 +1036,9 @@ public class RecordEndpointsTests
 
         if (countryId is not null)
             query.Add($"countryId={countryId}");
+
+        if (format is not null)
+            query.Add($"format={format}");
 
         if (sortBy is not null)
             query.Add($"sortBy={sortBy}");

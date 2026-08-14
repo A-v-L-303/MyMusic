@@ -17,7 +17,7 @@ public class GetPagedRecordsQueryHandlerTests
         var handler = new GetPagedRecordsQueryHandler(
             repository, labelRepository, artistRepository, new RecordResponseBuilder());
 
-        var query = new GetPagedRecordsQuery(userId, 2, 10, null, null, null, null, null, null, null, null);
+        var query = new GetPagedRecordsQuery(userId, 2, 10, null, null, null, null, null, null, null, null, null);
 
         // act
         var response = await handler.HandleAsync(query, CancellationToken.None);
@@ -55,7 +55,7 @@ public class GetPagedRecordsQueryHandlerTests
 
         var query = new GetPagedRecordsQuery(
             userId, 1, 20, Name: "abbey", ArtistId: 10, LabelId: 1, YearFrom: 1960, YearTo: 1969,
-            CountryId: null, SortBy: null, SortDirection: null);
+            CountryId: null, Format: null, SortBy: null, SortDirection: null);
 
         // act
         await handler.HandleAsync(query, CancellationToken.None);
@@ -85,6 +85,99 @@ public class GetPagedRecordsQueryHandlerTests
 
         // Mandantentrennung gilt auch für die Filterung der Liste
         Assert.False(predicate(fremdesRecord));
+    }
+
+    [Theory]
+    [InlineData("CdAlbum")]
+    [InlineData("cdalbum")]
+    [InlineData("CDALBUM")]
+    public async Task HandleAsync_FormatFilterGesetzt_WirktGleichheitsbasiertUndCaseInsensitiv(string format)
+    {
+        // arrange
+        var userId = Guid.NewGuid();
+
+        Expression<Func<RecordEntity, bool>>? capturedFilter = null;
+
+        var repository = Substitute.For<IRepository<RecordEntity>>();
+
+        repository.GetPagedAsync(
+                Arg.Do<Expression<Func<RecordEntity, bool>>>(filter => capturedFilter = filter),
+                Arg.Any<Func<IQueryable<RecordEntity>, IOrderedQueryable<RecordEntity>>>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns((Items: (IReadOnlyList<RecordEntity>)new List<RecordEntity>(), TotalCount: 0));
+
+        var labelRepository = Substitute.For<IRepository<LabelEntity>>();
+
+        var artistRepository = Substitute.For<IRepository<ArtistEntity>>();
+
+        var handler = new GetPagedRecordsQueryHandler(
+            repository, labelRepository, artistRepository, new RecordResponseBuilder());
+
+        var query = new GetPagedRecordsQuery(
+            userId, 1, 20, null, null, null, null, null, null, format, null, null);
+
+        // act
+        await handler.HandleAsync(query, CancellationToken.None);
+
+        // assert
+        Assert.NotNull(capturedFilter);
+
+        var predicate = capturedFilter!.Compile();
+
+        var passendesFormat = CreateRecord(
+            userId, labelId: 1, artistId: null, albumName: "Abbey Road", year: 1969, format: RecordFormat.CdAlbum);
+
+        var falschesFormat = CreateRecord(
+            userId, labelId: 1, artistId: null, albumName: "Abbey Road", year: 1969, format: RecordFormat.Album);
+
+        Assert.True(predicate(passendesFormat));
+        Assert.False(predicate(falschesFormat));
+    }
+
+    [Fact]
+    public async Task HandleAsync_UnbekannterFormatWert_WirktWieKeinFilter()
+    {
+        // arrange
+        var userId = Guid.NewGuid();
+
+        Expression<Func<RecordEntity, bool>>? capturedFilter = null;
+
+        var repository = Substitute.For<IRepository<RecordEntity>>();
+
+        repository.GetPagedAsync(
+                Arg.Do<Expression<Func<RecordEntity, bool>>>(filter => capturedFilter = filter),
+                Arg.Any<Func<IQueryable<RecordEntity>, IOrderedQueryable<RecordEntity>>>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns((Items: (IReadOnlyList<RecordEntity>)new List<RecordEntity>(), TotalCount: 0));
+
+        var labelRepository = Substitute.For<IRepository<LabelEntity>>();
+
+        var artistRepository = Substitute.For<IRepository<ArtistEntity>>();
+
+        var handler = new GetPagedRecordsQueryHandler(
+            repository, labelRepository, artistRepository, new RecordResponseBuilder());
+
+        var query = new GetPagedRecordsQuery(
+            userId, 1, 20, null, null, null, null, null, null, "nicht-existentes-format", null, null);
+
+        // act
+        await handler.HandleAsync(query, CancellationToken.None);
+
+        // assert
+        Assert.NotNull(capturedFilter);
+
+        var predicate = capturedFilter!.Compile();
+
+        var irgendeinRecord = CreateRecord(
+            userId, labelId: 1, artistId: null, albumName: "Abbey Road", year: 1969, format: RecordFormat.CdSingle);
+
+        // ein unbekannter Format-Wert bedeutet "kein Filter", kein HTTP 400 (siehe CQRS-Framework: Queries
+        // werden nicht validiert)
+        Assert.True(predicate(irgendeinRecord));
     }
 
     [Theory]
@@ -120,7 +213,8 @@ public class GetPagedRecordsQueryHandlerTests
         var handler = new GetPagedRecordsQueryHandler(
             repository, labelRepository, artistRepository, new RecordResponseBuilder());
 
-        var query = new GetPagedRecordsQuery(userId, 1, 20, null, null, null, null, null, null, sortBy, sortDirection);
+        var query = new GetPagedRecordsQuery(
+            userId, 1, 20, null, null, null, null, null, null, null, sortBy, sortDirection);
 
         // act
         await handler.HandleAsync(query, CancellationToken.None);
@@ -174,7 +268,7 @@ public class GetPagedRecordsQueryHandlerTests
         var handler = new GetPagedRecordsQueryHandler(
             repository, labelRepository, artistRepository, new RecordResponseBuilder());
 
-        var query = new GetPagedRecordsQuery(userId, 1, 20, null, null, null, null, null, 5, null, null);
+        var query = new GetPagedRecordsQuery(userId, 1, 20, null, null, null, null, null, 5, null, null, null);
 
         // act
         await handler.HandleAsync(query, CancellationToken.None);
@@ -212,7 +306,8 @@ public class GetPagedRecordsQueryHandlerTests
         var handler = new GetPagedRecordsQueryHandler(
             repository, labelRepository, artistRepository, new RecordResponseBuilder());
 
-        var query = new GetPagedRecordsQuery(userId, 1, 20, null, null, null, null, null, null, null, null);
+        var query = new GetPagedRecordsQuery(
+            userId, 1, 20, null, null, null, null, null, null, null, null, null);
 
         // act
         await handler.HandleAsync(query, CancellationToken.None);
@@ -256,9 +351,9 @@ public class GetPagedRecordsQueryHandlerTests
         return repository;
     }
 
-    private static RecordEntity CreateRecord(Guid userId, int labelId, int? artistId, string albumName, int year)
+    private static RecordEntity CreateRecord(
+        Guid userId, int labelId, int? artistId, string albumName, int year, RecordFormat format = RecordFormat.Album)
     {
-        return RecordEntity.Create(
-            labelId, artistId, RecordFormat.Album, albumName, year, RecordCondition.Vg, null, userId);
+        return RecordEntity.Create(labelId, artistId, format, albumName, year, RecordCondition.Vg, null, userId);
     }
 }
