@@ -296,6 +296,30 @@ Das Cover wird als `bytea` in der `record`-Tabelle gespeichert und in
 (`data:image/jpeg;base64,...` bzw. `image/png`) zurückgegeben — sowohl beim
 Einzelabruf als auch je Item der paginierten Liste.
 
+### Record-Liste (Block 6f)
+
+`GET /api/records` filtert seit Block 6f zusätzlich exakt nach Format:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/records?...&format=` | Zusätzlicher Filter auf einen der zehn `RecordFormat`-Werte (kein Gruppieren nach Vinyl/CD) |
+
+Ein unbekannter `format`-Wert wirkt wie kein Filter (kein HTTP 400) — Queries
+werden im CQRS-Framework grundsätzlich nicht validiert, analog zu `sortBy`/
+`sortDirection`.
+
+Das Angular-Feature `records/` zeigt die Sammlung erstmals als Card-Grid
+statt als Tabelle (`features/records/`, siehe `komponenten-klassen.md` für
+die Karten-/Grade-Badge-Klassen). Die Filter-Zeile kombiniert Albumname
+(Freitext), Erscheinungsjahr-Zeitraum, Land/Format (native `<select>`,
+feste kleine Wertemengen) und Sortierung mit einem neuen, wiederverwendbaren
+Baustein `shared/autocomplete/`: Artist und Label werden per serverseitigem
+Freitext-Autosuggest gegen den bestehenden `getPaged`-Endpoint gesucht
+(debounced, kleines `pageSize`) statt als Dropdown — diese Listen können
+beliebig groß werden, ein vollständig geladenes `<select>` wäre nicht
+bedienbar. Anlegen/Bearbeiten/Löschen, Detailseite, Cover-Upload und Tracks
+folgen mit den Blöcken 6g–6j, siehe `TASK.md`.
+
 ### Swagger/OpenAPI (Block 0e)
 
 Im Development-Modus ist unter `http://localhost:<api-port>/swagger` eine
