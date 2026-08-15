@@ -317,8 +317,8 @@ Baustein `shared/autocomplete/`: Artist und Label werden per serverseitigem
 Freitext-Autosuggest gegen den bestehenden `getPaged`-Endpoint gesucht
 (debounced, kleines `pageSize`) statt als Dropdown — diese Listen können
 beliebig groß werden, ein vollständig geladenes `<select>` wäre nicht
-bedienbar. Detailseite, Cover-Upload und Tracks folgen mit den Blöcken
-6h–6j, siehe `TASK.md`.
+bedienbar. Cover-Upload und Tracks folgen mit den Blöcken 6i–6j, siehe
+`TASK.md`.
 
 ### Record anlegen/bearbeiten/löschen (Block 6g)
 
@@ -336,6 +336,22 @@ Bearbeiten-Modus den bisherigen Namen vorbefüllt (`linkedSignal`, analog dem
 Vorbefüll-Muster aus `LabelForm`). Kein "Discogs-Suche"-Button — der im
 Wiki (`ui-ux-konzept.md`) beschriebene verschachtelte Discogs-Modal-Flow
 gehört zum weiterhin offenen Block 8.
+
+### Record-Detailansicht (Block 6h)
+
+Reiner Frontend-Block — `GET /api/records/{id}` war seit Block 6a bereits
+vollständig vorhanden (inkl. aufgelöster Tracks und Cover als Base64-Data-
+URL). Laut Design-Prototyp (`wiki/design/ui-kit.md`) ist die Detailansicht
+ein **Modal** über dem weiterhin sichtbaren Records-Grid, keine eigene
+Vollbild-Seite. Umgesetzt als Kind-Route von `/records`
+(`features/records/records.routes.ts`: `{ path: '', component: Records,
+children: [{ path: ':id', component: RecordDetail }] }`), damit `Records`
+gemountet bleibt und `RecordDetail` per `<router-outlet>` als Modal darüber
+rendert — die URL bleibt dabei verlinkbar (`/records/:id`). Neue Komponente
+`features/records/track-list/` zeigt die Tracks rein lesend, gruppiert nach
+Plattenseite (`recordSide`, keine Gruppen-Überschrift bei ausschließlich
+`recordSide = '0'`, also CD). Kein Bearbeiten/Löschen im Detail-Modal — das
+bleibt Aufgabe der Icons auf der `RecordCard` in der Liste (Block 6g).
 
 Direkt aus dem Formular lassen sich unbekannte Label/Artist anlegen, ohne
 die Ansicht zu wechseln: Beim Künstler fragt ein `ConfirmModal` nach

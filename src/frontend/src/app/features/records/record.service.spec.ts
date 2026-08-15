@@ -170,6 +170,50 @@ describe('RecordService', () => {
     expect(request.request.params.has('sortDirection')).toBe(true);
   });
 
+  it('ruft getById gegen die Id-Route auf', () => {
+    // arrange
+    const record: Record = {
+      id: 1,
+      labelId: 1,
+      labelName: 'Columbia',
+      artistId: 2,
+      artistName: 'Miles Davis',
+      format: 'Album',
+      albumName: 'Kind of Blue',
+      releaseYear: 1959,
+      condition: 'Vg',
+      information: null,
+      albumCoverDataUrl: null,
+      tracks: [],
+    };
+    let result: Record | undefined;
+
+    // act
+    service.getById(1).subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/records/1');
+    request.flush(record);
+
+    // assert
+    expect(request.request.method).toBe('GET');
+    expect(result).toEqual(record);
+  });
+
+  it('propagiert einen 404-Fehler von getById an den Aufrufer', () => {
+    // arrange
+    let error: HttpErrorResponse | undefined;
+
+    // act
+    service.getById(999).subscribe({ error: (err: HttpErrorResponse) => (error = err) });
+    const request = httpTesting.expectOne('https://api.test/api/records/999');
+    request.flush(
+      { title: 'Nicht gefunden', status: 404 },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    // assert
+    expect(error?.status).toBe(404);
+  });
+
   it('sendet create als POST mit allen Feldern im Body', () => {
     // arrange
     const created: Record = {

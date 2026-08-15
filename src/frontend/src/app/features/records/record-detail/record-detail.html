@@ -1,0 +1,48 @@
+<app-modal (closed)="onClose()">
+  @if (recordResource.isLoading()) {
+    <div class="modal-body">
+      <div class="flex justify-center py-12">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  } @else if (record(); as record) {
+    <div class="modal-head">
+      <div class="flex items-start gap-3">
+        <div class="record-cover w-20 flex-none rounded-md">
+          @if (record.albumCoverDataUrl) {
+            <img [src]="record.albumCoverDataUrl" [alt]="record.albumName" />
+          } @else {
+            <svg lucideDisc3 [size]="24" class="text-fg-subtle" aria-hidden="true"></svg>
+          }
+        </div>
+        <div>
+          <h2 class="text-base font-semibold text-fg">{{ record.albumName }}</h2>
+          @if (record.artistName) {
+            <div class="text-sm text-fg-muted">{{ record.artistName }}</div>
+          }
+          <div class="mt-1 text-xs text-fg-subtle">
+            {{ record.releaseYear }} · {{ record.labelName }}
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-1.5">
+            <span class="badge badge-neutral">{{ formatLabel() }}</span>
+            <span class="grade" [class]="gradeClass()">{{ gradeText() }}</span>
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="btn btn-ghost btn-icon btn-sm"
+        (click)="onClose()"
+        aria-label="Schließen"
+      >
+        <svg lucideX [size]="16" aria-hidden="true"></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      @if (record.information) {
+        <p class="mb-3">{{ record.information }}</p>
+      }
+      <app-track-list [tracks]="record.tracks" />
+    </div>
+  }
+</app-modal>

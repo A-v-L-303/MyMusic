@@ -1,7 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { Router, provideRouter } from '@angular/router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Artist } from '../artists/artist';
 import { Country } from '../../shared/country/country';
@@ -9,6 +11,9 @@ import { ErrorModalService } from '../../shared/error-modal/error-modal.service'
 import { RuntimeConfigService } from '../../core/runtime-config/runtime-config.service';
 import { Record, RecordListResponse } from './record';
 import { Records } from './records';
+
+@Component({ selector: 'app-dummy', template: '' })
+class Dummy {}
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,6 +60,10 @@ describe('Records', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([
+          { path: 'records', component: Dummy },
+          { path: 'records/:id', component: Dummy },
+        ]),
         { provide: RuntimeConfigService, useValue: { apiBaseUrl: 'https://api.test' } },
       ],
     });
@@ -266,9 +275,11 @@ describe('Records', () => {
     await fixture.whenStable();
   });
 
-  it('öffnet keine Detailansicht bei Klick auf eine Karte (noch nicht Teil dieses Blocks)', async () => {
+  it('navigiert beim Klick auf eine Karte zur Detailansicht', async () => {
     // arrange
     const fixture = await createLoadedFixture();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
 
     // act
     compiled(fixture)
@@ -277,8 +288,7 @@ describe('Records', () => {
     fixture.detectChanges();
 
     // assert
-    // httpTesting.verify() im afterEach deckt einen unerwarteten Folge-Request auf.
-    expect(compiled(fixture).textContent).toContain('Abbey Road');
+    expect(navigateSpy).toHaveBeenCalledWith(['/records', 1]);
   });
 
   it('zeigt einen Fehler beim Laden der Records über den ErrorModalService mit Retry-Callback an', async () => {
