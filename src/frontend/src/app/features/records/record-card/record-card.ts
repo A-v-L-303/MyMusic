@@ -2,9 +2,9 @@ import { Component, computed, input, output } from '@angular/core';
 import { LucideDisc3, LucidePencil, LucideTrash2 } from '@lucide/angular';
 
 import {
-  CD_FORMATS,
   RECORD_CONDITION_GRADE_CLASS,
   RECORD_CONDITION_GRADE_TEXT,
+  RECORD_FORMAT_LABELS,
   Record,
 } from '../record';
 
@@ -20,9 +20,7 @@ export class RecordCard {
   readonly editRequested = output<Record>();
   readonly deleteRequested = output<Record>();
 
-  protected readonly formatPill = computed(() =>
-    CD_FORMATS.includes(this.record().format) ? 'CD' : 'LP',
-  );
+  protected readonly formatLabel = computed(() => RECORD_FORMAT_LABELS[this.record().format]);
 
   protected readonly gradeClass = computed(
     () => RECORD_CONDITION_GRADE_CLASS[this.record().condition],
