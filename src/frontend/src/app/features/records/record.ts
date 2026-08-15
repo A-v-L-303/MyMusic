@@ -114,3 +114,7 @@ export const RECORD_CONDITION_GRADE_TEXT: { [condition in RecordCondition]: stri
   G: 'G',
   P: 'P',
 };
+
+export const MAX_ALBUM_COVER_SIZE_BYTES = 5 * 1024 * 1024;
+
+export const ALLOWED_ALBUM_COVER_CONTENT_TYPES = ['image/jpeg', 'image/png'];

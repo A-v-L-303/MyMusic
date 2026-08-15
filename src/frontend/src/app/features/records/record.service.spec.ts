@@ -304,6 +304,54 @@ describe('RecordService', () => {
     expect(completed).toBe(true);
   });
 
+  it('sendet uploadCover als POST mit FormData gegen die Cover-Route', () => {
+    // arrange
+    const updated: Record = {
+      id: 1,
+      labelId: 1,
+      labelName: 'Columbia',
+      artistId: 2,
+      artistName: 'Miles Davis',
+      format: 'Album',
+      albumName: 'Kind of Blue',
+      releaseYear: 1959,
+      condition: 'Vg',
+      information: null,
+      albumCoverDataUrl: 'data:image/jpeg;base64,abc',
+      tracks: [],
+    };
+    const file = new File(['content'], 'cover.jpg', { type: 'image/jpeg' });
+    let result: Record | undefined;
+
+    // act
+    service.uploadCover(1, file).subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/records/1/cover');
+    request.flush(updated);
+
+    // assert
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toBeInstanceOf(FormData);
+    expect((request.request.body as FormData).get('file')).toBe(file);
+    expect(result).toEqual(updated);
+  });
+
+  it('propagiert einen 400-Fehler von uploadCover an den Aufrufer', () => {
+    // arrange
+    const file = new File(['content'], 'cover.txt', { type: 'text/plain' });
+    let error: HttpErrorResponse | undefined;
+
+    // act
+    service.uploadCover(1, file).subscribe({ error: (err: HttpErrorResponse) => (error = err) });
+    const request = httpTesting.expectOne('https://api.test/api/records/1/cover');
+    request.flush(
+      { title: 'Validierungsfehler', status: 400, errors: { FileContent: ['ungültig'] } },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    // assert
+    expect(error?.status).toBe(400);
+  });
+
   it('propagiert HTTP-Fehler an den Aufrufer', () => {
     // arrange
     let error: HttpErrorResponse | undefined;

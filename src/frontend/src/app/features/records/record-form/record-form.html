@@ -118,6 +118,25 @@
           <span class="hint is-error">{{ recordForm.information().errors()[0].message }}</span>
         }
       </div>
+      <div class="field">
+        <span class="label">Album-Cover</span>
+        <div class="flex items-center gap-3">
+          <div class="record-cover w-16 flex-none rounded-md">
+            @if (previewUrl(); as url) {
+              <img [src]="url" alt="Cover-Vorschau" />
+            } @else {
+              <svg lucideDisc3 [size]="20" class="text-fg-subtle" aria-hidden="true"></svg>
+            }
+          </div>
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            class="input"
+            aria-label="Album-Cover"
+            (change)="onCoverFileSelected($event)"
+          />
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button type="button" class="btn btn-secondary" (click)="onCancel()">Abbrechen</button>

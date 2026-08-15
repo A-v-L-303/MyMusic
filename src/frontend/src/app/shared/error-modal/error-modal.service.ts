@@ -1,9 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, isDevMode, signal } from '@angular/core';
 
-import { ProblemDetails } from '../http/problem-details';
+import { ProblemDetails, ValidationProblemDetails } from '../http/problem-details';
 
-export type ErrorModalKind = 'not-found' | 'conflict' | 'server' | 'rate-limit' | 'network';
+export type ErrorModalKind =
+  | 'not-found'
+  | 'conflict'
+  | 'server'
+  | 'rate-limit'
+  | 'network'
+  | 'validation';
 
 export interface ErrorModalState {
   kind: ErrorModalKind;
@@ -29,6 +35,10 @@ export class ErrorModalService {
     this.state.set(this.mapToState(error, entityName, onRetry));
   }
 
+  showValidationMessage(message: string): void {
+    this.state.set({ kind: 'validation', message });
+  }
+
   dismiss(): void {
     this.state.set(null);
   }
@@ -50,6 +60,10 @@ export class ErrorModalService {
       return { kind: 'not-found', message: `${entityName} wurde nicht gefunden.` };
     }
 
+    if (error.status === 400) {
+      return { kind: 'validation', message: this.extractFirstValidationError(error) };
+    }
+
     if (error.status === 409) {
       return {
         kind: 'conflict',
@@ -68,5 +82,13 @@ export class ErrorModalService {
 
   private extractDetail(error: HttpErrorResponse): string | undefined {
     return (error.error as ProblemDetails | undefined)?.detail;
+  }
+
+  private extractFirstValidationError(error: HttpErrorResponse): string {
+    const errors = (error.error as ValidationProblemDetails | undefined)?.errors;
+    const firstKey = errors ? Object.keys(errors)[0] : undefined;
+    const firstMessage = firstKey ? errors?.[firstKey]?.[0] : undefined;
+
+    return firstMessage ?? 'Die Eingabe ist ungültig.';
   }
 }

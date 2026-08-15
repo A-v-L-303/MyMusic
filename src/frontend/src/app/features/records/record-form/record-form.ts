@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  OnDestroy,
   computed,
   inject,
   input,
@@ -10,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { LucidePlus } from '@lucide/angular';
+import { LucideDisc3, LucidePlus } from '@lucide/angular';
 import {
   FieldTree,
   FormField,
@@ -35,6 +36,8 @@ import { Label } from '../../labels/label';
 import { LabelForm } from '../../labels/label-form/label-form';
 import { LabelService } from '../../labels/label.service';
 import {
+  ALLOWED_ALBUM_COVER_CONTENT_TYPES,
+  MAX_ALBUM_COVER_SIZE_BYTES,
   RECORD_CONDITION_LABELS,
   RECORD_FORMAT_LABELS,
   Record,
@@ -62,10 +65,10 @@ interface RecordFormModel {
 
 @Component({
   selector: 'app-record-form',
-  imports: [FormField, Modal, Autocomplete, ConfirmModal, LabelForm, LucidePlus],
+  imports: [FormField, Modal, Autocomplete, ConfirmModal, LabelForm, LucidePlus, LucideDisc3],
   templateUrl: './record-form.html',
 })
-export class RecordForm {
+export class RecordForm implements OnDestroy {
   private readonly recordService = inject(RecordService);
   private readonly labelService = inject(LabelService);
   private readonly artistService = inject(ArtistService);
@@ -95,6 +98,9 @@ export class RecordForm {
   protected readonly labelQuery = signal('');
   protected readonly artistQuery = signal('');
   protected readonly attemptedSubmit = signal(false);
+
+  protected readonly selectedCoverFile = signal<File | null>(null);
+  protected readonly previewUrl = linkedSignal(() => this.record()?.albumCoverDataUrl ?? null);
 
   protected readonly labelSuggestionsResource = rxResource({
     params: () => ({ query: this.labelQuery() }),
@@ -269,6 +275,40 @@ export class RecordForm {
     this.labelCreateOpen.set(false);
   }
 
+  protected onCoverFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (
+      !ALLOWED_ALBUM_COVER_CONTENT_TYPES.includes(file.type) ||
+      file.size > MAX_ALBUM_COVER_SIZE_BYTES
+    ) {
+      this.errorModalService.showValidationMessage(
+        'Es sind nur JPEG- oder PNG-Dateien bis 5 MB erlaubt.',
+      );
+      return;
+    }
+
+    this.revokePreviewObjectUrl();
+    this.selectedCoverFile.set(file);
+    this.previewUrl.set(URL.createObjectURL(file));
+  }
+
+  ngOnDestroy(): void {
+    this.revokePreviewObjectUrl();
+  }
+
+  private revokePreviewObjectUrl(): void {
+    if (this.selectedCoverFile()) {
+      URL.revokeObjectURL(this.previewUrl()!);
+    }
+  }
+
   protected onCancel(): void {
     this.cancelled.emit();
   }
@@ -292,17 +332,35 @@ export class RecordForm {
     const record = this.record();
 
     try {
-      if (record) {
-        await firstValueFrom(this.recordService.update(record.id, request));
-      } else {
-        await firstValueFrom(this.recordService.create(request));
-      }
+      const savedRecord = record
+        ? await firstValueFrom(this.recordService.update(record.id, request))
+        : await firstValueFrom(this.recordService.create(request));
+
+      await this.uploadSelectedCoverIfAny(savedRecord.id);
 
       this.saved.emit();
 
       return;
     } catch (error) {
       return this.handleSaveError(error, field);
+    }
+  }
+
+  private async uploadSelectedCoverIfAny(recordId: number): Promise<void> {
+    const file = this.selectedCoverFile();
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      await firstValueFrom(this.recordService.uploadCover(recordId, file));
+    } catch (error) {
+      if (!(error instanceof HttpErrorResponse)) {
+        throw error;
+      }
+
+      this.errorModalService.showFromHttpError(error, 'Album-Cover');
     }
   }
 
