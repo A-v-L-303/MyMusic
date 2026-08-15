@@ -37,8 +37,7 @@ PR #61) umgesetzt, live verifiziert und nach `main` gemergt; Block 6j
 verifiziert und nach `main` gemergt — Records-Frontend damit vollständig,
 Block 6 (Backend+Frontend) fachlich vollständig; Block 7f
 (Keycloak-Login-Theme „mymusic", siehe Abschnitt 7f) umgesetzt und live
-verifiziert, noch nicht committet und nicht nach `main` gemergt (Branch
-`block-7f-keycloak-login-theme`).
+verifiziert, PR #69, noch nicht nach `main` gemergt.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
