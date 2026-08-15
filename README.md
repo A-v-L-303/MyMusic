@@ -317,8 +317,7 @@ Baustein `shared/autocomplete/`: Artist und Label werden per serverseitigem
 Freitext-Autosuggest gegen den bestehenden `getPaged`-Endpoint gesucht
 (debounced, kleines `pageSize`) statt als Dropdown — diese Listen können
 beliebig groß werden, ein vollständig geladenes `<select>` wäre nicht
-bedienbar. Cover-Upload und Tracks folgen mit den Blöcken 6i–6j, siehe
-`TASK.md`.
+bedienbar. Tracks folgen mit Block 6j, siehe `TASK.md`.
 
 ### Record anlegen/bearbeiten/löschen (Block 6g)
 
@@ -365,6 +364,25 @@ bekam einen `blur`-Output und eine öffentliche `setQuery()`-Methode für
 programmatische Textänderungen von außen, und `shared/confirm-modal/`
 akzeptiert jetzt ein alternatives `confirmLabel`/`confirmVariant` statt
 fest "Löschen"/`.btn-danger` zu verwenden.
+
+### Album-Cover-Upload (Block 6i)
+
+Reiner Frontend-Block — `POST /api/records/{id}/cover` war seit Block 6b
+bereits vollständig vorhanden. Der Upload-Trigger sitzt im
+`RecordForm`-Modal (`features/records/record-form/`), sowohl beim Anlegen
+als auch beim Bearbeiten eines Records — nicht im Detail-Modal (Block 6h)
+und nicht als eigenes Icon auf der `RecordCard`. Ein Cover lässt sich
+hinzufügen und ersetzen, aber nicht löschen (dafür fehlt ein
+`DELETE`-Endpunkt im Backend). Nach erfolgreichem `create`/`update` wird
+bei gewählter Datei zusätzlich `uploadCover(...)` aufgerufen — als
+eigenständiger, unabhängiger Schritt: Ein fehlgeschlagener Cover-Upload
+zeigt ein Fehler-Modal, blockiert aber nicht das bereits erfolgreiche
+Speichern des Records. Client-seitige Vorprüfung von Format (JPEG/PNG) und
+Größe (max. 5 MB) vor jedem Server-Roundtrip. `shared/error-modal/` bekam
+dafür einen neuen `ErrorModalKind` `'validation'` für echte
+Validierungsmeldungen aus `ValidationProblemDetails.errors` bei
+HTTP-400-Antworten, statt der bisherigen generischen
+"Serverfehler"-Meldung.
 
 ### Swagger/OpenAPI (Block 0e)
 

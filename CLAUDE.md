@@ -193,8 +193,10 @@ Record-Formular anzulegen (verschachteltes `LabelForm`-Modal bzw.
 `ConfirmModal`-Rückfrage für Artist); mit Block 6h (PR #59) die
 Detailansicht als Modal über dem Records-Grid (Kind-Route `/records/:id`,
 reiner Lesemodus mit Tracklist, kein Bearbeiten/Löschen im Modal — dafür
-bleiben die Icons auf der `RecordCard` zuständig); Cover-Upload und Tracks
-folgen mit Block 6i–6j; `dashboard/` und `search/` enthalten weiterhin nur
+bleiben die Icons auf der `RecordCard` zuständig); mit Block 6i (PR #61)
+der Album-Cover-Upload im `RecordForm`-Modal beim Anlegen und Bearbeiten
+(Trigger nicht im Detail-Modal, kein Löschen möglich); Tracks folgen mit
+Block 6j; `dashboard/` und `search/` enthalten weiterhin nur
 Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
