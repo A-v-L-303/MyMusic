@@ -1,0 +1,32 @@
+@if (tracks().length === 0) {
+  <p class="empty">Noch keine Tracks vorhanden.</p>
+} @else {
+  <div>
+    <div class="text-xs font-medium uppercase tracking-wide text-fg-muted">Tracklist</div>
+    @for (group of groups(); track group.side) {
+      <div class="mt-2">
+        @if (showSideHeading()) {
+          <div class="mb-1 text-xs font-medium text-fg-muted">Seite {{ group.side }}</div>
+        }
+        <table class="w-full">
+          <tbody>
+            @for (track of group.tracks; track track.id) {
+              <tr class="border-b border-line text-sm text-fg">
+                <td class="w-8 py-1.5 pr-2 tnum text-fg-muted">{{ track.trackNumber }}</td>
+                <td class="py-1.5">
+                  <div>{{ track.trackName }}</div>
+                  <div class="text-xs text-fg-muted">
+                    {{ track.artistName }} · {{ track.genreName }}
+                  </div>
+                  @if (track.information) {
+                    <div class="text-xs text-fg-subtle">{{ track.information }}</div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

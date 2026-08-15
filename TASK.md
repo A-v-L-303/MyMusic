@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-14 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-15 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -28,15 +28,17 @@ löschen als Modal, Edit/Delete-Icons auf der RecordCard, Vorbefüll-Erweiterung
 von `shared/autocomplete/`, dazu die Erweiterung „Label/Artist direkt aus dem
 Record-Formular anlegen" mit Anpassungen an `shared/modal/`,
 `shared/autocomplete/`, `shared/confirm-modal/` und `LabelForm.saved`)
-umgesetzt, live verifiziert und nach `main` gemergt.
-Blöcke 6h–6j (Detailansicht, Cover-Upload, Tracks) sind geplant, aber noch
-nicht begonnen)
-Branch: `main` (Block 6b per PR #30, Block 6c per PR #32,
-Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41, Block 0f per
-PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45, Block 2
-Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend per
-PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57
-nach `main` gemergt)
+umgesetzt, live verifiziert und nach `main` gemergt; Block 6h
+(Record-Detailansicht als Modal über der Liste, Kind-Route `/records/:id`,
+reiner Lesemodus mit Tracklist) umgesetzt und live verifiziert, siehe
+Abschnitt 6h — noch nicht committet/gemergt.
+Blöcke 6i–6j (Cover-Upload, Tracks) sind geplant, aber noch nicht begonnen)
+Branch: `block-6h-angular-records-detail` (Block 6b per PR #30, Block 6c per
+PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
+Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
+Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
+per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57
+nach `main` gemergt; Block 6h noch offen)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -54,8 +56,9 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d, 0e, 0c, 0f, 0g und 7a sind abgeschlossen. Offen aus dem
-MVP-Umfang der Phase 1:
+Block 0a, 0b, 0d, 0e, 0c, 0f, 0g und 7a sind abgeschlossen. Block 6h ist
+umgesetzt und live verifiziert, aber noch nicht committet/gemergt. Offen aus
+dem MVP-Umfang der Phase 1:
 
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
   Artist-Backend erledigt, siehe Abschnitte 2–5; Record-Backend ohne Tracks
@@ -70,9 +73,10 @@ MVP-Umfang der Phase 1:
   `artists/` umgesetzt, aber ohne UI für den `labelId`-Filter (Block 5
   Frontend, siehe Abschnitt 5); `records/` hat mit Block 6f (Record-Liste:
   Card-Ansicht, Filter, Sortierung, Paginierung) die Platzhalterseite
-  ersetzt, siehe Abschnitt 6f, und mit Block 6g Anlegen/Bearbeiten/Löschen
-  erhalten, siehe Abschnitt 6g; Detailansicht (Block 6h), Cover-Upload
-  (Block 6i) und Tracks (Block 6j) sind geplant, aber noch offen).
+  ersetzt, siehe Abschnitt 6f, mit Block 6g Anlegen/Bearbeiten/Löschen
+  erhalten, siehe Abschnitt 6g, und mit Block 6h die Detailansicht als
+  Modal erhalten, siehe Abschnitt 6h; Cover-Upload (Block 6i) und Tracks
+  (Block 6j) sind geplant, aber noch offen).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -910,7 +914,7 @@ Gesamtblocks erst ganz am Ende messbar wäre. Block 6a, 6b, 6c und 6d
 abgeschlossen. Dazu Block 6e (Nachtrag, siehe dortiger Abschnitt). Das
 Angular-Frontend für `records/` wurde auf Wunsch des Projektinhabers
 zusätzlich in fünf einzeln abnehmbare Teilblöcke 6f–6j zerlegt (analog zur
-Backend-Aufteilung); Block 6f abgeschlossen, 6g–6j noch offen.
+Backend-Aufteilung); Block 6f, 6g und 6h abgeschlossen, 6i–6j noch offen.
 Priorität: hoch, fachlicher Kern
 
 Ziel:
@@ -1555,6 +1559,92 @@ selbst am echten Cursor bestätigt), verschachteltes Label-Formular inkl.
 das obere (verschachteltes Label-Formular schließt, Record-Formular bleibt
 offen), Artist-Rückfrage mit grünem „Anlegen"-Button (nicht „Löschen"),
 Bestätigen legt an und übernimmt, keine Konsolenfehler.
+
+### 6h. Record-Detailansicht
+
+Status: **abgeschlossen** (2026-08-15)
+Arbeits-Prompt: `docs/prompts/2026-08-15-block-6h-angular-records-detail.md`
+
+Anlass: Dritter der fünf Teilblöcke 6f–6j (siehe Abschnitt 6f). Deckt US-R7
+(Detailansicht mit Tracklist) ab — ohne Cover-Upload, ohne Track-CRUD.
+Reiner Frontend-Block: `GET /api/records/{id}` war seit Block 6a bereits
+vollständig vorhanden (inkl. aufgelöster Tracks und Cover als Base64-Data-
+URL), keine Backend-Änderung nötig.
+
+Design-Klärung mit dem Projektinhaber während der Umsetzung: `wiki/design/
+ui-kit.md` und der zugehörige Design-Prototyp-Screenshot zeigen die
+Detailansicht als **Modal** über dem weiterhin sichtbaren Records-Grid,
+nicht als eigene Vollbild-Seite. Umgesetzt als Kind-Route von `/records`
+(`{ path: '', component: Records, children: [{ path: ':id', component:
+RecordDetail }] }`), damit `Records` gemountet bleibt und `RecordDetail`
+per `<router-outlet>` als Modal darüber rendert — URL bleibt dabei
+verlinkbar (`/records/:id`), passend zur Zurück-Link-Vorgabe aus
+`ui-ux-konzept.md`. Zusätzlich klargestellt: Bearbeiten und Löschen sind im
+Detail-Modal **nicht** verfügbar (reiner Lesemodus) — beides bleibt
+ausschließlich über die Icons auf der `RecordCard` in der Liste erreichbar
+(Block 6g); der Design-Prototyp zeigte dafür ursprünglich Footer-Buttons im
+Modal, das wurde bewusst nicht übernommen.
+
+Umgesetzt:
+
+- `features/records/record.service.ts`: `getById(id)` ergänzt.
+- `features/records/records.routes.ts`: `:id` als Kind-Route von `''`.
+- `features/records/records.ts`/`records.html`: `Router` injiziert,
+  `record-card`s bisher ungenutztes `opened`-Output an
+  `router.navigate(['/records', record.id])` gebunden; `<router-outlet>`
+  ergänzt.
+- `features/records/record-detail/` (neu): Modal-Komponente
+  (`shared/modal/modal.ts`), lädt per `getById` (das Listenobjekt hat laut
+  `RecordResponseBuilder.BuildPaged` nie echte Tracks, daher zwingend
+  Neuladen), Routenparameter über `ActivatedRoute` + `toSignal(
+  route.paramMap...)` (Projekt nutzt kein `withComponentInputBinding()`,
+  analog zu `features/search/search.ts`). Zeigt Cover, Albumname, Künstler,
+  Format-/Grade-/Genre-Badges, Jahr, Label, `information`, Tracklist.
+  Fehlerbehandlung wie in `genres.ts` (`ErrorModalService`); dabei
+  festgestellt: „Erneut versuchen" ist im bestehenden
+  `ErrorModalService`/`ErrorModal` nur für `kind: 'network'` verdrahtet,
+  nicht für `kind: 'server'` (HTTP 500) — bestehendes Verhalten, keine
+  Änderung für diesen Block.
+- `features/records/track-list/` (neu): reine Anzeige-Komponente, gruppiert
+  Tracks nach `recordSide` mit Überschrift „Seite {{side}}" (keine
+  Überschrift bei ausschließlich `recordSide = '0'`, also CD); Backend
+  liefert bereits sortiert (Seite, dann Tracknummer).
+- **Darstellungsfehler während der Live-Verifikation gefunden und
+  behoben**: Öffnete man aus dem Detail-Modal heraus das Bearbeiten-
+  Formular (vor der obigen Klarstellung, dass das gar nicht vorgesehen
+  ist), lag es hinter statt vor dem Detail-Modal (DOM-Reihenfolge in
+  `records.html` — `<router-outlet>` stand vor `@if (formOpen())`).
+  Zwischenzeitlich durch Umsortieren behoben, mit der Entfernung der
+  Bearbeiten/Löschen-Aktion aus dem Detail-Modal insgesamt hinfällig
+  geworden.
+- 288 Frontend-Tests insgesamt, alle grün. Production-Build und
+  Prettier-Check grün (Prettier meldet projektweit, auch für unveränderte
+  Bestandsdateien, Formatierungsabweichungen — Ursache ist `core.autocrlf
+  =true` unter Windows (CRLF-Checkout vs. Prettier-Default `lf`), kein
+  durch diesen Block verursachtes Problem; das CI-Gate läuft auf Linux und
+  ist davon nicht betroffen).
+
+Bewusst nicht Teil dieses Standes:
+
+- Album-Cover-Upload (US-R8, Block 6i).
+- Tracks hinzufügen/bearbeiten/löschen (US-T1–T3, Block 6j) — Tracklist ist
+  rein lesend.
+- Bearbeiten/Löschen im Detail-Modal (siehe Design-Klärung oben) — bleibt
+  Aufgabe der Liste (Block 6g).
+
+Abnahmekriterium:
+
+- Klick auf eine Record-Card öffnet die Detailansicht mit Tracklist; nur
+  eigene Records sind aufrufbar, bei fremder/unbekannter Id erscheint das
+  „Record nicht gefunden"-Modal; kein Breadcrumb, expliziter Zurück-Weg
+  (Schließen-Button/Escape/Klick außerhalb) genügt. **Vollständig erfüllt**
+  — automatisierte Tests grün und zusätzlich live im Browser gegen den
+  laufenden Aspire-AppHost verifiziert (Klick auf Card öffnet Modal über
+  dem Grid, URL wechselt zu `/records/:id`, Cover-Platzhalter, Stammdaten,
+  Grade-Badge, leere Tracklist mit Hinweistext, Schließen per ×- und
+  Scrim-Klick führt zurück zu `/records`, kein Bearbeiten/Löschen im Modal
+  und Klick auf die dahinterliegenden Card-Icons löst währenddessen nichts
+  aus, keine Konsolenfehler).
 
 ## 7. Authentifizierung und Mandantentrennung
 

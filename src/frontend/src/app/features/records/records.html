@@ -33,6 +33,7 @@
         @for (record of records(); track record.id) {
           <app-record-card
             [record]="record"
+            (opened)="onRecordOpened(record)"
             (editRequested)="openEditForm($event)"
             (deleteRequested)="onDeleteRequested($event)"
           />
@@ -48,6 +49,8 @@
     }
   </div>
 </section>
+
+<router-outlet />
 
 @if (formOpen()) {
   <app-record-form

@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Router, RouterOutlet } from '@angular/router';
 import { LucidePlus } from '@lucide/angular';
 import { of } from 'rxjs';
 
@@ -27,7 +28,15 @@ const SUGGESTION_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-records',
-  imports: [RecordFilter, RecordCard, Pagination, RecordForm, ConfirmModal, LucidePlus],
+  imports: [
+    RecordFilter,
+    RecordCard,
+    Pagination,
+    RecordForm,
+    ConfirmModal,
+    RouterOutlet,
+    LucidePlus,
+  ],
   templateUrl: './records.html',
 })
 export class Records {
@@ -36,6 +45,7 @@ export class Records {
   private readonly labelService = inject(LabelService);
   private readonly countryService = inject(CountryService);
   private readonly errorModalService = inject(ErrorModalService);
+  private readonly router = inject(Router);
 
   protected readonly filterName = signal('');
   protected readonly filterArtistId = signal<number | undefined>(undefined);
@@ -185,6 +195,10 @@ export class Records {
 
   protected onLabelQueryChange(query: string): void {
     this.labelQuery.set(query);
+  }
+
+  protected onRecordOpened(record: Record): void {
+    this.router.navigate(['/records', record.id]);
   }
 
   protected openCreateForm(): void {
