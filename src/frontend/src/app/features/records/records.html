@@ -2,9 +2,16 @@
   <div class="flex items-center justify-between gap-4">
     <div class="flex items-center gap-2">
       <h1 class="text-lg font-bold text-fg">Records</h1>
-      <span class="badge badge-neutral">{{ totalCount() }}</span>
+      <span class="badge badge-neutral" title="Anzahl der gefundenen Records">
+        {{ totalCount() }}
+      </span>
     </div>
-    <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+    <button
+      type="button"
+      class="btn btn-primary"
+      title="Neuen Record anlegen"
+      (click)="openCreateForm()"
+    >
       <svg lucidePlus [size]="15" aria-hidden="true"></svg>
       Anlegen
     </button>

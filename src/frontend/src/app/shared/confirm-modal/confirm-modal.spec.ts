@@ -56,6 +56,20 @@ describe('ConfirmModal', () => {
     expect(cancelledHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('hat Tooltips an Abbrechen- und Bestätigen-Button', () => {
+    // arrange
+    const fixture = createFixture();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const cancelButton = compiled.querySelector('.btn-secondary') as HTMLButtonElement;
+    const confirmButton = compiled.querySelector('.btn-danger') as HTMLButtonElement;
+
+    // assert
+    expect(cancelButton.title).toBe('Abbrechen');
+    expect(confirmButton.title).toBe('Löschen');
+  });
+
   it('zeigt ein alternatives Bestätigen-Label und eine alternative Variante an', () => {
     // arrange
     const fixture = TestBed.createComponent(ConfirmModal);

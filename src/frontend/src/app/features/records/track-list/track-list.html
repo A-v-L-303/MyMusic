@@ -16,7 +16,9 @@
                 <td class="py-1.5">
                   <div class="flex items-center gap-2">
                     <span>{{ track.artistName }} · {{ track.trackName }}</span>
-                    <span class="badge badge-neutral">{{ track.genreName }}</span>
+                    <span class="badge badge-neutral" title="Genre des Tracks">
+                      {{ track.genreName }}
+                    </span>
                   </div>
                   @if (track.information) {
                     <div class="text-xs text-fg-subtle">{{ track.information }}</div>
@@ -28,6 +30,7 @@
                     class="btn btn-ghost btn-icon btn-sm"
                     (click)="onEditClicked(track)"
                     [attr.aria-label]="'Track ' + track.trackName + ' bearbeiten'"
+                    [title]="'Track ' + track.trackName + ' bearbeiten'"
                   >
                     <svg lucidePencil [size]="14" aria-hidden="true"></svg>
                   </button>
@@ -36,6 +39,7 @@
                     class="btn btn-ghost btn-icon btn-sm"
                     (click)="onDeleteClicked(track)"
                     [attr.aria-label]="'Track ' + track.trackName + ' löschen'"
+                    [title]="'Track ' + track.trackName + ' löschen'"
                   >
                     <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
                   </button>

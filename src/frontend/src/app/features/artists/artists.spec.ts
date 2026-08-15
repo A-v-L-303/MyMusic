@@ -84,6 +84,18 @@ describe('Artists', () => {
     expect(compiled(fixture).querySelector('.spinner')).toBeNull();
   });
 
+  it('hat Tooltips am Anzahl-Badge und am Anlegen-Button', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture();
+
+    // assert
+    expect(compiled(fixture).querySelector('.badge')?.getAttribute('title')).toBe(
+      'Anzahl der gefundenen Artists',
+    );
+    expect(findButton(compiled(fixture), 'Anlegen').title).toBe('Neuen Artist anlegen');
+  });
+
   it('filtert live nach Namenseingabe und setzt die Seite dabei zurück', async () => {
     // arrange
     const fixture = await createLoadedFixture();

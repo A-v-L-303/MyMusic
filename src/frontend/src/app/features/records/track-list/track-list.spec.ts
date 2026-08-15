@@ -97,6 +97,7 @@ describe('TrackList', () => {
 
     // assert
     expect(element.textContent).toContain('Jazz');
+    expect(element.querySelector('.badge')?.getAttribute('title')).toBe('Genre des Tracks');
   });
 
   it('zeigt kein Informationsfeld, wenn keine Information hinterlegt ist', () => {
@@ -126,6 +127,25 @@ describe('TrackList', () => {
 
     // assert
     expect(emitted).toEqual(track);
+  });
+
+  it('hat Tooltips an Bearbeiten- und Löschen-Button', () => {
+    // arrange
+    const track = buildTrack({ trackName: 'So What' });
+    const fixture = createFixture([track]);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const editButton = compiled.querySelector(
+      '[aria-label="Track So What bearbeiten"]',
+    ) as HTMLButtonElement;
+    const deleteButton = compiled.querySelector(
+      '[aria-label="Track So What löschen"]',
+    ) as HTMLButtonElement;
+
+    // assert
+    expect(editButton.title).toBe('Track So What bearbeiten');
+    expect(deleteButton.title).toBe('Track So What löschen');
   });
 
   it('emittiert deleteRequested mit dem angeklickten Track', () => {

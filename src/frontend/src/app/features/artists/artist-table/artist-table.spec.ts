@@ -87,6 +87,25 @@ describe('ArtistTable', () => {
     expect(deleteHandler).toHaveBeenCalledWith(artists[0]);
   });
 
+  it('hat Tooltips an Bearbeiten- und Löschen-Button', () => {
+    // arrange
+    const artists: Artist[] = [{ id: 1, name: 'Miles Davis' }];
+    const fixture = createFixture(artists, false);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const editButton = compiled.querySelector(
+      '[aria-label="Artist Miles Davis bearbeiten"]',
+    ) as HTMLButtonElement;
+    const deleteButton = compiled.querySelector(
+      '[aria-label="Artist Miles Davis löschen"]',
+    ) as HTMLButtonElement;
+
+    // assert
+    expect(editButton.title).toBe('Artist Miles Davis bearbeiten');
+    expect(deleteButton.title).toBe('Artist Miles Davis löschen');
+  });
+
   it('reicht pageChange von der eingebetteten Paginierung durch', () => {
     // arrange
     const artists: Artist[] = [{ id: 1, name: 'Miles Davis' }];

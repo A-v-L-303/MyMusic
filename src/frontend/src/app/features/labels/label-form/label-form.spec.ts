@@ -271,6 +271,20 @@ describe('LabelForm', () => {
     expect(savedHandler).not.toHaveBeenCalled();
   });
 
+  it('hat Tooltips an Abbrechen- und Speichern-Button', () => {
+    // arrange
+    const fixture = createFixture();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const cancelButton = compiled.querySelector('.btn-secondary') as HTMLButtonElement;
+    const submitButton = compiled.querySelector('.btn-primary') as HTMLButtonElement;
+
+    // assert
+    expect(cancelButton.title).toBe('Abbrechen');
+    expect(submitButton.title).toBe('Speichern');
+  });
+
   it('emittiert cancelled beim Abbrechen', () => {
     // arrange
     const fixture = createFixture();

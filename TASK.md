@@ -1892,6 +1892,45 @@ reiner Frontend-Fix, kein Backend-Change:
   Live-Prüfung im Browser steht aus (kein laufender Aspire-AppHost
   während der Umsetzung).
 
+## UX-Nachtrag: Tooltips für Badges und Buttons (2026-08-15)
+
+Arbeits-Prompt:
+`docs/prompts/2026-08-15-fix-fehlende-tooltips-badges-buttons.md`.
+
+Beim Live-Test ist aufgefallen, dass Badges und Buttons im gesamten
+Angular-Frontend überwiegend keine Tooltips hatten. Betrifft blockübergreifend
+Genre (Block 2), Label (Block 4), Artist (Block 5), Record/Tracks (Block 6)
+sowie Nav (Block 0g) und den Theme-Umschalter (Block 0f), reiner
+Frontend-Fix, kein Backend-Change:
+
+- Alle `<button>`- und `.badge`-/`.grade`-/`.fmt`-Vorkommen im
+  Angular-Workspace inventarisiert. Tooltips ausschließlich über das native
+  HTML-`title`-Attribut ergänzt (keine neue Library) — Icon-only-Buttons
+  (Bearbeiten/Löschen in den Tabellen und auf der RecordCard, Paginierung,
+  Theme-Umschalter, Modal-Schließen) übernehmen denselben Text wie ihr
+  bereits vorhandenes `aria-label`; Text-Buttons (Anlegen, Abbrechen,
+  Speichern, Login/Logout, Bestätigen in den Modals) bekommen ein `title`,
+  das den sichtbaren Text spiegelt bzw. beim „Anlegen"-Button in den
+  Toolbars präzisiert (z. B. „Neuen Artist anlegen").
+- Anzahl-Badges in den Toolbars erklären jetzt, dass die Zahl die aktuell
+  gefilterten Treffer zählt. Die Goldmine-Grade-Badges (`.grade`, auf der
+  RecordCard und im Detail-Modal) zeigen den ausgeschriebenen Zustandsnamen
+  aus der bereits vorhandenen Konstante `RECORD_CONDITION_LABELS`
+  (`features/records/record.ts`), z. B. „Zustand: Very Good Plus" — die
+  Abkürzungen (VG+, G+, NM, …) sind sonst nicht selbsterklärend.
+- Wiki: neuer Abschnitt „Tooltips" in
+  `02 Wiki/MyMusic Wiki/wiki/architektur/ui-ux-konzept.md` sowie Eintrag in
+  `wiki/log.md`.
+- 353 Frontend-Tests insgesamt, alle grün (334 zuvor + 19 neue
+  Tooltip-Tests). Production-Build grün. `npx prettier --check` meldet
+  projektweit auch für unveränderte Bestandsdateien Formatierungsabweichungen
+  (bekannte, bereits dokumentierte CRLF-Diskrepanz unter Windows,
+  `core.autocrlf=true`; CI prüft das für das Frontend ohnehin nicht) — an den
+  eigenen Änderungen selbst keine darüber hinausgehenden Abweichungen.
+  Zeilenlängen (≤120 Zeichen) der geänderten Zeilen per `git diff` geprüft,
+  keine Überlänge. Manuelle Live-Prüfung im Browser steht aus (kein
+  laufender Aspire-AppHost während der Umsetzung).
+
 ## 7. Authentifizierung und Mandantentrennung
 
 Status: teilweise offen; Block 7a (Angular-Login-Flow) abgeschlossen

@@ -87,6 +87,25 @@ describe('GenreTable', () => {
     expect(deleteHandler).toHaveBeenCalledWith(genres[0]);
   });
 
+  it('hat Tooltips an Bearbeiten- und Löschen-Button', () => {
+    // arrange
+    const genres: Genre[] = [{ id: 1, name: 'Rock' }];
+    const fixture = createFixture(genres, false);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const editButton = compiled.querySelector(
+      '[aria-label="Genre Rock bearbeiten"]',
+    ) as HTMLButtonElement;
+    const deleteButton = compiled.querySelector(
+      '[aria-label="Genre Rock löschen"]',
+    ) as HTMLButtonElement;
+
+    // assert
+    expect(editButton.title).toBe('Genre Rock bearbeiten');
+    expect(deleteButton.title).toBe('Genre Rock löschen');
+  });
+
   it('reicht pageChange von der eingebetteten Paginierung durch', () => {
     // arrange
     const genres: Genre[] = [{ id: 1, name: 'Rock' }];

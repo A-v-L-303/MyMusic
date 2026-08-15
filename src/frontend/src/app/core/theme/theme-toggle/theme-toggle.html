@@ -2,6 +2,7 @@
   type="button"
   class="btn btn-ghost btn-icon btn-sm"
   [attr.aria-label]="ariaLabel()"
+  [title]="ariaLabel()"
   (click)="themeService.toggle()"
 >
   @if (isDark()) {

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RuntimeConfigService } from '../../../core/runtime-config/runtime-config.service';
 import { ErrorModalService } from '../../../shared/error-modal/error-modal.service';
-import { Record, RecordTrack } from '../record';
+import { RECORD_CONDITION_LABELS, Record, RecordTrack } from '../record';
 import { RecordDetail } from './record-detail';
 
 function wait(ms: number): Promise<void> {
@@ -149,6 +149,24 @@ describe('RecordDetail', () => {
     const grade = compiled(fixture).querySelector('.grade') as HTMLElement;
     expect(grade.classList.contains('grade-vgp')).toBe(true);
     expect(grade.textContent?.trim()).toBe('VG+');
+    expect(grade.getAttribute('title')).toBe('Zustand: ' + RECORD_CONDITION_LABELS.VgPlus);
+  });
+
+  it('hat Tooltips am Format-Badge, am Schließen- und am Track-hinzufügen-Button', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture();
+
+    // assert
+    expect(compiled(fixture).querySelector('.badge')?.getAttribute('title')).toBe(
+      'Format des Albums',
+    );
+    expect(
+      (
+        compiled(fixture).querySelector('[aria-label="Schließen"]') as HTMLButtonElement
+      ).title,
+    ).toBe('Schließen');
+    expect(findButton(compiled(fixture), 'Track hinzufügen').title).toBe('Track hinzufügen');
   });
 
   it('navigiert beim Schließen zurück zur Liste', async () => {

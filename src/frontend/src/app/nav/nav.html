@@ -20,6 +20,7 @@
           class="tab"
           [class.is-active]="optionMenuActive()"
           [attr.aria-expanded]="optionMenuOpen()"
+          title="Weitere Bereiche anzeigen"
           (click)="toggleOptionMenu()"
         >
           Option
@@ -70,9 +71,13 @@
         @if (username(); as name) {
           <span class="text-sm text-fg-muted">{{ name }}</span>
         }
-        <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+        <button type="button" class="btn btn-secondary" title="Abmelden" (click)="logout()">
+          Logout
+        </button>
       } @else {
-        <button type="button" class="btn btn-secondary" (click)="login()">Login</button>
+        <button type="button" class="btn btn-secondary" title="Anmelden" (click)="login()">
+          Login
+        </button>
       }
     </div>
   </div>

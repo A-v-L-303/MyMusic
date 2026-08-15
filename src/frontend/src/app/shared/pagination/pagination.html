@@ -6,6 +6,7 @@
       [disabled]="page() === 1"
       (click)="goTo(page() - 1)"
       aria-label="Vorherige Seite"
+      title="Vorherige Seite"
     >
       <svg lucideChevronLeft [size]="16" aria-hidden="true"></svg>
     </button>
@@ -16,6 +17,7 @@
         [class.btn-secondary]="p !== page()"
         [class.btn-primary]="p === page()"
         [attr.aria-current]="p === page() ? 'page' : null"
+        [title]="'Seite ' + p"
         (click)="goTo(p)"
       >
         {{ p }}
@@ -27,6 +29,7 @@
       [disabled]="page() === totalPages()"
       (click)="goTo(page() + 1)"
       aria-label="Nächste Seite"
+      title="Nächste Seite"
     >
       <svg lucideChevronRight [size]="16" aria-hidden="true"></svg>
     </button>

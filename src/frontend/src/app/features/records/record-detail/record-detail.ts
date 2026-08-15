@@ -11,6 +11,7 @@ import { Modal } from '../../../shared/modal/modal';
 import {
   RECORD_CONDITION_GRADE_CLASS,
   RECORD_CONDITION_GRADE_TEXT,
+  RECORD_CONDITION_LABELS,
   RECORD_FORMAT_LABELS,
   Record,
   RecordTrack,
@@ -57,6 +58,11 @@ export class RecordDetail {
   protected readonly formatLabel = computed(() => {
     const record = this.record();
     return record ? RECORD_FORMAT_LABELS[record.format] : '';
+  });
+
+  protected readonly gradeTitle = computed(() => {
+    const record = this.record();
+    return record ? 'Zustand: ' + RECORD_CONDITION_LABELS[record.condition] : '';
   });
 
   protected readonly trackFormOpen = signal(false);

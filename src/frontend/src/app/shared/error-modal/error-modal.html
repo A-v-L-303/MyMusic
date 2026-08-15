@@ -11,10 +11,19 @@
     <div class="modal-body">{{ current.message }}</div>
     <div class="modal-foot">
       @if (current.kind === 'network') {
-        <button type="button" class="btn btn-secondary" (click)="onClosed()">Schließen</button>
-        <button type="button" class="btn btn-primary" (click)="onRetry()">Erneut versuchen</button>
+        <button type="button" class="btn btn-secondary" title="Schließen" (click)="onClosed()">
+          Schließen
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          title="Erneut versuchen"
+          (click)="onRetry()"
+        >
+          Erneut versuchen
+        </button>
       } @else {
-        <button type="button" class="btn btn-primary" (click)="onClosed()">OK</button>
+        <button type="button" class="btn btn-primary" title="OK" (click)="onClosed()">OK</button>
       }
     </div>
   </app-modal>

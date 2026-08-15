@@ -34,6 +34,7 @@ describe('ThemeToggle', () => {
     // assert
     const button = (fixture.nativeElement as HTMLElement).querySelector('button');
     expect(button?.getAttribute('aria-label')).toBe('Zum dunklen Design wechseln');
+    expect(button?.title).toBe('Zum dunklen Design wechseln');
     expect(button?.textContent?.trim()).toBe('');
   });
 
@@ -48,6 +49,7 @@ describe('ThemeToggle', () => {
     // assert
     const button = (fixture.nativeElement as HTMLElement).querySelector('button');
     expect(button?.getAttribute('aria-label')).toBe('Zum hellen Design wechseln');
+    expect(button?.title).toBe('Zum hellen Design wechseln');
     expect(button?.textContent?.trim()).toBe('');
   });
 

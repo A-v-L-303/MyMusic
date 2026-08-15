@@ -103,6 +103,40 @@ describe('ErrorModal', () => {
     expect(service.current()).toBeNull();
   });
 
+  it('hat Tooltips an Schließen- und Erneut-versuchen-Button bei Netzwerkfehler', () => {
+    // arrange
+    service.showFromHttpError(new HttpErrorResponse({ status: 0 }), 'Genre');
+    const fixture = TestBed.createComponent(ErrorModal);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const buttons = Array.from(compiled.querySelectorAll('button')) as HTMLButtonElement[];
+
+    // assert
+    expect(buttons.find((button) => button.textContent?.includes('Schließen'))?.title).toBe(
+      'Schließen',
+    );
+    expect(
+      buttons.find((button) => button.textContent?.includes('Erneut versuchen'))?.title,
+    ).toBe('Erneut versuchen');
+  });
+
+  it('hat einen Tooltip am OK-Button', () => {
+    // arrange
+    service.showFromHttpError(new HttpErrorResponse({ status: 404 }), 'Genre');
+    const fixture = TestBed.createComponent(ErrorModal);
+    fixture.detectChanges();
+
+    // act
+    const okButton = (fixture.nativeElement as HTMLElement).querySelector(
+      '.btn-primary',
+    ) as HTMLButtonElement;
+
+    // assert
+    expect(okButton.title).toBe('OK');
+  });
+
   it('schließt den Fehler beim Klick auf OK', () => {
     // arrange
     service.showFromHttpError(new HttpErrorResponse({ status: 404 }), 'Genre');

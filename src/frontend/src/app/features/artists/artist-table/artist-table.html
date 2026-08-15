@@ -24,6 +24,7 @@
                   class="btn btn-ghost btn-icon btn-sm"
                   (click)="editRequested.emit(artist)"
                   [attr.aria-label]="'Artist ' + artist.name + ' bearbeiten'"
+                  [title]="'Artist ' + artist.name + ' bearbeiten'"
                 >
                   <svg lucidePencil [size]="15" aria-hidden="true"></svg>
                 </button>
@@ -32,6 +33,7 @@
                   class="btn btn-ghost btn-icon btn-sm"
                   (click)="deleteRequested.emit(artist)"
                   [attr.aria-label]="'Artist ' + artist.name + ' löschen'"
+                  [title]="'Artist ' + artist.name + ' löschen'"
                 >
                   <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
                 </button>
