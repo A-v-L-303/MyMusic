@@ -24,6 +24,7 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
     .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", keycloakAdminPassword)
     .WithEnvironment("KC_HEALTH_ENABLED", "true")
     .WithBindMount("../../keycloak", "/opt/keycloak/data/import", isReadOnly: true)
+    .WithBindMount("../../keycloak/themes/mymusic", "/opt/keycloak/themes/mymusic", isReadOnly: true)
     .WithArgs("start-dev", "--import-realm")
     .WithHttpHealthCheck("/health/ready", endpointName: "management");
 

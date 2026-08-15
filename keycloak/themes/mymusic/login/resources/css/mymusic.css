@@ -1,0 +1,157 @@
+/* MyMusic Keycloak-Login-Theme.
+   Baut auf dem PatternFly-v5-basierten Standard-Login-Theme "keycloak.v2" auf
+   (theme.properties: parent=keycloak.v2). Statt einzelne Komponenten-Selektoren
+   zu überschreiben, werden primär die globalen PatternFly-CSS-Variablen auf die
+   MyMusic-Design-Tokens (src/frontend/src/styles/design-system/colors_and_type.css)
+   gemappt — robuster gegen künftige PatternFly-Markup-Änderungen. Dark Mode nutzt
+   denselben Mechanismus wie das Parent-Theme (Klasse "pf-v5-theme-dark" auf <html>,
+   von template.ftl per prefers-color-scheme gesetzt, siehe theme.properties
+   darkMode=true) — hier werden nur die Farbwerte innerhalb dieser Klasse ersetzt. */
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --mm-bg-page: #f6f7f8;
+  --mm-bg-surface: #ffffff;
+  --mm-border: #e3e6e8;
+  --mm-fg: #14181a;
+  --mm-fg-muted: #5b6469;
+  --mm-accent-solid: #059669;
+  --mm-accent-solid-hover: #047857;
+  --mm-link: #047857;
+  --mm-link-hover: #059669;
+  --mm-radius-xl: 14px;
+  --mm-shadow-lg: 0 16px 40px rgba(16, 24, 28, 0.16), 0 4px 12px rgba(16, 24, 28, 0.08);
+
+  /* Absichtlich beibehalten, falls PatternFly-Komponenten diese Globalvariable
+     direkt konsumieren. Der Fokus-Rahmen der Formularfelder tut das live geprüft
+     NICHT (bindet stattdessen an eine eigene, unbekannte Dark-Mode-Variante) —
+     bleibt bewusst blau, siehe Risiken im Arbeits-Prompt (kosmetische Abweichung,
+     kein Blocker). */
+  --pf-v5-global--primary-color--100: var(--mm-accent-solid);
+}
+
+/* Höhere Spezifität als ":root" (Typ- + Klassenselektor statt reinem Pseudoselektor)
+   ist hier notwendig: PatternFly setzt die Klasse "pf-v5-theme-dark" per JS auf
+   <html> (siehe template.ftl), ":where(.pf-v5-theme-dark)" hätte Spezifität 0 und
+   würde vom eigenen ":root"-Block oben verloren gehen — live geprüft. */
+html.pf-v5-theme-dark {
+  --mm-bg-page: #0d1011;
+  --mm-bg-surface: #15191b;
+  --mm-border: #262c2f;
+  --mm-fg: #e9edee;
+  --mm-fg-muted: #9aa3a6;
+  --mm-accent-solid: #10b981;
+  --mm-accent-solid-hover: #34d399;
+  --mm-link: #34d399;
+  --mm-link-hover: #6ee7b7;
+  --mm-shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.65), 0 6px 14px rgba(0, 0, 0, 0.5);
+
+  --pf-v5-global--primary-color--100: var(--mm-accent-solid);
+}
+
+html,
+body {
+  background: var(--mm-bg-page);
+}
+
+body {
+  font-family: "Inter", system-ui, "Segoe UI", sans-serif;
+}
+
+/* Struktur-Layout des Parent-Themes ("keycloak.v2/login/resources/css/styles.css"),
+   ausschließlich die Grid-Definition — der Rest dieser Datei (vollflächiges
+   Hintergrundbild, Großbuchstaben-Header mit !important) wird bewusst NICHT
+   übernommen (siehe ADR 0014). Ohne diese Regel steht der Marken-Header nicht
+   über der Karte, sondern wird frei im Grid platziert — live geprüft. */
+.pf-v5-c-login__container {
+  grid-template-columns: 34rem;
+  grid-template-areas: "header" "main";
+}
+
+/* Kopfbereich: Markenzeichen + Wortmarke statt des zentrierten Realm-Titels aus
+   dem Parent-Theme. */
+.mymusic-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-block: 24px;
+}
+
+.mymusic-mark {
+  display: block;
+}
+
+.mymusic-brand-word {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--mm-fg);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Direkte Eigenschaften statt PatternFly-Globalvariablen: Dark Mode bindet
+   mehrere Komponentenfarben (Karten-Hintergrund, Primärbutton) intern an eigene,
+   anders benannte "--dark-100"/"--300"-Varianten statt nur die Werte der
+   "--100"-Variablen zu tauschen — ein reines Überschreiben von z. B.
+   "--pf-v5-global--primary-color--100" griff deshalb im Dark Mode nicht
+   durchgängig (live geprüft). Direkte Property-Overrides auf den konkreten
+   Komponentenselektoren sind robuster und unabhängig von dieser internen
+   Verkettung. */
+.pf-v5-c-login__main {
+  background-color: var(--mm-bg-surface);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-radius-xl);
+  box-shadow: var(--mm-shadow-lg);
+}
+
+.pf-v5-c-login__main-header {
+  border-top: none;
+}
+
+.pf-v5-c-title,
+#kc-page-title {
+  color: var(--mm-fg);
+}
+
+.pf-v5-c-form__label-text,
+.pf-v5-c-helper-text__item-text {
+  color: var(--mm-fg-muted);
+}
+
+a,
+a:visited {
+  color: var(--mm-link);
+}
+
+a:hover {
+  color: var(--mm-link-hover);
+}
+
+.pf-v5-c-button.pf-m-primary {
+  background-color: var(--mm-accent-solid);
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:focus {
+  background-color: var(--mm-accent-solid-hover);
+}
+
+.pf-v5-c-form-control:focus {
+  border-color: var(--mm-accent-solid);
+}

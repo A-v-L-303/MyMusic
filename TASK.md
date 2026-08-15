@@ -35,7 +35,10 @@ nach `main` gemergt; Block 6i (Cover-Upload im Records-Formular,
 PR #61) umgesetzt, live verifiziert und nach `main` gemergt; Block 6j
 (Tracks, Track-CRUD in der Detailansicht, PR #63) umgesetzt, live
 verifiziert und nach `main` gemergt — Records-Frontend damit vollständig,
-Block 6 (Backend+Frontend) fachlich vollständig.
+Block 6 (Backend+Frontend) fachlich vollständig; Block 7f
+(Keycloak-Login-Theme „mymusic", siehe Abschnitt 7f) umgesetzt und live
+verifiziert, noch nicht committet und nicht nach `main` gemergt (Branch
+`block-7f-keycloak-login-theme`).
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -60,7 +63,7 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d, 0e, 0c, 0f, 0g und 7a sind abgeschlossen. Offen aus
+Block 0a, 0b, 0d, 0e, 0c, 0f, 0g, 7a und 7f sind abgeschlossen. Offen aus
 dem MVP-Umfang der Phase 1:
 
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
@@ -85,8 +88,9 @@ dem MVP-Umfang der Phase 1:
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
-  Limiting, CORS-Production-Whitelist, CSP, Keycloak-Custom-Theme der
-  Anmeldeseite (siehe Abschnitt 7).
+  Limiting, CORS-Production-Whitelist, CSP (siehe Abschnitt 7; das
+  Keycloak-Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit
+  Block 7f erledigt).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -1933,7 +1937,8 @@ Frontend-Fix, kein Backend-Change:
 
 ## 7. Authentifizierung und Mandantentrennung
 
-Status: teilweise offen; Block 7a (Angular-Login-Flow) abgeschlossen
+Status: teilweise offen; Block 7a (Angular-Login-Flow) und Block 7f
+(Keycloak-Custom-Theme der Anmeldeseite) abgeschlossen
 Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
@@ -2051,12 +2056,78 @@ Aufgaben (noch offen):
 - Rate Limiting (100 req/min pro Benutzer), CORS-Production-Whitelist, CSP.
 - Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
-- Keycloak-Custom-Theme der Anmeldeseite (US-AU8).
 
 Abnahmekriterium (Gesamtabschnitt 7):
 
 - Ohne Login ist kein fachlicher Endpunkt erreichbar; Benutzer sehen
   ausschließlich eigene Daten; der Admin kann Benutzer löschen.
+
+### 7f. Keycloak-Custom-Theme der Anmeldeseite
+
+Status: **abgeschlossen** (2026-08-15)
+Arbeits-Prompt: `docs/prompts/2026-08-15-block-7f-keycloak-login-theme.md`
+
+Umgesetzt:
+
+- Eigenes Keycloak-Login-Theme `mymusic` unter `keycloak/themes/mymusic/login/`
+  (`parent=keycloak.v2`, nur Theme-Typ `login`): `theme.properties`,
+  `template.ftl` (1:1-Kopie aus dem realen `quay.io/keycloak/keycloak:26.5`-Image,
+  Header um `mark.svg` + Wortmarke „MyMusic" ergänzt), `resources/css/mymusic.css`
+  (Emerald-Akzent, Neutraltöne, Inter, Karten-/Button-/Titel-Farben für Light und
+  Dark Mode), `resources/img/mark.svg` (Kopie aus `src/frontend/public/mark.svg`),
+  `resources/fonts/inter-latin-{400,600}-normal.woff2` (Kopie aus dem bereits
+  installierten `@fontsource/inter`-Paket, kein CDN, keine neue Abhängigkeit).
+- `keycloak/mymusic-realm.json`: `"loginTheme": "mymusic"` sowie
+  `"internationalizationEnabled": true`, `"supportedLocales": ["de"]`,
+  `"defaultLocale": "de"` ergänzt — Letzteres auf Wunsch des Projektinhabers
+  während der Live-Prüfung nachgezogen (Keycloak lieferte ohne aktivierte
+  Internationalisierung ausschließlich englische Standardtexte; deutsche
+  Übersetzungen bringt Keycloak für den Theme-Typ `login` bereits mit).
+- `src/MyMusic.AppHost/AppHost.cs`: zusätzlicher Bind-Mount
+  `.WithBindMount("../../keycloak/themes/mymusic", "/opt/keycloak/themes/mymusic", isReadOnly: true)`
+  auf der `keycloak`-Ressource, analog zum bestehenden Realm-Import-Bind-Mount.
+- ADR `docs/adr/0014-keycloak-login-theme.md`.
+- Der genaue Keycloak-26.5-Theming-Mechanismus (Parent-Theme-Name,
+  CSS-Ladereihenfolge, PatternFly-Variablenbindung) wurde nicht aus Doku
+  übernommen, sondern am realen Image empirisch geprüft
+  (`docker create`/`docker cp` der Themes-JARs, temporär, `--rm`).
+
+Live verifiziert über den Aspire-AppHost (Browser, `claude-in-chrome`):
+
+- Realm-Import ohne Fehler, Theme `mymusic` wird erkannt.
+- Marke (`mark.svg`) + Wortmarke „MyMusic" sichtbar, Emerald-Akzent auf dem
+  Primärbutton, Inter-Font geladen (kein Google-Fonts-Request), Kartenlayout,
+  Light- und Dark-Mode (`prefers-color-scheme`) beide korrekt.
+- Fehleranmeldung (falsches Passwort) zeigt die MyMusic-gestylte Fehlermeldung,
+  jetzt auf Deutsch („Ungültiger Benutzername oder Passwort.").
+- Bei der ersten Live-Prüfung zwei echte Bugs gefunden und behoben: Die
+  Grid-Layout-Regel `.pf-v5-c-login__container` aus dem Parent-Theme fehlte
+  (Marken-Header stand frei statt über der Karte) — gezielt nachgezogen, ohne
+  den Rest der ausgeschlossenen `styles.css` zu übernehmen. Der
+  Dark-Mode-Selektor `:where(.pf-v5-theme-dark)` hatte Spezifität 0 und verlor
+  gegen den eigenen `:root`-Block — auf `html.pf-v5-theme-dark` (Typ- +
+  Klassenselektor) korrigiert.
+- Bekannte kosmetische Abweichung: Der Fokus-Rahmen der Formularfelder bleibt
+  PatternFly-Blau statt Emerald (zuständige interne PatternFly-Variable im
+  Dark Mode nicht gefunden, kein Blocker für US-AU8).
+- Wichtiger Betriebshinweis: `--import-realm` überspringt bereits importierte
+  Realms (`IGNORE_EXISTING`). In lokalen Entwicklungsumgebungen mit
+  bestehendem `mymusic-keycloak-data`-Volume wirken `loginTheme` und die
+  Internationalisierungs-Felder aus der JSON deshalb nicht automatisch —
+  einmalig manuell nachziehen (Admin-Konsole oder
+  `kcadm.sh update realms/mymusic -s <feld>=<wert>`).
+
+Bewusst nicht Teil dieses Standes:
+
+- `account`- oder `email`-Theme (nur `login`, siehe ADR 0014).
+- Sprachumschalter (nur `de` unterstützt, wie die Angular-Anwendung selbst).
+- Korrektur des Fokus-Rahmen-Farbtons (siehe oben, kosmetisch).
+
+Abnahmekriterium erfüllt:
+
+- Die Keycloak-Anmeldeseite verwendet ein eigenes Theme statt des
+  Standard-Themes, Farben/Typografie entsprechen den Design-Tokens, Marke und
+  Wortmarke erscheinen auf der Seite — live im Browser geprüft.
 
 ## 8. Discogs-Integration
 
