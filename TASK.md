@@ -1928,8 +1928,8 @@ Frontend-Fix, kein Backend-Change:
   `core.autocrlf=true`; CI prüft das für das Frontend ohnehin nicht) — an den
   eigenen Änderungen selbst keine darüber hinausgehenden Abweichungen.
   Zeilenlängen (≤120 Zeichen) der geänderten Zeilen per `git diff` geprüft,
-  keine Überlänge. Manuelle Live-Prüfung im Browser steht aus (kein
-  laufender Aspire-AppHost während der Umsetzung).
+  keine Überlänge. Manuelle Live-Prüfung im Browser durch den
+  Projektinhaber erfolgt und bestätigt.
 
 ## 7. Authentifizierung und Mandantentrennung
 
