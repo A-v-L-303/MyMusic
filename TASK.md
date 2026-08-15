@@ -34,15 +34,15 @@ reiner Lesemodus mit Tracklist, PR #59) umgesetzt, live verifiziert und
 nach `main` gemergt; Block 6i (Cover-Upload im Records-Formular,
 PR #61) umgesetzt, live verifiziert und nach `main` gemergt; Block 6j
 (Tracks, Track-CRUD in der Detailansicht) umgesetzt und live verifiziert,
-PR steht noch aus — Records-Frontend damit vollständig, Block 6
+PR #63 offen — Records-Frontend damit vollständig, Block 6
 (Backend+Frontend) fachlich vollständig.
 Branch: `block-6j-tracks-frontend` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
-Block 6h per PR #59, Block 6i per PR #61 nach `main` gemergt; Block 6j noch
-offen)
+Block 6h per PR #59, Block 6i per PR #61 nach `main` gemergt; Block 6j per
+PR #63 noch offen)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -1778,7 +1778,7 @@ Abnahmekriterium:
 ### 6j. Tracks (Track-CRUD in der Detailansicht)
 
 Status: **abgeschlossen** (2026-08-15), automatisiert und live verifiziert,
-PR noch offen.
+PR #63 offen.
 Branch: `block-6j-tracks-frontend`
 Arbeits-Prompt: `docs/prompts/2026-08-15-block-6j-tracks-frontend.md`
 
