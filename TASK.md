@@ -30,15 +30,15 @@ Record-Formular anlegen" mit Anpassungen an `shared/modal/`,
 `shared/autocomplete/`, `shared/confirm-modal/` und `LabelForm.saved`)
 umgesetzt, live verifiziert und nach `main` gemergt; Block 6h
 (Record-Detailansicht als Modal über der Liste, Kind-Route `/records/:id`,
-reiner Lesemodus mit Tracklist) umgesetzt und live verifiziert, siehe
-Abschnitt 6h — noch nicht committet/gemergt.
+reiner Lesemodus mit Tracklist, PR #59) umgesetzt, live verifiziert und
+nach `main` gemergt.
 Blöcke 6i–6j (Cover-Upload, Tracks) sind geplant, aber noch nicht begonnen)
-Branch: `block-6h-angular-records-detail` (Block 6b per PR #30, Block 6c per
+Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
-per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57
-nach `main` gemergt; Block 6h noch offen)
+per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
+Block 6h per PR #59 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -56,8 +56,7 @@ Feature-Roadmap und aktuellem Repository-Stand.
 
 ## Aktuell nicht umgesetzt
 
-Block 0a, 0b, 0d, 0e, 0c, 0f, 0g und 7a sind abgeschlossen. Block 6h ist
-umgesetzt und live verifiziert, aber noch nicht committet/gemergt. Offen aus
+Block 0a, 0b, 0d, 0e, 0c, 0f, 0g und 7a sind abgeschlossen. Offen aus
 dem MVP-Umfang der Phase 1:
 
 - CRUD-Slices für Record und Tracks (Genre-, Country-, Label- und
@@ -1562,7 +1561,7 @@ Bestätigen legt an und übernimmt, keine Konsolenfehler.
 
 ### 6h. Record-Detailansicht
 
-Status: **abgeschlossen** (2026-08-15)
+Status: **abgeschlossen** (2026-08-15), PR #59 nach `main` gemergt
 Arbeits-Prompt: `docs/prompts/2026-08-15-block-6h-angular-records-detail.md`
 
 Anlass: Dritter der fünf Teilblöcke 6f–6j (siehe Abschnitt 6f). Deckt US-R7
@@ -1623,6 +1622,20 @@ Umgesetzt:
   =true` unter Windows (CRLF-Checkout vs. Prettier-Default `lf`), kein
   durch diesen Block verursachtes Problem; das CI-Gate läuft auf Linux und
   ist davon nicht betroffen).
+
+Nachtrag (2026-08-15, vor dem Merge im selben PR behoben): Der Projektinhaber
+fand beim Live-Test einen Anzeigefehler in `track-list.html` — je Track
+erschien „Künstler · Genre" statt „Künstler · Trackname". Der Design-
+Prototyp-Screenshot zeigt pro Track nur Nummer, Trackname und Dauer, kein
+Genre; die Genre-Anzeige war eine eigene, nicht aus dem Screenshot
+abgeleitete Ergänzung. Korrigiert auf „Künstler · Trackname" je Zeile,
+Genre entfällt aus der Tracklist-Darstellung. Dabei zusätzlich ein
+Dokumentationsfehler richtiggestellt: `Record` hat kein eigenes Genre-Feld
+(nur die zugehörigen Tracks haben eins) — ein an mehreren Stellen
+fälschlich erwähntes „Genre-Badge" auf Record-Ebene existiert im Code
+nicht und wurde aus der Doku entfernt. Neuer Testfall in
+`track-list.spec.ts` stellt sicher, dass kein Genre mehr angezeigt wird.
+289 Frontend-Tests insgesamt, alle grün.
 
 Bewusst nicht Teil dieses Standes:
 
