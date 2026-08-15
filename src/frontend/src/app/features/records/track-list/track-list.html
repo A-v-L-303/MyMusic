@@ -19,6 +19,24 @@
                     <div class="text-xs text-fg-subtle">{{ track.information }}</div>
                   }
                 </td>
+                <td class="w-16 py-1.5 text-right">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon btn-sm"
+                    (click)="onEditClicked(track)"
+                    [attr.aria-label]="'Track ' + track.trackName + ' bearbeiten'"
+                  >
+                    <svg lucidePencil [size]="14" aria-hidden="true"></svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-icon btn-sm"
+                    (click)="onDeleteClicked(track)"
+                    [attr.aria-label]="'Track ' + track.trackName + ' löschen'"
+                  >
+                    <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                  </button>
+                </td>
               </tr>
             }
           </tbody>

@@ -5,10 +5,13 @@ import { Observable } from 'rxjs';
 import { RuntimeConfigService } from '../../core/runtime-config/runtime-config.service';
 import {
   CreateRecordRequest,
+  CreateTrackRequest,
   Record,
   RecordFormat,
   RecordListResponse,
+  RecordTrack,
   UpdateRecordRequest,
+  UpdateTrackRequest,
 } from './record';
 
 @Injectable({ providedIn: 'root' })
@@ -95,5 +98,21 @@ export class RecordService {
     formData.append('file', file);
 
     return this.http.post<Record>(`${this.baseUrl}/${id}/cover`, formData);
+  }
+
+  createTrack(recordId: number, request: CreateTrackRequest): Observable<RecordTrack> {
+    return this.http.post<RecordTrack>(`${this.baseUrl}/${recordId}/tracks`, request);
+  }
+
+  updateTrack(
+    recordId: number,
+    trackId: number,
+    request: UpdateTrackRequest,
+  ): Observable<RecordTrack> {
+    return this.http.put<RecordTrack>(`${this.baseUrl}/${recordId}/tracks/${trackId}`, request);
+  }
+
+  deleteTrack(recordId: number, trackId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${recordId}/tracks/${trackId}`);
   }
 }

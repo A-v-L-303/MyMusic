@@ -32,14 +32,17 @@ umgesetzt, live verifiziert und nach `main` gemergt; Block 6h
 (Record-Detailansicht als Modal über der Liste, Kind-Route `/records/:id`,
 reiner Lesemodus mit Tracklist, PR #59) umgesetzt, live verifiziert und
 nach `main` gemergt; Block 6i (Cover-Upload im Records-Formular,
-PR #61) umgesetzt, live verifiziert und nach `main` gemergt.
-Block 6j (Tracks) ist geplant, aber noch nicht begonnen)
-Branch: `main` (Block 6b per PR #30, Block 6c per
+PR #61) umgesetzt, live verifiziert und nach `main` gemergt; Block 6j
+(Tracks, Track-CRUD in der Detailansicht) umgesetzt und live verifiziert,
+PR #63 offen — Records-Frontend damit vollständig, Block 6
+(Backend+Frontend) fachlich vollständig.
+Branch: `block-6j-tracks-frontend` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
-Block 6h per PR #59, Block 6i per PR #61 nach `main` gemergt)
+Block 6h per PR #59, Block 6i per PR #61 nach `main` gemergt; Block 6j per
+PR #63 noch offen)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -76,7 +79,9 @@ dem MVP-Umfang der Phase 1:
   ersetzt, siehe Abschnitt 6f, mit Block 6g Anlegen/Bearbeiten/Löschen
   erhalten, siehe Abschnitt 6g, und mit Block 6h die Detailansicht als
   Modal erhalten, siehe Abschnitt 6h, und mit Block 6i den Cover-Upload,
-  siehe Abschnitt 6i; Tracks (Block 6j) sind geplant, aber noch offen).
+  siehe Abschnitt 6i; mit Block 6j (Tracks, Track-CRUD in der
+  Detailansicht) umgesetzt und live verifiziert, siehe Abschnitt 6j — PR
+  steht noch aus, das Records-Frontend ist damit vollständig).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -1769,6 +1774,102 @@ Abnahmekriterium:
   fehlgeschlagener Cover-Upload verhindert nicht das Speichern des Records.
   **Vollständig erfüllt** — automatisierte Tests grün und zusätzlich live
   im Browser gegen den laufenden Aspire-AppHost verifiziert (siehe oben).
+
+### 6j. Tracks (Track-CRUD in der Detailansicht)
+
+Status: **abgeschlossen** (2026-08-15), automatisiert und live verifiziert,
+PR #63 offen.
+Branch: `block-6j-tracks-frontend`
+Arbeits-Prompt: `docs/prompts/2026-08-15-block-6j-tracks-frontend.md`
+
+Anlass: Letzter der fünf Teilblöcke 6f–6j (siehe Abschnitt 6f). Deckt
+US-T1–T3 (Track hinzufügen/bearbeiten/löschen) ab. Das Track-Backend
+(`POST/PUT/DELETE /api/records/{id}/tracks[/{trackId}]`) war seit Block 6c
+bereits vollständig vorhanden — reiner Frontend-Block, **keine
+Backend-Änderung**.
+
+Klärung mit dem Projektinhaber während der Planung (Wiki/Code-Konflikt, siehe
+`wiki/architektur/api-endpunkte.md`, Klärung 2026-08-15): Die Wiki-Klärung
+vom 2026-08-14 sah `/all`-Dropdowns für **beide** Fremdschlüssel (Artist und
+Genre) in „RecordTrack-Formularen" vor. Das bereits umgesetzte `RecordForm`
+weicht davon für Label/Artist bereits ab (Autocomplete statt Dropdown). Für
+das Track-Formular gilt: **Genre** über `GET /api/genres/all` als
+`<select>`-Dropdown (kleine Liste, folgt dem Wiki-Zweck), **Artist** über
+Autocomplete mit `getPaged` (konsistent zum bereits etablierten Artist-Feld
+in `RecordForm`). Kein Inline-„Artist neu anlegen"-Flow im Track-Formular
+(anders als `RecordForm`) — die User Stories verlangen dafür keine
+Anlage-Möglichkeit, nur eine Inline-Fehlermeldung bei ungültiger Referenz.
+
+Umgesetzt:
+
+- `features/genres/genre.service.ts`: `getAll()` ergänzt, ruft den seit
+  Block 6e bestehenden, im Frontend bislang ungenutzten Endpunkt
+  `GET /api/genres/all` auf (Muster: `CountryService.getAll()`).
+- `features/records/record.ts`: `CreateTrackRequest`/`UpdateTrackRequest`
+  ergänzt.
+- `features/records/record.service.ts`: `createTrack`/`updateTrack`/
+  `deleteTrack` ergänzt (Muster: `uploadCover`).
+- `features/records/track-form/` (neu): `TrackForm` — Signal-Forms-Formular
+  kombiniert das Create/Edit-Muster aus `GenreForm` mit dem
+  Artist-Autocomplete-Block aus `RecordForm`; Genre als natives `<select>`
+  über `GenreService.getAll()`. Validierung (Zeichensatz, Längen,
+  Tracknummer ≥ 1) exakt gegen die Backend-Validatoren
+  (`RecordTrackEntity`, `CreateRecordTrackCommandValidator`) abgeglichen.
+  400-Feldfehler werden inline zugeordnet, 404/409/500 gehen an
+  `ErrorModalService` (Konflikt bei doppelter Seite/Nummer-Kombination damit
+  korrekt als Modal, nicht inline).
+- `features/records/track-list/`: `TrackList` um `editRequested`/
+  `deleteRequested`-Outputs und Icon-Buttons je Zeile erweitert (Muster:
+  `RecordCard`) — bleibt sonst reine Anzeige.
+- `features/records/record-detail/`: `RecordDetail` (bisher reiner
+  Lesemodus, Block 6h) um „Track hinzufügen"-Button, verschachteltes
+  `TrackForm`-Modal und `ConfirmModal` für das Löschen erweitert (gleiches
+  Verschachtelungsmuster wie `LabelForm`/`ConfirmModal` in `RecordForm`);
+  nach jeder Track-Änderung wird die bestehende `recordResource` neu
+  geladen. Record selbst bleibt weiterhin nicht aus dem Modal heraus
+  bearbeit-/löschbar (dafür bleiben die Icons auf `RecordCard` zuständig,
+  unverändert seit Block 6h).
+- Tests ergänzt: `genre.service.spec.ts` (`getAll`), `record.service.spec.ts`
+  (`createTrack`/`updateTrack`/`deleteTrack`, 409-Fehler-Durchreichung),
+  `track-list.spec.ts` (neue Outputs), `track-form.spec.ts` (neu, 20 Fälle:
+  Vorbefüllung, alle Validierungsregeln, Create/Update, 400-Feldzuordnung,
+  409/404 → Modal), `record-detail.spec.ts` (Add-Button öffnet Formular,
+  Bearbeiten-Icon öffnet vorbefüllt, Löschen mit Bestätigung inkl. Reload,
+  Abbrechen ohne HTTP-Aufruf; bestehender „reiner Lesemodus"-Test für die
+  Record-Ebene bleibt unverändert grün, zusätzlich mit vorhandenen Tracks
+  erneut geprüft). 332 Frontend-Tests insgesamt, alle grün. Production-Build
+  grün, Prettier-Check grün.
+
+Live-Verifikation (2026-08-15, gegen den laufenden Aspire-AppHost, Login als
+`testuser`): Track zu einem Record ohne Tracks hinzugefügt (Künstler über
+Autocomplete, Genre über das neue Dropdown, Seite/Nummer) → erscheint sofort
+in der Tracklist; zweiter Track mit identischer Seite/Nummer-Kombination →
+409-Konflikt-Modal mit serverseitig formulierter Meldung, kein
+Tracklist-Eintrag; dritter Track mit Seite „B" → beide Tracks korrekt nach
+Seite gruppiert; Bearbeiten-Icon öffnet das Formular vollständig vorbefüllt
+(Künstler, Genre, Trackname, Seite, Nummer), Namensänderung wird nach
+Speichern sofort in der Tracklist sichtbar; Löschen-Icon öffnet die
+Sicherheitsabfrage mit korrektem Tracknamen, Bestätigen entfernt den Track
+und lädt neu; Pflichtfeld-Inline-Fehler (z. B. leerer Trackname nach Blur)
+erscheinen korrekt in Rot. Browser-Konsole zeigte während des gesamten
+Ablaufs keine unerwarteten Fehler (nur das erwartete Dev-Mode-Logging des
+absichtlich ausgelösten 409-Fehlers). Test-Track nach der Prüfung wieder
+gelöscht, Ausgangszustand („Noch keine Tracks vorhanden") wiederhergestellt.
+
+Bewusst nicht Teil dieses Standes:
+
+- Kein Inline-„Artist neu anlegen"-Flow im Track-Formular (siehe Klärung
+  oben).
+- `/labels/all`/`/artists/all` bleiben weiterhin ungenutzt (nur
+  `/genres/all` wird in diesem Block erstmals konsumiert).
+
+Abnahmekriterium:
+
+- Tracks lassen sich zu einem eigenen Record hinzufügen, bearbeiten und
+  löschen; fremde Referenzen (Artist/Genre/Record/Track) liefern 400/404;
+  doppelte Seite/Nummer-Kombination liefert 409 als Modal. **Vollständig
+  erfüllt** — automatisierte Tests grün und zusätzlich live im Browser gegen
+  den laufenden Aspire-AppHost verifiziert (siehe oben).
 
 ## 7. Authentifizierung und Mandantentrennung
 

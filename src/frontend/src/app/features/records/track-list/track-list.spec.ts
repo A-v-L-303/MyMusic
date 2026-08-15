@@ -109,4 +109,40 @@ describe('TrackList', () => {
     // assert
     expect(element.querySelector('.text-fg-subtle')).toBeNull();
   });
+
+  it('emittiert editRequested mit dem angeklickten Track', () => {
+    // arrange
+    const track = buildTrack({ trackName: 'So What' });
+    const fixture = createFixture([track]);
+    let emitted: RecordTrack | undefined;
+    fixture.componentInstance.editRequested.subscribe((value) => (emitted = value));
+
+    // act
+    (
+      fixture.nativeElement.querySelector(
+        '[aria-label="Track So What bearbeiten"]',
+      ) as HTMLButtonElement
+    ).click();
+
+    // assert
+    expect(emitted).toEqual(track);
+  });
+
+  it('emittiert deleteRequested mit dem angeklickten Track', () => {
+    // arrange
+    const track = buildTrack({ trackName: 'So What' });
+    const fixture = createFixture([track]);
+    let emitted: RecordTrack | undefined;
+    fixture.componentInstance.deleteRequested.subscribe((value) => (emitted = value));
+
+    // act
+    (
+      fixture.nativeElement.querySelector(
+        '[aria-label="Track So What löschen"]',
+      ) as HTMLButtonElement
+    ).click();
+
+    // assert
+    expect(emitted).toEqual(track);
+  });
 });

@@ -24,6 +24,10 @@ export class GenreService {
     return this.http.get<GenreListResponse>(this.baseUrl, { params });
   }
 
+  getAll(): Observable<Genre[]> {
+    return this.http.get<Genre[]>(`${this.baseUrl}/all`);
+  }
+
   create(request: CreateGenreRequest): Observable<Genre> {
     return this.http.post<Genre>(this.baseUrl, request);
   }

@@ -42,7 +42,33 @@
       @if (record.information) {
         <p class="mb-3">{{ record.information }}</p>
       }
-      <app-track-list [tracks]="record.tracks" />
+      <app-track-list
+        [tracks]="record.tracks"
+        (editRequested)="onEditTrackRequested($event)"
+        (deleteRequested)="onDeleteTrackRequested($event)"
+      />
+      <button type="button" class="btn btn-secondary btn-sm mt-3" (click)="onAddTrackClicked()">
+        <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+        Track hinzufügen
+      </button>
     </div>
   }
 </app-modal>
+
+@if (trackFormOpen()) {
+  <app-track-form
+    [track]="editingTrack()"
+    [recordId]="id()"
+    (cancelled)="onTrackFormCancelled()"
+    (saved)="onTrackFormSaved()"
+  />
+}
+
+@if (pendingDeleteTrack()) {
+  <app-confirm-modal
+    title="Track löschen"
+    [message]="pendingDeleteTrackMessage()"
+    (confirmed)="onDeleteTrackConfirmed()"
+    (cancelled)="onDeleteTrackCancelled()"
+  />
+}
