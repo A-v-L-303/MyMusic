@@ -190,8 +190,11 @@ vollständig geladenen `<select>`) — und mit Block 6g (PR #57)
 Anlegen/Bearbeiten/Löschen (US-R4–R6) als Modal, inklusive Möglichkeit,
 ein noch nicht existierendes Label oder Artist direkt aus dem
 Record-Formular anzulegen (verschachteltes `LabelForm`-Modal bzw.
-`ConfirmModal`-Rückfrage für Artist); Detailseite, Cover-Upload und Tracks
-folgen mit Block 6h–6j; `dashboard/` und `search/` enthalten weiterhin nur
+`ConfirmModal`-Rückfrage für Artist); mit Block 6h (PR #59) die
+Detailansicht als Modal über dem Records-Grid (Kind-Route `/records/:id`,
+reiner Lesemodus mit Tracklist, kein Bearbeiten/Löschen im Modal — dafür
+bleiben die Icons auf der `RecordCard` zuständig); Cover-Upload und Tracks
+folgen mit Block 6i–6j; `dashboard/` und `search/` enthalten weiterhin nur
 Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
