@@ -6,6 +6,10 @@
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
+  "loginTheme": "mymusic",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["de"],
+  "defaultLocale": "de",
 
   "accessTokenLifespan": 300,
   "ssoSessionIdleTimeout": 1800,
