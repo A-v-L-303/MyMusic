@@ -105,15 +105,13 @@ Neuer Abschnitt „Tooltips" in
    Grundrauschen hinausgehenden Abweichungen.
 4. Zeilenlängen-Check (≤120 Zeichen) der geänderten Zeilen per
    `git diff --unified=0` geprüft — keine Überlänge.
-5. Manuelle Live-Prüfung im Browser steht aus (kein laufender
-   Aspire-AppHost während der Umsetzung).
+5. Manuelle Live-Prüfung im Browser durch den Projektinhaber erfolgt und
+   bestätigt.
 
 ## Risiken und offene Punkte
 
 - Keine fachliche Verhaltensänderung außer der Tooltip-Ergänzung selbst —
   geringes Risiko.
-- Manuelle Live-Prüfung im Browser (Tooltip-Hover-Verhalten, Lesbarkeit)
-  noch nicht durchgeführt.
 - GitHub-Wiki-Sync für die Wiki-Ergänzung wurde nicht automatisch ausgelöst
   (siehe TASK.md-Nachtrag/Wiki-Log) — bislang nur bei „neue Quelle
   aufnehmen" vorgesehen, bei Bedarf gesondert anzustoßen.
