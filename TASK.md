@@ -37,14 +37,14 @@ PR #61) umgesetzt, live verifiziert und nach `main` gemergt; Block 6j
 verifiziert und nach `main` gemergt — Records-Frontend damit vollständig,
 Block 6 (Backend+Frontend) fachlich vollständig; Block 7f
 (Keycloak-Login-Theme „mymusic", siehe Abschnitt 7f) umgesetzt und live
-verifiziert, PR #69, noch nicht nach `main` gemergt.
+verifiziert, PR #69, nach `main` gemergt.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
-Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63 nach `main`
-gemergt)
+Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
+PR #69 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
