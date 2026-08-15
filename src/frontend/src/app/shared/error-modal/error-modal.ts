@@ -10,6 +10,7 @@ const TITLES: Record<ErrorModalKind, string> = {
   server: 'Serverfehler',
   'rate-limit': 'Zu viele Anfragen',
   network: 'Verbindungsfehler',
+  validation: 'Ungültige Eingabe',
 };
 
 @Component({

@@ -38,6 +38,53 @@ describe('ErrorModal', () => {
     expect(compiled.textContent).toContain('Es ist ein unerwarteter Serverfehler aufgetreten.');
   });
 
+  it('zeigt bei einem Validierungsfehler (400) die erste Fehlermeldung aus errors', () => {
+    // arrange
+    service.showFromHttpError(
+      new HttpErrorResponse({
+        status: 400,
+        error: { title: 'Validierungsfehler', status: 400, errors: { FileContent: ['ungültig'] } },
+      }),
+      'Album-Cover',
+    );
+    const fixture = TestBed.createComponent(ErrorModal);
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Ungültige Eingabe');
+    expect(compiled.textContent).toContain('ungültig');
+  });
+
+  it('zeigt bei einem Validierungsfehler (400) ohne errors einen Fallback-Text', () => {
+    // arrange
+    service.showFromHttpError(new HttpErrorResponse({ status: 400 }), 'Album-Cover');
+    const fixture = TestBed.createComponent(ErrorModal);
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Die Eingabe ist ungültig.');
+  });
+
+  it('zeigt eine manuell gesetzte Validierungsmeldung', () => {
+    // arrange
+    service.showValidationMessage('Es sind nur JPEG- oder PNG-Dateien bis 5 MB erlaubt.');
+    const fixture = TestBed.createComponent(ErrorModal);
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Ungültige Eingabe');
+    expect(compiled.textContent).toContain('Es sind nur JPEG- oder PNG-Dateien bis 5 MB erlaubt.');
+  });
+
   it('zeigt bei einem Netzwerkfehler die Schaltfläche „Erneut versuchen" und ruft onRetry auf', () => {
     // arrange
     const onRetry = vi.fn();

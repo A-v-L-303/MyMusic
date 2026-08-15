@@ -32,7 +32,10 @@ umgesetzt, live verifiziert und nach `main` gemergt; Block 6h
 (Record-Detailansicht als Modal über der Liste, Kind-Route `/records/:id`,
 reiner Lesemodus mit Tracklist, PR #59) umgesetzt, live verifiziert und
 nach `main` gemergt.
-Blöcke 6i–6j (Cover-Upload, Tracks) sind geplant, aber noch nicht begonnen)
+Block 6i (Cover-Upload) ist im Frontend abgeschlossen, automatisiert und
+live verifiziert (Branch `block-6i-angular-records-cover-upload`, noch
+nicht nach `main` gemergt); Block 6j (Tracks) ist geplant, aber noch nicht
+begonnen)
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -74,8 +77,9 @@ dem MVP-Umfang der Phase 1:
   Card-Ansicht, Filter, Sortierung, Paginierung) die Platzhalterseite
   ersetzt, siehe Abschnitt 6f, mit Block 6g Anlegen/Bearbeiten/Löschen
   erhalten, siehe Abschnitt 6g, und mit Block 6h die Detailansicht als
-  Modal erhalten, siehe Abschnitt 6h; Cover-Upload (Block 6i) und Tracks
-  (Block 6j) sind geplant, aber noch offen).
+  Modal erhalten, siehe Abschnitt 6h; Cover-Upload (Block 6i) ist im
+  Frontend abgeschlossen, siehe Abschnitt 6i, noch nicht nach `main`
+  gemergt; Tracks (Block 6j) sind geplant, aber noch offen).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
 - Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
@@ -913,7 +917,8 @@ Gesamtblocks erst ganz am Ende messbar wäre. Block 6a, 6b, 6c und 6d
 abgeschlossen. Dazu Block 6e (Nachtrag, siehe dortiger Abschnitt). Das
 Angular-Frontend für `records/` wurde auf Wunsch des Projektinhabers
 zusätzlich in fünf einzeln abnehmbare Teilblöcke 6f–6j zerlegt (analog zur
-Backend-Aufteilung); Block 6f, 6g und 6h abgeschlossen, 6i–6j noch offen.
+Backend-Aufteilung); Block 6f, 6g, 6h und 6i (Frontend) abgeschlossen,
+Block 6i noch nicht nach `main` gemergt, 6j noch offen.
 Priorität: hoch, fachlicher Kern
 
 Ziel:
@@ -1658,6 +1663,115 @@ Abnahmekriterium:
   Scrim-Klick führt zurück zu `/records`, kein Bearbeiten/Löschen im Modal
   und Klick auf die dahinterliegenden Card-Icons löst währenddessen nichts
   aus, keine Konsolenfehler).
+
+### 6i. Album-Cover-Upload
+
+Status: **abgeschlossen** (2026-08-15), automatisiert und live verifiziert;
+Branch: `block-6i-angular-records-cover-upload`
+Arbeits-Prompt: `docs/prompts/2026-08-15-block-6i-angular-records-cover-upload.md`
+
+Anlass: Vierter der fünf Teilblöcke 6f–6j (siehe Abschnitt 6f). Deckt US-R8
+(Album-Cover hochladen) ab. `POST /api/records/{id}/cover` war seit Block 6b
+bereits vollständig vorhanden — reiner Frontend-Block, **keine
+Backend-Änderung**.
+
+Design-Klärung mit dem Projektinhaber während der Planung (weicht von der
+wörtlichen US-R8-Formulierung „unabhängig vom Anlegen/Bearbeiten des
+Records" ab, daher hier festgehalten statt stillschweigend entschieden):
+Der Upload-Trigger sitzt im `RecordForm`-Modal, sowohl beim Anlegen als
+auch beim Bearbeiten — nicht im Detail-Modal (Block 6h), nicht als Icon auf
+der Record-Card. Ein Cover kann hinzugefügt und ersetzt, aber **nicht
+gelöscht** werden — das Backend hat weder einen `DELETE`-Endpunkt noch eine
+`RemoveAlbumCover()`-Domänenmethode; eine Löschfunktion wäre ein eigener,
+separat freizugebender Backend-Block und bewusst nicht Teil von 6i.
+
+Umgesetzt:
+
+- `features/records/record.ts`: Konstanten `MAX_ALBUM_COVER_SIZE_BYTES`
+  (5 MB) und `ALLOWED_ALBUM_COVER_CONTENT_TYPES` (JPEG/PNG) ergänzt —
+  spiegeln die Backend-Regel für schnelles Client-Feedback.
+- `features/records/record.service.ts`: `uploadCover(id, file)` ergänzt,
+  sendet `multipart/form-data` (Feldname `file`, passend zum
+  Backend-Parameternamen `IFormFile file`) an `POST /records/{id}/cover`.
+- `features/records/record-form/record-form.ts`/`.html`: neues Feld
+  „Album-Cover" nach „Information" mit Vorschau-Thumbnail
+  (`.record-cover`-Klasse, aus `record-card`/`record-detail` bekannt) und
+  Datei-Input (`accept="image/jpeg,image/png"`). Client-seitige
+  Vorprüfung von Typ/Größe vor jedem Server-Roundtrip. Vorschau nutzt im
+  Bearbeiten-Modus zunächst `record.albumCoverDataUrl`, nach Dateiauswahl
+  `URL.createObjectURL(file)` (Freigabe der Object-URL bei Auswahlwechsel
+  und `ngOnDestroy`). `save()` ruft nach erfolgreichem `create`/`update`
+  zusätzlich `uploadCover(...)` auf, falls eine Datei gewählt wurde — in
+  einem eigenen try/catch, damit Record-Speichern und Cover-Upload
+  unabhängig bleiben: Ein fehlgeschlagener Cover-Upload zeigt ein Modal,
+  verhindert aber nicht `saved.emit()` (der Record selbst wurde bereits
+  korrekt gespeichert, analog zu US-R4).
+- `shared/error-modal/error-modal.service.ts`/`error-modal.ts`:
+  `ErrorModalKind` um `'validation'` (Titel „Ungültige Eingabe") erweitert,
+  `mapToState` erhält einen 400-Zweig, der die erste Meldung aus
+  `ValidationProblemDetails.errors` extrahiert (statt der bisherigen
+  generischen „Es ist ein unerwarteter Serverfehler aufgetreten."-Meldung,
+  die für einen 400er fachlich unpassend war, siehe
+  `wiki/fehler-und-ausnahmekonzept.md`: 400 = Validierungsfehler, 500 =
+  Serverfehler). Neue Methode `showValidationMessage(message)` für rein
+  clientseitig erkannte Fehler (kein `HttpErrorResponse` vorhanden, z. B.
+  Cover-Vorprüfung). **Nebeneffekt, bewusst in Kauf genommen**: Der
+  bestehende 400-Fallback in `handleSaveError` aller vier Formulare
+  (Genre/Label/Artist/Record), der greift, wenn ein 400-Fehlerschlüssel zu
+  keinem bekannten Formularfeld passt, zeigt jetzt die echte
+  Validierungsmeldung statt der generischen Serverfehler-Meldung — eine
+  Verbesserung eines bisher kaum erreichbaren Randfalls, kein neues
+  Verhalten für einen zuvor funktionierenden Pfad.
+- Tests ergänzt: `record.service.spec.ts` (`uploadCover`, `FormData`-Body,
+  400-Fehler-Durchreichung), `error-modal.spec.ts` (400 mit/ohne `errors`,
+  `showValidationMessage`), `record-form.spec.ts` (Vorschau im
+  Bearbeiten-Modus, Vorschau nach Dateiauswahl, Validierungsmodal bei zu
+  großer/falscher Datei ohne Server-Call, `uploadCover`-Aufruf mit neuer Id
+  nach erfolgreichem Anlegen, kein Aufruf ohne Datei, Cover-Fehler zeigt
+  Modal und emittiert trotzdem `saved`). 313 Frontend-Tests insgesamt, alle
+  grün. Production-Build grün.
+
+**Fund während der Live-Verifikation, im selben Block behoben**: Das
+Fehler-Modal (`ErrorModal`) erschien beim Cover-Validierungsfehler zwar im
+DOM mit korrektem Text, war aber visuell **unsichtbar** — verdeckt vom
+geöffneten `RecordForm`-Modal. Ursache: `app.html` mountete
+`<app-error-modal />` vor `<router-outlet />`; beide Modale nutzen dieselbe
+`.scrim`-Klasse mit festem `z-index: 50`
+(`styles/design-system/components.css`), sodass bei gleichem z-index die
+DOM-Reihenfolge über die Stapelung entscheidet — das später im
+`router-outlet` gerenderte `RecordForm`-Modal lag über dem `ErrorModal`,
+unabhängig davon, welches zeitlich zuletzt geöffnet wurde. Dieser Fall trat
+vor Block 6i nie auf, da bislang kein Formular-Modal einen weiteren
+Fehler-Modal-Aufruf auslösen konnte, während es selbst noch offen war. Fix:
+`app.html` — `<app-error-modal />` hinter `<router-outlet />` verschoben,
+damit es unabhängig vom jeweils offenen Routen-Modal immer zuoberst liegt.
+Live erneut geprüft: Fehler-Modal erscheint jetzt sichtbar über dem
+Formular.
+
+Live-Verifikation (2026-08-15, gegen den laufenden Aspire-AppHost, Login
+als `testuser`): Record mit gültigem PNG-Cover angelegt → Cover erscheint
+in der Card-Ansicht und in der Detailansicht; über das Bearbeiten-Modal
+zeigt die Vorschau zunächst das bestehende Cover, ein neu gewähltes Bild
+ersetzt es sichtbar nach dem Speichern; Datei mit falschem Format
+(`.txt`) und Datei über 5 MB lösen beide das Validierungsmodal aus, ohne
+einen Server-Request zu erzeugen; keine Konsolenfehler während des
+gesamten Ablaufs. Test-Record nach der Prüfung wieder gelöscht.
+
+Bewusst nicht Teil dieses Standes:
+
+- Cover löschen (siehe Design-Klärung oben) — eigener, separat
+  freizugebender Backend+Frontend-Block, falls künftig gewünscht.
+- Tracks hinzufügen/bearbeiten/löschen (US-T1–T3, Block 6j).
+- Backend-Änderungen (Upload-Endpunkt bereits vollständig vorhanden).
+
+Abnahmekriterium:
+
+- Beim Anlegen und Bearbeiten eines Records lässt sich ein Album-Cover
+  (JPEG/PNG, max. 5 MB) auswählen und hochladen; ungültige Dateien zeigen
+  ein Modal statt eines Server-Roundtrips bzw. eines Inline-Fehlers; ein
+  fehlgeschlagener Cover-Upload verhindert nicht das Speichern des Records.
+  **Vollständig erfüllt** — automatisierte Tests grün und zusätzlich live
+  im Browser gegen den laufenden Aspire-AppHost verifiziert (siehe oben).
 
 ## 7. Authentifizierung und Mandantentrennung
 

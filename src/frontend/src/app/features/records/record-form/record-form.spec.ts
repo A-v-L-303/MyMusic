@@ -32,14 +32,21 @@ const existingRecord: Record = {
 };
 
 describe('RecordForm', () => {
-  let recordServiceMock: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+  let recordServiceMock: {
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    uploadCover: ReturnType<typeof vi.fn>;
+  };
   let labelServiceMock: { getPaged: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
   let artistServiceMock: { getPaged: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
   let countryServiceMock: { getAll: ReturnType<typeof vi.fn> };
-  let errorModalServiceMock: { showFromHttpError: ReturnType<typeof vi.fn> };
+  let errorModalServiceMock: {
+    showFromHttpError: ReturnType<typeof vi.fn>;
+    showValidationMessage: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
-    recordServiceMock = { create: vi.fn(), update: vi.fn() };
+    recordServiceMock = { create: vi.fn(), update: vi.fn(), uploadCover: vi.fn() };
     labelServiceMock = {
       getPaged: vi.fn().mockReturnValue(
         of({
@@ -65,7 +72,7 @@ describe('RecordForm', () => {
       create: vi.fn(),
     };
     countryServiceMock = { getAll: vi.fn().mockReturnValue(of([])) };
-    errorModalServiceMock = { showFromHttpError: vi.fn() };
+    errorModalServiceMock = { showFromHttpError: vi.fn(), showValidationMessage: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
@@ -149,6 +156,13 @@ describe('RecordForm', () => {
     textarea.value = value;
     textarea.dispatchEvent(new Event('input'));
     textarea.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+  }
+
+  function selectCoverFile(fixture: ReturnType<typeof createFixture>, file: File | null): void {
+    const input = compiled(fixture).querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: file ? [file] : [], configurable: true });
+    input.dispatchEvent(new Event('change'));
     fixture.detectChanges();
   }
 
@@ -408,6 +422,133 @@ describe('RecordForm', () => {
     // assert
     expect(errorModalServiceMock.showFromHttpError).toHaveBeenCalledWith(error, 'Record');
     expect(savedHandler).not.toHaveBeenCalled();
+  });
+
+  it('zeigt im Bearbeiten-Modus das bestehende Cover als Vorschau', () => {
+    // arrange & act
+    const fixture = createFixture({
+      ...existingRecord,
+      albumCoverDataUrl: 'data:image/jpeg;base64,abc',
+    });
+
+    // assert
+    const preview = compiled(fixture).querySelector(
+      'img[alt="Cover-Vorschau"]',
+    ) as HTMLImageElement;
+    expect(preview.src).toBe('data:image/jpeg;base64,abc');
+  });
+
+  it('setzt nach Dateiauswahl eine Vorschau des gewählten Covers', () => {
+    // arrange
+    const fixture = createFixture();
+    const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' });
+
+    // act
+    selectCoverFile(fixture, file);
+
+    // assert
+    const preview = compiled(fixture).querySelector(
+      'img[alt="Cover-Vorschau"]',
+    ) as HTMLImageElement;
+    expect(preview).not.toBeNull();
+    expect(preview.src.startsWith('blob:')).toBe(true);
+    expect(errorModalServiceMock.showValidationMessage).not.toHaveBeenCalled();
+  });
+
+  it('zeigt bei zu großer Cover-Datei ein Validierungsmodal, ohne eine Vorschau zu setzen', () => {
+    // arrange
+    const fixture = createFixture();
+    const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(file, 'size', { value: 5 * 1024 * 1024 + 1 });
+
+    // act
+    selectCoverFile(fixture, file);
+
+    // assert
+    expect(errorModalServiceMock.showValidationMessage).toHaveBeenCalledWith(
+      'Es sind nur JPEG- oder PNG-Dateien bis 5 MB erlaubt.',
+    );
+    expect(compiled(fixture).querySelector('img[alt="Cover-Vorschau"]')).toBeNull();
+  });
+
+  it('zeigt bei falschem Dateiformat ein Validierungsmodal, ohne eine Vorschau zu setzen', () => {
+    // arrange
+    const fixture = createFixture();
+    const file = new File(['cover-bytes'], 'cover.txt', { type: 'text/plain' });
+
+    // act
+    selectCoverFile(fixture, file);
+
+    // assert
+    expect(errorModalServiceMock.showValidationMessage).toHaveBeenCalledWith(
+      'Es sind nur JPEG- oder PNG-Dateien bis 5 MB erlaubt.',
+    );
+    expect(compiled(fixture).querySelector('img[alt="Cover-Vorschau"]')).toBeNull();
+  });
+
+  it('ruft nach erfolgreichem Anlegen zusätzlich uploadCover mit der neuen Id auf, wenn ein Cover gewählt wurde', async () => {
+    // arrange
+    recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+    recordServiceMock.uploadCover.mockReturnValue(of({ ...existingRecord, id: 9 }));
+    const fixture = createFixture();
+    const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' });
+    const savedHandler = vi.fn();
+    fixture.componentInstance.saved.subscribe(savedHandler);
+
+    // act
+    await fillValidRecord(fixture);
+    selectCoverFile(fixture, file);
+    submitForm(fixture);
+    await fixture.whenStable();
+
+    // assert
+    expect(recordServiceMock.uploadCover).toHaveBeenCalledWith(9, file);
+    expect(savedHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('ruft uploadCover nicht auf, wenn kein Cover gewählt wurde', async () => {
+    // arrange
+    recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+    const fixture = createFixture();
+
+    // act
+    await fillValidRecord(fixture);
+    submitForm(fixture);
+    await fixture.whenStable();
+
+    // assert
+    expect(recordServiceMock.uploadCover).not.toHaveBeenCalled();
+  });
+
+  it('zeigt bei einem Cover-Upload-Fehler ein Modal, emittiert aber trotzdem saved', async () => {
+    // arrange
+    recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+    const coverError = new HttpErrorResponse({
+      status: 400,
+      error: {
+        errors: { FileContent: ['Es sind nur JPEG- oder PNG-Dateien erlaubt.'] },
+        title: 'Validierungsfehler',
+        status: 400,
+      },
+    });
+    recordServiceMock.uploadCover.mockReturnValue(throwError(() => coverError));
+    const fixture = createFixture();
+    const file = new File(['cover-bytes'], 'cover.jpg', { type: 'image/jpeg' });
+    const savedHandler = vi.fn();
+    fixture.componentInstance.saved.subscribe(savedHandler);
+
+    // act
+    await fillValidRecord(fixture);
+    selectCoverFile(fixture, file);
+    submitForm(fixture);
+    await fixture.whenStable();
+
+    // assert
+    expect(errorModalServiceMock.showFromHttpError).toHaveBeenCalledWith(
+      coverError,
+      'Album-Cover',
+    );
+    expect(savedHandler).toHaveBeenCalledTimes(1);
   });
 
   it('emittiert cancelled beim Abbrechen', () => {

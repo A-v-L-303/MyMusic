@@ -89,4 +89,11 @@ export class RecordService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  uploadCover(id: number, file: File): Observable<Record> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<Record>(`${this.baseUrl}/${id}/cover`, formData);
+  }
 }
