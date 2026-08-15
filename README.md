@@ -317,7 +317,7 @@ Baustein `shared/autocomplete/`: Artist und Label werden per serverseitigem
 Freitext-Autosuggest gegen den bestehenden `getPaged`-Endpoint gesucht
 (debounced, kleines `pageSize`) statt als Dropdown — diese Listen können
 beliebig groß werden, ein vollständig geladenes `<select>` wäre nicht
-bedienbar. Tracks folgen mit Block 6j, siehe `TASK.md`.
+bedienbar.
 
 ### Record anlegen/bearbeiten/löschen (Block 6g)
 
@@ -383,6 +383,27 @@ dafür einen neuen `ErrorModalKind` `'validation'` für echte
 Validierungsmeldungen aus `ValidationProblemDetails.errors` bei
 HTTP-400-Antworten, statt der bisherigen generischen
 "Serverfehler"-Meldung.
+
+### Track-CRUD in der Detailansicht (Block 6j)
+
+Reiner Frontend-Block — `POST/PUT/DELETE /api/records/{id}/tracks[/{trackId}]`
+war seit Block 6c bereits vollständig vorhanden. Tracks lassen sich jetzt
+direkt in der Record-Detailansicht (`RecordDetail`, Block 6h) hinzufügen,
+bearbeiten und löschen, über ein neues, verschachteltes `TrackForm`-Modal
+(gleiches Verschachtelungsmuster wie `LabelForm` im `RecordForm`) und
+`ConfirmModal` für das Löschen. Nach jeder Änderung wird der Record neu
+geladen. Der Record selbst bleibt weiterhin nicht aus dem Detail-Modal
+heraus bearbeit-/löschbar — dafür bleiben die Icons auf der `RecordCard`
+zuständig.
+
+Fremdschlüssel-Auswahl im `TrackForm` bewusst unterschiedlich gelöst: Genre
+über ein natives `<select>` (`GenreService.getAll()`, `GET
+/api/genres/all` — Endpunkt bestand seit Block 6e, war im Frontend
+ungenutzt), da Genre-Listen typischerweise klein bleiben; Artist über
+Autocomplete mit `getPaged` (identisch zum bereits etablierten Artist-Feld
+in `RecordForm`), da Artist-Listen groß werden können. Kein
+Inline-„Artist neu anlegen"-Flow wie im `RecordForm` — die User Stories
+verlangen dafür nur eine Inline-Fehlermeldung bei ungültiger Referenz.
 
 ### Swagger/OpenAPI (Block 0e)
 

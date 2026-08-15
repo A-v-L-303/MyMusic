@@ -196,11 +196,11 @@ reiner Lesemodus mit Tracklist, kein Bearbeiten/Löschen im Modal — dafür
 bleiben die Icons auf der `RecordCard` zuständig); mit Block 6i (PR #61)
 der Album-Cover-Upload im `RecordForm`-Modal beim Anlegen und Bearbeiten
 (Trigger nicht im Detail-Modal, kein Löschen möglich); mit Block 6j
-Track-CRUD (hinzufügen/bearbeiten/löschen) als Unteransicht der
+(PR #63) Track-CRUD (hinzufügen/bearbeiten/löschen) als Unteransicht der
 Record-Detailansicht (`RecordDetail`), Genre-Auswahl dort als `<select>`
-über den neuen `GenreService.getAll()` (`/api/genres/all`), Artist-Auswahl
-über Autocomplete wie im `RecordForm` — umgesetzt und live verifiziert, PR
-noch offen; `dashboard/` und `search/` enthalten weiterhin nur
+über `GenreService.getAll()` (`/api/genres/all`), Artist-Auswahl über
+Autocomplete wie im `RecordForm` — das Records-Frontend ist damit
+vollständig; `dashboard/` und `search/` enthalten weiterhin nur
 Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
