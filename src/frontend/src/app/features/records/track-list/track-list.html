@@ -14,7 +14,10 @@
               <tr class="border-b border-line text-sm text-fg">
                 <td class="w-8 py-1.5 pr-2 tnum text-fg-muted">{{ track.trackNumber }}</td>
                 <td class="py-1.5">
-                  <div>{{ track.artistName }} · {{ track.trackName }}</div>
+                  <div class="flex items-center gap-2">
+                    <span>{{ track.artistName }} · {{ track.trackName }}</span>
+                    <span class="badge badge-neutral">{{ track.genreName }}</span>
+                  </div>
                   @if (track.information) {
                     <div class="text-xs text-fg-subtle">{{ track.information }}</div>
                   }

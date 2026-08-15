@@ -1872,6 +1872,26 @@ Abnahmekriterium:
   erfüllt** — automatisierte Tests grün und zusätzlich live im Browser gegen
   den laufenden Aspire-AppHost verifiziert (siehe oben).
 
+Nachtrag (2026-08-15, Arbeits-Prompt
+`docs/prompts/2026-08-15-fix-record-detail-modalbreite-und-trackgenre.md`):
+Zwei Korrekturen am Detail-Modal nach Live-Test durch den Projektinhaber,
+reiner Frontend-Fix, kein Backend-Change:
+
+- **Modal-Breite**: `app-modal` (`shared/modal/`) hat einen neuen Input
+  `wide` erhalten; gesetzt auf `true` greift die neue CSS-Modifier-Klasse
+  `.modal-wide` (`max-width: 720px` statt der globalen 460px). Nur
+  `RecordDetail` setzt `[wide]="true"` — alle anderen Modals (RecordForm,
+  TrackForm, LabelForm, ConfirmModal, ErrorModal) bleiben unverändert bei
+  460px.
+- **Track-Genre**: `track-list.html` zeigt `track.genreName` jetzt als
+  Badge (Stil wie das Format-Badge im Modal-Kopf) direkt hinter
+  „Künstler · Trackname" in derselben Zelle. `track-list.spec.ts` prüft
+  das jetzt positiv.
+- 334 Frontend-Tests insgesamt, alle grün (332 zuvor + 2 neue Tests für
+  den `wide`-Input von `Modal`). Production-Build grün. Manuelle
+  Live-Prüfung im Browser steht aus (kein laufender Aspire-AppHost
+  während der Umsetzung).
+
 ## 7. Authentifizierung und Mandantentrennung
 
 Status: teilweise offen; Block 7a (Angular-Login-Flow) abgeschlossen
