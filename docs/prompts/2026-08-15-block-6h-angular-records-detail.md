@@ -119,9 +119,11 @@ funktionslos — kein neues Verhalten für diesen Block, nur bestehendes Muster
 `router.navigate(['/records'])` zurück.
 
 Inhalt: Cover (Bild oder Platzhalter wie `record-card.html`), Albumname,
-Künstler (falls vorhanden), Format-/Grade-/Genre-Badges
+Künstler (falls vorhanden), Format-Badge und Grade-Badge
 (`RECORD_FORMAT_LABELS`, `RECORD_CONDITION_GRADE_CLASS`/`_TEXT` aus
-`record.ts` wiederverwenden), Jahr, Label, `information` falls vorhanden,
+`record.ts` wiederverwenden — `Record` hat kein eigenes Genre-Feld, das
+dritte Badge aus dem Screenshot ist illustrative Mockup-Ausschmückung ohne
+Entsprechung in `RecordResponse`), Jahr, Label, `information` falls vorhanden,
 `<app-track-list [tracks]="record.tracks" />`.
 
 Reiner Lesemodus — kein „Löschen"/„Bearbeiten" im Modal (mit dem

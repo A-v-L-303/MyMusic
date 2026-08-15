@@ -1599,7 +1599,7 @@ Umgesetzt:
   Neuladen), Routenparameter über `ActivatedRoute` + `toSignal(
   route.paramMap...)` (Projekt nutzt kein `withComponentInputBinding()`,
   analog zu `features/search/search.ts`). Zeigt Cover, Albumname, Künstler,
-  Format-/Grade-/Genre-Badges, Jahr, Label, `information`, Tracklist.
+  Format-Badge, Grade-Badge, Jahr, Label, `information`, Tracklist.
   Fehlerbehandlung wie in `genres.ts` (`ErrorModalService`); dabei
   festgestellt: „Erneut versuchen" ist im bestehenden
   `ErrorModalService`/`ErrorModal` nur für `kind: 'network'` verdrahtet,

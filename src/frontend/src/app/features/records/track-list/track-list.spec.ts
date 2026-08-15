@@ -70,13 +70,12 @@ describe('TrackList', () => {
     expect(element.textContent).not.toContain('Seite');
   });
 
-  it('zeigt Trackname, Artist, Genre und Information je Track', () => {
+  it('zeigt Künstler, Trackname und Information je Track', () => {
     // arrange
     const tracks = [
       buildTrack({
         trackName: 'So What',
         artistName: 'Miles Davis',
-        genreName: 'Jazz',
         information: 'Take 3',
       }),
     ];
@@ -85,10 +84,19 @@ describe('TrackList', () => {
     const element = createFixture(tracks).nativeElement as HTMLElement;
 
     // assert
-    expect(element.textContent).toContain('So What');
-    expect(element.textContent).toContain('Miles Davis');
-    expect(element.textContent).toContain('Jazz');
+    expect(element.textContent).toContain('Miles Davis · So What');
     expect(element.textContent).toContain('Take 3');
+  });
+
+  it('zeigt kein Genre je Track (nicht Teil der Detailansicht)', () => {
+    // arrange
+    const tracks = [buildTrack({ genreName: 'Jazz' })];
+
+    // act
+    const element = createFixture(tracks).nativeElement as HTMLElement;
+
+    // assert
+    expect(element.textContent).not.toContain('Jazz');
   });
 
   it('zeigt kein Informationsfeld, wenn keine Information hinterlegt ist', () => {
