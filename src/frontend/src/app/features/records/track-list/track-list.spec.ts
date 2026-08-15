@@ -88,7 +88,7 @@ describe('TrackList', () => {
     expect(element.textContent).toContain('Take 3');
   });
 
-  it('zeigt kein Genre je Track (nicht Teil der Detailansicht)', () => {
+  it('zeigt das Genre je Track rechts neben Künstler und Trackname', () => {
     // arrange
     const tracks = [buildTrack({ genreName: 'Jazz' })];
 
@@ -96,7 +96,7 @@ describe('TrackList', () => {
     const element = createFixture(tracks).nativeElement as HTMLElement;
 
     // assert
-    expect(element.textContent).not.toContain('Jazz');
+    expect(element.textContent).toContain('Jazz');
   });
 
   it('zeigt kein Informationsfeld, wenn keine Information hinterlegt ist', () => {

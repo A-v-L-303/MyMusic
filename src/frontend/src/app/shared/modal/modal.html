@@ -1,5 +1,5 @@
 <div class="scrim" (click)="onScrimClick($event)">
-  <div class="modal">
+  <div class="modal" [class.modal-wide]="wide()">
     <ng-content />
   </div>
 </div>

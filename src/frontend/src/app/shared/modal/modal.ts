@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, output } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, input, output } from '@angular/core';
 
 let openModalStack: Modal[] = [];
 
@@ -7,6 +7,7 @@ let openModalStack: Modal[] = [];
   templateUrl: './modal.html',
 })
 export class Modal implements OnInit, OnDestroy {
+  readonly wide = input(false);
   readonly closed = output<void>();
 
   ngOnInit(): void {

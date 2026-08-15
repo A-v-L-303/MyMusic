@@ -170,6 +170,7 @@
 .modal { width: 100%; max-width: 460px; background: var(--bg-surface);
   border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
   overflow: hidden; }
+.modal-wide { max-width: 720px; }
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4);
   padding: var(--space-5) var(--space-5) 0; }
 .modal-body { padding: var(--space-3) var(--space-5) var(--space-5); color: var(--fg-muted); font-size: var(--text-sm); }
