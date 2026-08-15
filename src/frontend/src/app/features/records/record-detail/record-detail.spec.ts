@@ -7,8 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RuntimeConfigService } from '../../../core/runtime-config/runtime-config.service';
 import { ErrorModalService } from '../../../shared/error-modal/error-modal.service';
-import { Record } from '../record';
+import { Record, RecordTrack } from '../record';
 import { RecordDetail } from './record-detail';
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function buildRecord(overrides: Partial<Record> = {}): Record {
   return {
@@ -24,6 +28,22 @@ function buildRecord(overrides: Partial<Record> = {}): Record {
     information: null,
     albumCoverDataUrl: null,
     tracks: [],
+    ...overrides,
+  };
+}
+
+function buildTrack(overrides: Partial<RecordTrack> = {}): RecordTrack {
+  return {
+    id: 1,
+    recordId: 1,
+    artistId: 2,
+    artistName: 'Miles Davis',
+    genreId: 1,
+    genreName: 'Jazz',
+    trackName: 'So What',
+    recordSide: 'A',
+    trackNumber: 1,
+    information: null,
     ...overrides,
   };
 }
@@ -56,6 +76,12 @@ describe('RecordDetail', () => {
 
   function compiled(fixture: { nativeElement: unknown }): HTMLElement {
     return fixture.nativeElement as HTMLElement;
+  }
+
+  function findButton(root: HTMLElement, text: string): HTMLButtonElement {
+    return Array.from(root.querySelectorAll('button')).find((button) =>
+      button.textContent?.trim().includes(text),
+    ) as HTMLButtonElement;
   }
 
   async function createLoadedFixture(record: Record = buildRecord()) {
@@ -206,5 +232,102 @@ describe('RecordDetail', () => {
 
     // assert
     expect(compiled(fixture).textContent).toContain('So What');
+  });
+
+  it('öffnet über den Track-hinzufügen-Button das Track-Formular im Anlegen-Modus', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+
+    // act
+    findButton(compiled(fixture), 'Track hinzufügen').click();
+    fixture.detectChanges();
+    httpTesting.expectOne('https://api.test/api/genres/all').flush([]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(compiled(fixture).querySelector('app-track-form')).not.toBeNull();
+    expect((compiled(fixture).querySelector('#track-name') as HTMLInputElement).value).toBe('');
+  });
+
+  it('öffnet über das Bearbeiten-Icon eines Tracks das Track-Formular vorbefüllt', async () => {
+    // arrange
+    const track = buildTrack({ trackName: 'So What' });
+    const fixture = await createLoadedFixture(buildRecord({ tracks: [track] }));
+
+    // act
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Track So What bearbeiten"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+    httpTesting.expectOne('https://api.test/api/genres/all').flush([]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect((compiled(fixture).querySelector('#track-name') as HTMLInputElement).value).toBe(
+      'So What',
+    );
+  });
+
+  it('zeigt auch bei vorhandenen Tracks keine Bearbeiten-/Löschen-Buttons mit Text auf Record-Ebene', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture(
+      buildRecord({ tracks: [buildTrack({ trackName: 'So What' })] }),
+    );
+
+    // assert
+    const buttonTexts = Array.from(compiled(fixture).querySelectorAll('button')).map((button) =>
+      button.textContent?.trim(),
+    );
+    expect(buttonTexts).not.toContain('Bearbeiten');
+    expect(buttonTexts).not.toContain('Löschen');
+  });
+
+  it('löscht einen Track nach Bestätigung und lädt den Record danach neu', async () => {
+    // arrange
+    const track = buildTrack({ trackName: 'So What' });
+    const fixture = await createLoadedFixture(buildRecord({ tracks: [track] }));
+    (
+      compiled(fixture).querySelector('[aria-label="Track So What löschen"]') as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Löschen').click();
+    const deleteRequest = httpTesting.expectOne(
+      (req) => req.method === 'DELETE' && req.url === 'https://api.test/api/records/1/tracks/1',
+    );
+    deleteRequest.flush(null);
+    await wait(0);
+    fixture.detectChanges();
+    httpTesting.expectOne('https://api.test/api/records/1').flush(buildRecord({ tracks: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(compiled(fixture).querySelector('app-confirm-modal')).toBeNull();
+    expect(compiled(fixture).textContent).not.toContain('So What');
+  });
+
+  it('bricht das Löschen eines Tracks ohne HTTP-Aufruf ab', async () => {
+    // arrange
+    const track = buildTrack({ trackName: 'So What' });
+    const fixture = await createLoadedFixture(buildRecord({ tracks: [track] }));
+    (
+      compiled(fixture).querySelector('[aria-label="Track So What löschen"]') as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Abbrechen').click();
+    fixture.detectChanges();
+
+    // assert
+    // httpTesting.verify() im afterEach deckt einen unerwarteten DELETE-Request auf.
+    expect(compiled(fixture).querySelector('app-confirm-modal')).toBeNull();
   });
 });

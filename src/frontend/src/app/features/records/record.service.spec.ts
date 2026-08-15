@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { RuntimeConfigService } from '../../core/runtime-config/runtime-config.service';
-import { Record, RecordListResponse } from './record';
+import { Record, RecordListResponse, RecordTrack } from './record';
 import { RecordService } from './record.service';
 
 describe('RecordService', () => {
@@ -366,5 +366,103 @@ describe('RecordService', () => {
 
     // assert
     expect(error?.status).toBe(500);
+  });
+
+  const track: RecordTrack = {
+    id: 1,
+    recordId: 1,
+    artistId: 2,
+    artistName: 'Miles Davis',
+    genreId: 3,
+    genreName: 'Jazz',
+    trackName: 'So What',
+    recordSide: 'A',
+    trackNumber: 1,
+    information: null,
+  };
+
+  it('sendet createTrack als POST gegen die Tracks-Route', () => {
+    // arrange
+    const request_ = {
+      artistId: 2,
+      genreId: 3,
+      trackName: 'So What',
+      recordSide: 'A',
+      trackNumber: 1,
+      information: null,
+    };
+    let result: RecordTrack | undefined;
+
+    // act
+    service.createTrack(1, request_).subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/records/1/tracks');
+    request.flush(track);
+
+    // assert
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(request_);
+    expect(result).toEqual(track);
+  });
+
+  it('sendet updateTrack als PUT gegen die Track-Id-Route', () => {
+    // arrange
+    const request_ = {
+      artistId: 2,
+      genreId: 3,
+      trackName: 'So What (Remaster)',
+      recordSide: 'A',
+      trackNumber: 1,
+      information: null,
+    };
+    let result: RecordTrack | undefined;
+
+    // act
+    service.updateTrack(1, 1, request_).subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/records/1/tracks/1');
+    request.flush({ ...track, trackName: 'So What (Remaster)' });
+
+    // assert
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(request_);
+    expect(result?.trackName).toBe('So What (Remaster)');
+  });
+
+  it('sendet deleteTrack als DELETE gegen die Track-Id-Route', () => {
+    // arrange
+    let completed = false;
+
+    // act
+    service.deleteTrack(1, 1).subscribe({ complete: () => (completed = true) });
+    const request = httpTesting.expectOne('https://api.test/api/records/1/tracks/1');
+    request.flush(null);
+
+    // assert
+    expect(request.request.method).toBe('DELETE');
+    expect(completed).toBe(true);
+  });
+
+  it('propagiert einen 409-Fehler von createTrack an den Aufrufer', () => {
+    // arrange
+    let error: HttpErrorResponse | undefined;
+
+    // act
+    service
+      .createTrack(1, {
+        artistId: 2,
+        genreId: 3,
+        trackName: 'So What',
+        recordSide: 'A',
+        trackNumber: 1,
+        information: null,
+      })
+      .subscribe({ error: (err: HttpErrorResponse) => (error = err) });
+    const request = httpTesting.expectOne('https://api.test/api/records/1/tracks');
+    request.flush(
+      { title: 'Konflikt', status: 409, detail: 'Track A1 ist bereits vergeben.' },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    // assert
+    expect(error?.status).toBe(409);
   });
 });

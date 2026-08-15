@@ -66,6 +66,24 @@ describe('GenreService', () => {
     expect(request.request.params.has('name')).toBe(true);
   });
 
+  it('ruft getAll ohne Query-Parameter gegen die all-Route auf', () => {
+    // arrange
+    const genres: Genre[] = [
+      { id: 1, name: 'Jazz' },
+      { id: 2, name: 'Rock' },
+    ];
+    let result: Genre[] | undefined;
+
+    // act
+    service.getAll().subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/genres/all');
+    request.flush(genres);
+
+    // assert
+    expect(request.request.method).toBe('GET');
+    expect(result).toEqual(genres);
+  });
+
   it('sendet create als POST mit dem Namen im Body', () => {
     // arrange
     const created: Genre = { id: 1, name: 'Rock' };

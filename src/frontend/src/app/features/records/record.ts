@@ -60,6 +60,17 @@ export interface CreateRecordRequest {
 
 export interface UpdateRecordRequest extends CreateRecordRequest {}
 
+export interface CreateTrackRequest {
+  artistId: number;
+  genreId: number;
+  trackName: string;
+  recordSide: string;
+  trackNumber: number;
+  information: string | null;
+}
+
+export interface UpdateTrackRequest extends CreateTrackRequest {}
+
 export const RECORD_FORMAT_LABELS: { [format in RecordFormat]: string } = {
   Album: 'Album',
   MaxiSingle: 'MaxiSingle',
