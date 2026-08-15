@@ -80,6 +80,22 @@ describe('Pagination', () => {
     expect(pageChangeHandler).not.toHaveBeenCalled();
   });
 
+  it('hat Tooltips an Vor-/Zurück- und Seitenzahl-Buttons', () => {
+    // arrange
+    const fixture = createFixture(2, 3);
+
+    // act
+    const iconButtons = (fixture.nativeElement as HTMLElement).querySelectorAll('button.btn-icon');
+    const pageButtons = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      'button.btn-sm:not(.btn-icon)',
+    );
+
+    // assert
+    expect((iconButtons[0] as HTMLButtonElement).title).toBe('Vorherige Seite');
+    expect((iconButtons[1] as HTMLButtonElement).title).toBe('Nächste Seite');
+    expect((pageButtons[2] as HTMLButtonElement).title).toBe('Seite 3');
+  });
+
   it('emittiert pageChange bei Klick auf Vor/Zurück', () => {
     // arrange
     const fixture = createFixture(2, 3);

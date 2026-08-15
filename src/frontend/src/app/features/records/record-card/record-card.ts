@@ -4,6 +4,7 @@ import { LucideDisc3, LucidePencil, LucideTrash2 } from '@lucide/angular';
 import {
   RECORD_CONDITION_GRADE_CLASS,
   RECORD_CONDITION_GRADE_TEXT,
+  RECORD_CONDITION_LABELS,
   RECORD_FORMAT_LABELS,
   Record,
 } from '../record';
@@ -28,6 +29,10 @@ export class RecordCard {
 
   protected readonly gradeText = computed(
     () => RECORD_CONDITION_GRADE_TEXT[this.record().condition],
+  );
+
+  protected readonly gradeTitle = computed(
+    () => 'Zustand: ' + RECORD_CONDITION_LABELS[this.record().condition],
   );
 
   protected onEditClicked(event: MouseEvent): void {

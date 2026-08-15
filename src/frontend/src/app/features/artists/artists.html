@@ -2,11 +2,18 @@
   <div class="flex items-center justify-between gap-4">
     <div class="flex items-center gap-2">
       <h1 class="text-lg font-bold text-fg">Artists</h1>
-      <span class="badge badge-neutral">{{ totalCount() }}</span>
+      <span class="badge badge-neutral" title="Anzahl der gefundenen Artists">
+        {{ totalCount() }}
+      </span>
     </div>
     <div class="flex items-center gap-2">
       <app-artist-filter (filterChange)="onFilterChange($event)" />
-      <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+      <button
+        type="button"
+        class="btn btn-primary"
+        title="Neuen Artist anlegen"
+        (click)="openCreateForm()"
+      >
         <svg lucidePlus [size]="15" aria-hidden="true"></svg>
         Anlegen
       </button>

@@ -164,6 +164,33 @@ describe('LabelTable', () => {
     expect(deleteHandler).toHaveBeenCalledWith(labels[0]);
   });
 
+  it('hat Tooltips an Bearbeiten- und Löschen-Button', () => {
+    // arrange
+    const labels: Label[] = [
+      {
+        id: 1,
+        name: 'Rough Trade',
+        countryId: 1,
+        countryName: 'Vereinigtes Königreich',
+        information: null,
+      },
+    ];
+    const fixture = createFixture(labels, false);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // act
+    const editButton = compiled.querySelector(
+      '[aria-label="Label Rough Trade bearbeiten"]',
+    ) as HTMLButtonElement;
+    const deleteButton = compiled.querySelector(
+      '[aria-label="Label Rough Trade löschen"]',
+    ) as HTMLButtonElement;
+
+    // assert
+    expect(editButton.title).toBe('Label Rough Trade bearbeiten');
+    expect(deleteButton.title).toBe('Label Rough Trade löschen');
+  });
+
   it('reicht pageChange von der eingebetteten Paginierung durch', () => {
     // arrange
     const labels: Label[] = [

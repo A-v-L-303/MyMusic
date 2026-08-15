@@ -153,6 +153,18 @@ describe('Records', () => {
     // /api/artists/all oder /api/labels/all beim Start auf.
   });
 
+  it('hat Tooltips am Anzahl-Badge und am Anlegen-Button', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture();
+
+    // assert
+    expect(compiled(fixture).querySelector('.badge')?.getAttribute('title')).toBe(
+      'Anzahl der gefundenen Records',
+    );
+    expect(findButton(compiled(fixture), 'Anlegen').title).toBe('Neuen Record anlegen');
+  });
+
   it('zeigt "Keine Daten vorhanden" ohne Treffer', async () => {
     // arrange
     // act

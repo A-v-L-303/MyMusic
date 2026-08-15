@@ -97,6 +97,18 @@ describe('Nav', () => {
     expect(trigger?.classList.contains('is-active')).toBe(true);
   });
 
+  it('hat einen Tooltip am Option-Trigger', () => {
+    // arrange
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+
+    // act
+    const trigger = (fixture.nativeElement as HTMLElement).querySelector('button.tab');
+
+    // assert
+    expect(trigger?.getAttribute('title')).toBe('Weitere Bereiche anzeigen');
+  });
+
   it('öffnet und schließt das Option-Dropdown per Klick auf den Trigger', () => {
     // arrange
     const fixture = TestBed.createComponent(Nav);
@@ -214,6 +226,7 @@ describe('Nav', () => {
 
     // assert
     expect(button?.textContent).toContain('Login');
+    expect(button?.title).toBe('Anmelden');
     expect(authorizeMock).toHaveBeenCalledTimes(1);
   });
 
@@ -232,6 +245,7 @@ describe('Nav', () => {
     // assert
     expect(compiled.textContent).toContain('nav-test-user');
     expect(button?.textContent).toContain('Logout');
+    expect(button?.title).toBe('Abmelden');
     expect(logoffMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -24,8 +24,10 @@
             {{ record.releaseYear }} · {{ record.labelName }}
           </div>
           <div class="mt-2 flex flex-wrap items-center gap-1.5">
-            <span class="badge badge-neutral">{{ formatLabel() }}</span>
-            <span class="grade" [class]="gradeClass()">{{ gradeText() }}</span>
+            <span class="badge badge-neutral" title="Format des Albums">{{ formatLabel() }}</span>
+            <span class="grade" [class]="gradeClass()" [title]="gradeTitle()">
+              {{ gradeText() }}
+            </span>
           </div>
         </div>
       </div>
@@ -34,6 +36,7 @@
         class="btn btn-ghost btn-icon btn-sm"
         (click)="onClose()"
         aria-label="Schließen"
+        title="Schließen"
       >
         <svg lucideX [size]="16" aria-hidden="true"></svg>
       </button>
@@ -47,7 +50,12 @@
         (editRequested)="onEditTrackRequested($event)"
         (deleteRequested)="onDeleteTrackRequested($event)"
       />
-      <button type="button" class="btn btn-secondary btn-sm mt-3" (click)="onAddTrackClicked()">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm mt-3"
+        title="Track hinzufügen"
+        (click)="onAddTrackClicked()"
+      >
         <svg lucidePlus [size]="14" aria-hidden="true"></svg>
         Track hinzufügen
       </button>

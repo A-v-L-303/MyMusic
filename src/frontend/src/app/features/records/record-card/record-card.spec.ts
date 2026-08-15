@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Record, RECORD_FORMAT_LABELS } from '../record';
+import { Record, RECORD_CONDITION_LABELS, RECORD_FORMAT_LABELS } from '../record';
 import { RecordCard } from './record-card';
 
 function buildRecord(overrides: Partial<Record> = {}): Record {
@@ -92,6 +92,7 @@ describe('RecordCard', () => {
 
       // assert
       expect(pill?.textContent?.trim()).toBe(RECORD_FORMAT_LABELS[format]);
+      expect(pill?.getAttribute('title')).toBe('Format des Albums');
     },
   );
 
@@ -105,6 +106,7 @@ describe('RecordCard', () => {
     // assert
     expect(grade.classList.contains('grade-f')).toBe(true);
     expect(grade.textContent?.trim()).toBe('G+');
+    expect(grade.getAttribute('title')).toBe('Zustand: ' + RECORD_CONDITION_LABELS.GPlus);
   });
 
   it('emittiert opened bei Klick auf die Karte', () => {
@@ -140,6 +142,7 @@ describe('RecordCard', () => {
     // assert
     expect(editHandler).toHaveBeenCalledWith(record);
     expect(openedHandler).not.toHaveBeenCalled();
+    expect(button.title).toBe('Record Abbey Road bearbeiten');
   });
 
   it('emittiert deleteRequested bei Klick auf den Löschen-Button, ohne opened auszulösen', () => {
@@ -160,5 +163,6 @@ describe('RecordCard', () => {
     // assert
     expect(deleteHandler).toHaveBeenCalledWith(record);
     expect(openedHandler).not.toHaveBeenCalled();
+    expect(button.title).toBe('Record Abbey Road löschen');
   });
 });

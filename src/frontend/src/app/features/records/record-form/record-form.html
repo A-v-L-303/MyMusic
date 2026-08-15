@@ -139,8 +139,15 @@
       </div>
     </div>
     <div class="modal-foot">
-      <button type="button" class="btn btn-secondary" (click)="onCancel()">Abbrechen</button>
-      <button type="submit" class="btn btn-primary" [disabled]="recordForm().submitting()">
+      <button type="button" class="btn btn-secondary" title="Abbrechen" (click)="onCancel()">
+        Abbrechen
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        title="Speichern"
+        [disabled]="recordForm().submitting()"
+      >
         Speichern
       </button>
     </div>

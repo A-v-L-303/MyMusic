@@ -104,6 +104,18 @@ describe('Labels', () => {
     expect(compiled(fixture).querySelector('.spinner')).toBeNull();
   });
 
+  it('hat Tooltips am Anzahl-Badge und am Anlegen-Button', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture();
+
+    // assert
+    expect(compiled(fixture).querySelector('.badge')?.getAttribute('title')).toBe(
+      'Anzahl der gefundenen Labels',
+    );
+    expect(findButton(compiled(fixture), 'Anlegen').title).toBe('Neues Label anlegen');
+  });
+
   it('filtert live nach Namenseingabe und setzt die Seite dabei zurück', async () => {
     // arrange
     const fixture = await createLoadedFixture();

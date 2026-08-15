@@ -564,6 +564,19 @@ describe('RecordForm', () => {
     expect(cancelledHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('hat Tooltips an Abbrechen- und Speichern-Button', () => {
+    // arrange & act
+    const fixture = createFixture();
+
+    // assert
+    expect((compiled(fixture).querySelector('.btn-secondary') as HTMLButtonElement).title).toBe(
+      'Abbrechen',
+    );
+    expect((compiled(fixture).querySelector('.btn-primary') as HTMLButtonElement).title).toBe(
+      'Speichern',
+    );
+  });
+
   it('hat einen Tooltip am Label-Anlegen-Button', () => {
     // arrange & act
     const fixture = createFixture();
