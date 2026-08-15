@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Record } from '../record';
+import { Record, RECORD_FORMAT_LABELS } from '../record';
 import { RecordCard } from './record-card';
 
 function buildRecord(overrides: Partial<Record> = {}): Record {
@@ -81,27 +81,19 @@ describe('RecordCard', () => {
     expect(image.getAttribute('src')).toBe('data:image/jpeg;base64,xyz');
   });
 
-  it.each([
-    ['Album', 'LP'],
-    ['MaxiSingle', 'LP'],
-    ['Single', 'LP'],
-    ['Ep', 'LP'],
-    ['Compilation', 'LP'],
-    ['CdAlbum', 'CD'],
-    ['CdMaxiSingle', 'CD'],
-    ['CdSingle', 'CD'],
-    ['CdEp', 'CD'],
-    ['CdCompilation', 'CD'],
-  ])('zeigt die Format-Pille "%s" -> "%s"', (format, expectedPill) => {
-    // arrange
-    const fixture = createFixture(buildRecord({ format: format as Record['format'] }));
+  it.each(Object.keys(RECORD_FORMAT_LABELS) as Record['format'][])(
+    'zeigt die Format-Pille für "%s"',
+    (format) => {
+      // arrange
+      const fixture = createFixture(buildRecord({ format }));
 
-    // act
-    const pill = (fixture.nativeElement as HTMLElement).querySelector('.fmt');
+      // act
+      const pill = (fixture.nativeElement as HTMLElement).querySelector('.fmt');
 
-    // assert
-    expect(pill?.textContent?.trim()).toBe(expectedPill);
-  });
+      // assert
+      expect(pill?.textContent?.trim()).toBe(RECORD_FORMAT_LABELS[format]);
+    },
+  );
 
   it('zeigt das Grade-Badge mit der zum Zustand passenden Klasse und Bezeichnung', () => {
     // arrange
