@@ -5,6 +5,7 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UserRolesService } from '../core/auth/user-roles.service';
 import { ThemeService } from '../core/theme/theme.service';
 import { Nav } from './nav';
 
@@ -18,6 +19,7 @@ describe('Nav', () => {
   >;
   let authorizeMock: ReturnType<typeof vi.fn>;
   let logoffMock: ReturnType<typeof vi.fn>;
+  let isAdminSignal: ReturnType<typeof signal<boolean>>;
   let router: Router;
 
   beforeEach(async () => {
@@ -25,6 +27,7 @@ describe('Nav', () => {
     userDataSignal = signal({ userData: undefined });
     authorizeMock = vi.fn();
     logoffMock = vi.fn().mockReturnValue(of(undefined));
+    isAdminSignal = signal(false);
 
     await TestBed.configureTestingModule({
       imports: [Nav],
@@ -47,6 +50,7 @@ describe('Nav', () => {
           },
         },
         { provide: ThemeService, useValue: { effectiveTheme: signal('light'), toggle: vi.fn() } },
+        { provide: UserRolesService, useValue: { isAdmin: isAdminSignal } },
       ],
     }).compileComponents();
 
@@ -201,6 +205,33 @@ describe('Nav', () => {
 
     // assert
     expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('zeigt keinen Admin-Button, wenn die Rolle Admin fehlt', () => {
+    // arrange
+    const fixture = TestBed.createComponent(Nav);
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[routerLink="/admin"]')).toBeFalsy();
+  });
+
+  it('zeigt den Admin-Button, wenn die Rolle Admin vorhanden ist', () => {
+    // arrange
+    isAdminSignal.set(true);
+    const fixture = TestBed.createComponent(Nav);
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const compiled = fixture.nativeElement as HTMLElement;
+    const adminLink = compiled.querySelector<HTMLAnchorElement>('a[routerLink="/admin"]');
+    expect(adminLink?.textContent?.trim()).toBe('Admin');
+    expect(adminLink?.title).toBe('Admin-Bereich öffnen');
   });
 
   it('zeigt den Theme-Toggle', () => {

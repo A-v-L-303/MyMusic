@@ -14,6 +14,7 @@ import {
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { filter, map } from 'rxjs';
 
+import { UserRolesService } from '../core/auth/user-roles.service';
 import { ThemeToggle } from '../core/theme/theme-toggle/theme-toggle';
 
 interface OidcUserClaims {
@@ -41,8 +42,10 @@ export class Nav {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly router = inject(Router);
   private readonly oidcSecurityService = inject(OidcSecurityService);
+  private readonly userRolesService = inject(UserRolesService);
 
   protected readonly authenticated = this.oidcSecurityService.authenticated;
+  protected readonly isAdmin = this.userRolesService.isAdmin;
   protected readonly username = computed(() => {
     const claims = this.oidcSecurityService.userData().userData as OidcUserClaims | undefined;
     return claims?.preferred_username;

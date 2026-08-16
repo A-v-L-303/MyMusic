@@ -21,6 +21,7 @@ describe('App', () => {
             userData: signal({ userData: undefined }),
             authorize: vi.fn(),
             logoff: vi.fn().mockReturnValue(of(undefined)),
+            getPayloadFromAccessToken: vi.fn().mockReturnValue(of({})),
           },
         },
         { provide: ThemeService, useValue: { effectiveTheme: signal('light'), toggle: vi.fn() } },

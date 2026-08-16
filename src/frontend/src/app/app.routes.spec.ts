@@ -9,9 +9,12 @@ vi.mock('angular-auth-oidc-client', () => ({
   autoLoginPartialRoutesGuard: () => true,
 }));
 
+import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { routes } from './app.routes';
 import { RuntimeConfigService } from './core/runtime-config/runtime-config.service';
+import { UserRolesService } from './core/auth/user-roles.service';
+import { Admin } from './features/admin/admin';
 import { Artists } from './features/artists/artists';
 import { Dashboard } from './features/dashboard/dashboard';
 import { Genres } from './features/genres/genres';
@@ -26,6 +29,13 @@ const routingTestProviders = [
   { provide: RuntimeConfigService, useValue: { apiBaseUrl: 'https://api.test' } },
 ];
 
+function routingTestProvidersWithAdminRole(isAdmin: boolean) {
+  return [
+    ...routingTestProviders,
+    { provide: UserRolesService, useValue: { isAdmin: () => isAdmin } },
+  ];
+}
+
 describe('app.routes', () => {
   it('verdrahtet authGuard auf dem Eltern-Knoten', () => {
     // arrange & act
@@ -33,6 +43,38 @@ describe('app.routes', () => {
 
     // assert
     expect(root.canActivate).toEqual([authGuard]);
+  });
+
+  it('verdrahtet adminGuard auf der /admin-Route', () => {
+    // arrange & act
+    const adminRoute = routes[0].children?.find((route) => route.path === 'admin');
+
+    // assert
+    expect(adminRoute?.canActivate).toEqual([adminGuard]);
+  });
+
+  it('lädt /admin, wenn die Rolle Admin vorhanden ist', async () => {
+    // arrange
+    TestBed.configureTestingModule({ providers: routingTestProvidersWithAdminRole(true) });
+    const harness = await RouterTestingHarness.create();
+
+    // act
+    const component = await harness.navigateByUrl('/admin', Admin);
+
+    // assert
+    expect(component).toBeInstanceOf(Admin);
+  });
+
+  it('leitet /admin auf /dashboard um, wenn die Rolle Admin fehlt', async () => {
+    // arrange
+    TestBed.configureTestingModule({ providers: routingTestProvidersWithAdminRole(false) });
+    const harness = await RouterTestingHarness.create();
+
+    // act
+    await harness.navigateByUrl('/admin', Dashboard);
+
+    // assert
+    expect(TestBed.inject(Router).url).toBe('/dashboard');
   });
 
   it('redirectet den Wurzelpfad auf /dashboard', async () => {
