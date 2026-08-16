@@ -41,15 +41,14 @@ verifiziert, PR #69, nach `main` gemergt. Zusätzlich Block 7b (Rollenkonzept
 User/Admin im Angular-Code: `UserRolesService`, `AdminGuard`, Admin-Button in
 der Kopfzeile, Platzhalter-Route `/admin`, siehe Abschnitt 7b) umgesetzt,
 automatisiert getestet (366 Frontend-Tests grün) und live gegen den
-laufenden Aspire-AppHost verifiziert — Branch
-`block-7b-rollenkonzept-admin-guard`, PR noch ausstehend.
+laufenden Aspire-AppHost verifiziert, PR #71, nach `main` gemergt.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
-PR #69 nach `main` gemergt)
+PR #69, Block 7b per PR #71 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -2069,7 +2068,7 @@ Abnahmekriterium (Gesamtabschnitt 7):
 ### 7b. Rollenkonzept User/Admin im Angular-Code
 
 Status: **abgeschlossen** (2026-08-16), automatisiert getestet und live
-verifiziert; Branch `block-7b-rollenkonzept-admin-guard`, PR noch ausstehend.
+verifiziert; PR #71, nach `main` gemergt.
 Arbeits-Prompt: `docs/prompts/2026-08-16-block-7b-rollenkonzept-admin-guard.md`
 
 Umfang bewusst auf den Angular-Code begrenzt (TASK.md-Vorgabe „im
