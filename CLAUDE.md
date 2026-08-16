@@ -63,11 +63,12 @@ Nach einer ausdrücklichen Freigabe:
 
 1. Ändere nur den freigegebenen Umfang.
 2. Es wird nichts implementiert bevor ein Arbeits-Prompt erstellt und geschrieben wurde.
-3. Halte Änderungen klein und thematisch geschlossen.
-4. Prüfe vor Beginn den Iststand erneut (Git-Status, aktueller Branch gemäß 2.4,
+3. Der Arbeits-Prompt ist ein Plan und keine Dokumentation, der Arbeits-Prompt darf nach Freigabe nicht mehr geändert werden.
+4. Halte Änderungen klein und thematisch geschlossen.
+5. Prüfe vor Beginn den Iststand erneut (Git-Status, aktueller Branch gemäß 2.4,
    Build, betroffene Dateien).
-5. Führe passende Builds und Tests aus.
-6. Dokumentiere:
+6. Führe passende Builds und Tests aus.
+7. Dokumentiere:
    - geänderte Dateien,
    - fachliche und technische Auswirkungen,
    - ausgeführte Prüfungen,
