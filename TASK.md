@@ -37,7 +37,12 @@ PR #61) umgesetzt, live verifiziert und nach `main` gemergt; Block 6j
 verifiziert und nach `main` gemergt — Records-Frontend damit vollständig,
 Block 6 (Backend+Frontend) fachlich vollständig; Block 7f
 (Keycloak-Login-Theme „mymusic", siehe Abschnitt 7f) umgesetzt und live
-verifiziert, PR #69, nach `main` gemergt.
+verifiziert, PR #69, nach `main` gemergt. Zusätzlich Block 7b (Rollenkonzept
+User/Admin im Angular-Code: `UserRolesService`, `AdminGuard`, Admin-Button in
+der Kopfzeile, Platzhalter-Route `/admin`, siehe Abschnitt 7b) umgesetzt,
+automatisiert getestet (366 Frontend-Tests grün) und live gegen den
+laufenden Aspire-AppHost verifiziert — Branch
+`block-7b-rollenkonzept-admin-guard`, PR noch ausstehend.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -86,10 +91,12 @@ dem MVP-Umfang der Phase 1:
   vollständig).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
-- Rollenkonzept (`User`/`Admin`) im Angular-Code, Admin-Bereich, Rate
-  Limiting, CORS-Production-Whitelist, CSP (siehe Abschnitt 7; das
-  Keycloak-Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit
-  Block 7f erledigt).
+- Admin-Bereich (Userliste/-löschung über die Keycloak Admin REST API),
+  Swagger-UI-Freischaltung für die Admin-Rolle in Production, Rate Limiting,
+  CORS-Production-Whitelist, CSP (siehe Abschnitt 7; das Keycloak-
+  Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit Block 7f
+  erledigt, das Rollenkonzept im Angular-Code — `AdminGuard`, Admin-Button,
+  Platzhalter-Route `/admin` — mit Block 7b, siehe Abschnitt 7b).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -1936,8 +1943,9 @@ Frontend-Fix, kein Backend-Change:
 
 ## 7. Authentifizierung und Mandantentrennung
 
-Status: teilweise offen; Block 7a (Angular-Login-Flow) und Block 7f
-(Keycloak-Custom-Theme der Anmeldeseite) abgeschlossen
+Status: teilweise offen; Block 7a (Angular-Login-Flow), Block 7b
+(Rollenkonzept im Angular-Code) und Block 7f (Keycloak-Custom-Theme der
+Anmeldeseite) abgeschlossen
 Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
@@ -2046,9 +2054,6 @@ Abnahmekriterium erfüllt (live verifiziert, siehe Nachtrag oben):
 
 Aufgaben (noch offen):
 
-- Rollen (`User`, `Admin`) im Angular-Code (`AdminGuard`, Admin-Tab) — die
-  Ownership-Prüfung in Handlern (404 statt 403) ist bereits je CRUD-Slice
-  serverseitig umgesetzt.
 - Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
   zurückgestellt aus Block 0e, siehe
   `docs/adr/0007-swagger-openapi-nur-development.md`).
@@ -2060,6 +2065,69 @@ Abnahmekriterium (Gesamtabschnitt 7):
 
 - Ohne Login ist kein fachlicher Endpunkt erreichbar; Benutzer sehen
   ausschließlich eigene Daten; der Admin kann Benutzer löschen.
+
+### 7b. Rollenkonzept User/Admin im Angular-Code
+
+Status: **abgeschlossen** (2026-08-16), automatisiert getestet und live
+verifiziert; Branch `block-7b-rollenkonzept-admin-guard`, PR noch ausstehend.
+Arbeits-Prompt: `docs/prompts/2026-08-16-block-7b-rollenkonzept-admin-guard.md`
+
+Umfang bewusst auf den Angular-Code begrenzt (TASK.md-Vorgabe „im
+Angular-Code"): kein Backend-Code geändert, die Ownership-Prüfung (404 statt
+403) ist bereits je CRUD-Slice serverseitig umgesetzt. Admin-Bereich-Inhalt
+(Userliste/-löschung), Swagger-Freischaltung für Production, Rate Limiting,
+CORS-Whitelist und CSP bleiben eigene, spätere Punkte in Abschnitt 7.
+
+Umgesetzt:
+
+- `UserRolesService` (`core/auth/user-roles.service.ts`, neu): exponiert
+  `roles`/`isAdmin` als Signals.
+- `AdminGuard` (`core/auth/admin.guard.ts`, neu): funktionaler
+  `CanActivateFn`, leitet ohne Rolle `Admin` still auf `/dashboard` um (kein
+  Modal, konsistent mit CLAUDE.md §7 „Rolle unzureichend" → Weiterleitung).
+- `features/admin/` (neu): Platzhalter-Komponente 1:1 nach dem Muster von
+  `features/dashboard/`, eigene `admin.routes.ts`.
+- `app.routes.ts`: neue `/admin`-Route mit `canActivate: [adminGuard]`.
+- `NavComponent`: Admin-Button (Label only, kein Icon) zwischen
+  Theme-Toggle und Username/Login, sichtbar nur bei `isAdmin()` — Position
+  und Verhalten nach `wiki/architektur/navigation-konzept.md`.
+- 13 neue Vitest-Tests (`user-roles.service.spec.ts`,
+  `admin.guard.spec.ts`, `admin.spec.ts`, Erweiterungen von
+  `app.routes.spec.ts` und `nav.spec.ts`); `app.spec.ts` um den seither
+  fehlenden `getPayloadFromAccessToken`-Mock ergänzt. 366 Frontend-Tests
+  insgesamt, alle grün. Production-Build grün.
+
+Empirische Erkenntnis zur Rollenclaim-Quelle (live gegen den laufenden
+Aspire-AppHost mit einem Testbenutzer geprüft, dem die Rolle `Admin` in der
+Keycloak-Admin-UI zugewiesen wurde): Der geplante erste Ansatz, die Rolle
+aus `OidcSecurityService.userData()` (Ergebnis des Keycloak-`/userinfo`-
+Endpunkts) zu lesen, funktioniert **nicht** — die UserInfo-Antwort enthält
+keinen `realm_access`-Claim, nur die Standard-Profilclaims (`sub`,
+`preferred_username`, `email`, …). Der rohe **Access Token** enthält
+`realm_access.roles` dagegen wie erwartet. `UserRolesService` liest die
+Rolle deshalb über `oidcSecurityService.getPayloadFromAccessToken()`,
+reaktiv erneut ausgelöst bei jeder Änderung des `authenticated`-Signals
+(`toObservable(authenticated).pipe(switchMap(...))`) — ein einmaliges
+Auslesen beim Service-Start hätte Login/Logout/Rollenänderungen nicht
+nachgezogen.
+
+Bewusst nicht Teil dieses Standes:
+
+- Admin-Bereich-Inhalt (`/admin` zeigt nur einen Platzhalter).
+- Jede Backend-Änderung.
+- Verhalten bei Rollenänderung während einer laufenden Session ohne
+  Token-Neuerwerb (Silent Renew übernimmt eine geänderte Rolle erst mit dem
+  nächsten tatsächlichen Access-Token-Refresh — nicht gesondert geprüft).
+
+Abnahmekriterium erfüllt (live verifiziert):
+
+- Mit der Rolle `Admin` erscheint der Admin-Button an der vorgesehenen
+  Position (Theme-Toggle · Admin · Username · Logout), ein Klick navigiert
+  zu `/admin` und zeigt die Platzhalteransicht. Ohne die Rolle bleibt der
+  Button laut automatisierten Tests ausgeblendet und `/admin` leitet auf
+  `/dashboard` um (deterministisch über denselben Code-Pfad wie der
+  positive Fall abgesichert, nicht zusätzlich live mit einem zweiten
+  Testbenutzer nachgewiesen).
 
 ### 7f. Keycloak-Custom-Theme der Anmeldeseite
 

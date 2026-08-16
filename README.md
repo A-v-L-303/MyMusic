@@ -510,6 +510,22 @@ Bewusst nicht Teil dieses Blocks: Admin-Button/`AdminGuard` (Rollenkonzept,
 `TASK.md` Abschnitt 7), responsives Icon-only-/Hamburger-Verhalten,
 Benutzerprofil-Modal.
 
+### Rollenkonzept im Angular-Code (Block 7b)
+
+`src/frontend/src/app/core/auth/user-roles.service.ts` liest die
+Keycloak-Realm-Rolle `Admin` aus dem rohen **Access Token**
+(`OidcSecurityService.getPayloadFromAccessToken()`), reaktiv erneut
+ausgelöst bei jeder Änderung des `authenticated`-Signals — der zunächst
+naheliegende Weg über `userData()` (Ergebnis des Keycloak-`/userinfo`-
+Endpunkts) funktioniert nicht, da dort kein `realm_access`-Claim enthalten
+ist (live gegen den laufenden Aspire-AppHost verifiziert). Der
+`AdminGuard` (`core/auth/admin.guard.ts`) leitet ohne diese Rolle still auf
+`/dashboard` um; die `NavComponent` zeigt den Admin-Button (Label only,
+kein Icon) nur mit der Rolle, zwischen Theme-Toggle und Username/Login.
+`/admin` (`features/admin/`) ist bislang nur eine Platzhalterseite — der
+eigentliche Admin-Bereich (Userliste/-löschung über die Keycloak Admin REST
+API) folgt mit einem eigenen, späteren Block (`TASK.md` Abschnitt 7).
+
 ### Prüfen
 
 ```powershell
