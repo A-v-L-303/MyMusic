@@ -41,14 +41,22 @@ verifiziert, PR #69, nach `main` gemergt. Zusätzlich Block 7b (Rollenkonzept
 User/Admin im Angular-Code: `UserRolesService`, `AdminGuard`, Admin-Button in
 der Kopfzeile, Platzhalter-Route `/admin`, siehe Abschnitt 7b) umgesetzt,
 automatisiert getestet (366 Frontend-Tests grün) und live gegen den
-laufenden Aspire-AppHost verifiziert, PR #71, nach `main` gemergt.
+laufenden Aspire-AppHost verifiziert, PR #71, nach `main` gemergt. Block 7c
+(Admin-Bereich, Backend und Frontend: `GET /api/admin/users`,
+`DELETE /api/admin/users/{id}`, serverseitige Admin-Autorisierungspolicy,
+Keycloak-Service-Account-Client für die Admin REST API, Angular-Feature
+`features/admin/` mit Userliste und Löschen, siehe Abschnitt 7c) umgesetzt,
+automatisiert getestet (alle Unit- und Integrationstests sowie 375
+Frontend-Tests grün), PR #74, nach `main` gemergt — die manuelle
+Live-Verifikation im Browser steht dabei noch aus, siehe Nachtrag in
+Abschnitt 7c.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
-PR #69, Block 7b per PR #71 nach `main` gemergt)
+PR #69, Block 7b per PR #71, Block 7c per PR #74 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -90,12 +98,14 @@ dem MVP-Umfang der Phase 1:
   vollständig).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
-- Admin-Bereich (Userliste/-löschung über die Keycloak Admin REST API),
-  Swagger-UI-Freischaltung für die Admin-Rolle in Production, Rate Limiting,
+- Swagger-UI-Freischaltung für die Admin-Rolle in Production, Rate Limiting,
   CORS-Production-Whitelist, CSP (siehe Abschnitt 7; das Keycloak-
   Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit Block 7f
   erledigt, das Rollenkonzept im Angular-Code — `AdminGuard`, Admin-Button,
-  Platzhalter-Route `/admin` — mit Block 7b, siehe Abschnitt 7b).
+  Platzhalter-Route `/admin` — mit Block 7b, der Admin-Bereich selbst
+  (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c,
+  siehe Abschnitt 7c — dort steht die manuelle Live-Verifikation im Browser
+  noch aus).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -1948,7 +1958,8 @@ Frontend-Fix, kein Backend-Change:
 
 Status: teilweise offen; Block 7a (Angular-Login-Flow), Block 7b
 (Rollenkonzept im Angular-Code) und Block 7f (Keycloak-Custom-Theme der
-Anmeldeseite) abgeschlossen
+Anmeldeseite) abgeschlossen; Block 7c (Admin-Bereich) Backend und Frontend
+gemergt, Live-Verifikation im Browser offen (siehe Abschnitt 7c)
 Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
@@ -2061,13 +2072,15 @@ Aufgaben (noch offen):
   zurückgestellt aus Block 0e, siehe
   `docs/adr/0007-swagger-openapi-nur-development.md`).
 - Rate Limiting (100 req/min pro Benutzer), CORS-Production-Whitelist, CSP.
-- Admin-Bereich: Benutzer inkl. aller Daten löschen (`/admin`, nur Rolle Admin).
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
 
 Abnahmekriterium (Gesamtabschnitt 7):
 
 - Ohne Login ist kein fachlicher Endpunkt erreichbar; Benutzer sehen
-  ausschließlich eigene Daten; der Admin kann Benutzer löschen.
+  ausschließlich eigene Daten; der Admin kann Benutzer löschen — mit
+  Block 7c backend- und frontendseitig umgesetzt und automatisiert
+  nachgewiesen, die manuelle Live-Prüfung im Browser steht noch aus (siehe
+  Abschnitt 7c).
 
 ### 7b. Rollenkonzept User/Admin im Angular-Code
 
@@ -2134,9 +2147,9 @@ Abnahmekriterium erfüllt (live verifiziert):
 
 ### 7c. Admin-Bereich
 
-Status: **in Umsetzung** (Stand 2026-08-17): Backend und Frontend
-implementiert und automatisiert getestet, Live-Verifikation im Browser sowie
-Commit/Push/PR stehen noch aus.
+Status: **Backend und Frontend gemergt** (2026-08-17), automatisiert
+getestet; PR #74, nach `main` gemergt. Die manuelle Live-Verifikation im
+Browser steht weiterhin aus (siehe „Noch offen" unten).
 Arbeits-Prompt: `docs/prompts/2026-08-17-block-7c-admin-bereich.md`
 
 Anders als bei Genre/Label/Artist wird dieser Slice nicht in getrennte
@@ -2199,8 +2212,12 @@ Bewusst nicht Teil dieses Blocks (eigene, spätere Punkte):
 
 Noch offen:
 
-- Live-Verifikation im Browser gegen den laufenden Aspire-AppHost.
-- Commit, Push, Pull Request (jeweils separate Freigabe erforderlich).
+- Live-Verifikation im Browser gegen den laufenden Aspire-AppHost. Laut
+  PR-#74-Beschreibung hing `dotnet run` auf dem AppHost beim Merge
+  reproduzierbar beim Start von Postgres/Keycloak (Seq startet, die anderen
+  nicht) — im Gegensatz zu `dotnet test`, das zuverlässig funktioniert.
+  Ursache noch nicht geklärt; betrifft nur die manuelle UI-Prüfung, nicht
+  die automatisierten Tests.
 
 ### 7f. Keycloak-Custom-Theme der Anmeldeseite
 

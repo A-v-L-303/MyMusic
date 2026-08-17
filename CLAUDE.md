@@ -201,7 +201,14 @@ der Album-Cover-Upload im `RecordForm`-Modal beim Anlegen und Bearbeiten
 Record-Detailansicht (`RecordDetail`), Genre-Auswahl dort als `<select>`
 über `GenreService.getAll()` (`/api/genres/all`), Artist-Auswahl über
 Autocomplete wie im `RecordForm` — das Records-Frontend ist damit
-vollständig; `dashboard/` und `search/` enthalten weiterhin nur
+vollständig; `features/admin/` hatte seit Block 7b (PR #71) zunächst nur
+eine Platzhalterseite (nur für die Rolle `Admin` über `/admin` erreichbar)
+und wurde mit Block 7c (PR #74) durch eine vollständige Benutzerverwaltung
+ersetzt (paginierte Userliste, Löschen eines Benutzers inkl. aller
+App-Daten) — dafür erstmals eine echte serverseitige Rollenautorisierung
+(`Admin`-Policy, ADR 0015) und ein externer HTTP-Client der Anwendung
+(Keycloak Admin REST API über einen dedizierten Service-Account-Client,
+ADR 0016); `dashboard/` und `search/` enthalten weiterhin nur
 Platzhalterseiten. Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
