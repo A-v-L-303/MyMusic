@@ -21,6 +21,8 @@ global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos;
 global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos.Builder;
 global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos;
 global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos.Builder;
+global using MyMusic.Application.Features.Verwaltung.Admin.ResponseDtos;
+global using MyMusic.Application.Features.Verwaltung.Admin.ResponseDtos.Builder;
 global using MyMusic.Domain.Contracts.Repository;
 global using ArtistEntity = MyMusic.Domain.DomainModels.Stammdaten.Artist.Artist;
 global using CountryEntity = MyMusic.Domain.DomainModels.Stammdaten.Country.Country;

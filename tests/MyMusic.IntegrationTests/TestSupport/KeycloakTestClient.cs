@@ -49,6 +49,47 @@ public static class KeycloakTestClient
         return new KeycloakTestUser(userId, username, password);
     }
 
+    public static async Task AssignAdminRoleAsync(
+        HttpClient keycloakClient,
+        IDistributedApplicationTestingBuilder appHost,
+        KeycloakTestUser testUser,
+        CancellationToken cancellationToken)
+    {
+        var adminToken = await RequestAdminAccessTokenAsync(keycloakClient, appHost, cancellationToken);
+
+        using var getRoleRequest = new HttpRequestMessage(HttpMethod.Get, "/admin/realms/mymusic/roles/Admin");
+
+        getRoleRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var getRoleResponse = await keycloakClient.SendAsync(getRoleRequest, cancellationToken);
+
+        var roleBody = await getRoleResponse.Content.ReadAsStringAsync(cancellationToken);
+
+        Assert.True(
+            getRoleResponse.IsSuccessStatusCode,
+            $"Abrufen der Admin-Rolle fehlgeschlagen: {getRoleResponse.StatusCode} {roleBody}");
+
+        using var roleDocument = JsonDocument.Parse(roleBody);
+
+        var roleId = roleDocument.RootElement.GetProperty("id").GetString();
+
+        using var assignRoleRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/admin/realms/mymusic/users/{testUser.Id}/role-mappings/realm");
+
+        assignRoleRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        assignRoleRequest.Content = JsonContent.Create(new[] { new { id = roleId, name = "Admin" } });
+
+        var assignRoleResponse = await keycloakClient.SendAsync(assignRoleRequest, cancellationToken);
+
+        var assignRoleBody = await assignRoleResponse.Content.ReadAsStringAsync(cancellationToken);
+
+        Assert.True(
+            assignRoleResponse.IsSuccessStatusCode,
+            $"Zuweisen der Admin-Rolle fehlgeschlagen: {assignRoleResponse.StatusCode} {assignRoleBody}");
+    }
+
     public static async Task DeleteTestUserAsync(
         HttpClient keycloakClient,
         IDistributedApplicationTestingBuilder appHost,

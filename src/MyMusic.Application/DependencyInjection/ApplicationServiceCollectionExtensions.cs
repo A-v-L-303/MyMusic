@@ -22,6 +22,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<RecordTrackResponseBuilder>();
 
+        services.AddScoped<UserResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

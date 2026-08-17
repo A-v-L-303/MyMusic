@@ -1,14 +1,18 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('angular-auth-oidc-client', () => ({
   autoLoginPartialRoutesGuard: () => true,
+  OidcSecurityService: class {},
 }));
 
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { routes } from './app.routes';
@@ -33,6 +37,13 @@ function routingTestProvidersWithAdminRole(isAdmin: boolean) {
   return [
     ...routingTestProviders,
     { provide: UserRolesService, useValue: { isAdmin: () => isAdmin } },
+    {
+      provide: OidcSecurityService,
+      useValue: {
+        authenticated: signal({ isAuthenticated: true }),
+        getPayloadFromAccessToken: () => of({ sub: 'own-id' }),
+      },
+    },
   ];
 }
 
