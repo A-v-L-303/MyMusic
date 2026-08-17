@@ -54,7 +54,20 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new AdminRequirement()));
+
+builder.Services.AddSingleton<IAuthorizationHandler, AdminAuthorizationHandler>();
+
+builder.Services.AddSingleton<KeycloakServiceAccountSecretProvider>();
+
+builder.Services.AddHttpClient<KeycloakServiceAccountProvisioner>(client =>
+    client.BaseAddress = new Uri(builder.Configuration["Keycloak:AdminApiBaseUrl"]!));
+
+builder.Services.AddHttpClient<IKeycloakAdminClient, KeycloakAdminClient>(client =>
+    client.BaseAddress = new Uri(builder.Configuration["Keycloak:AdminApiBaseUrl"]!));
 
 if (builder.Environment.IsDevelopment())
 {
@@ -92,6 +105,26 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+await using (var startupScope = app.Services.CreateAsyncScope())
+{
+    var keycloakServiceAccountProvisioner =
+        startupScope.ServiceProvider.GetRequiredService<KeycloakServiceAccountProvisioner>();
+
+    try
+    {
+        await keycloakServiceAccountProvisioner.LoadSecretAsync(CancellationToken.None);
+    }
+    catch (Exception exception)
+    {
+        // Ein Fehlschlag hier darf nicht die gesamte API zum Absturz bringen - er betrifft
+        // ausschliesslich die Admin-Endpunkte, die dann mit 500 antworten (kein Secret geladen).
+        app.Logger.LogWarning(
+            exception,
+            "Das Keycloak-Service-Account-Secret konnte beim Start nicht geladen werden. " +
+            "Die Admin-Endpunkte sind dadurch nicht funktionsfähig.");
+    }
+}
+
 app.UseExceptionHandler();
 
 app.UseSerilogRequestLogging();
@@ -125,5 +158,7 @@ app.MapLabelEndpoints();
 app.MapArtistEndpoints();
 
 app.MapRecordEndpoints();
+
+app.MapAdminEndpoints();
 
 app.Run();

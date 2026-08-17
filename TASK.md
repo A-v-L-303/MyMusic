@@ -504,7 +504,9 @@ Abnahmekriterium erfüllt:
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
 Status: abgeschlossen (Genre: 2026-07-29; Country: 2026-08-05;
-Label: 2026-08-07; Artist: 2026-08-07; Record/Tracks: 2026-08-07)
+Label: 2026-08-07; Artist: 2026-08-07; Record/Tracks: 2026-08-07;
+Admin-Bereich: 2026-08-16 — bislang nicht in dieser Liste vermerkt, siehe
+Nachtrag unten)
 Priorität: hoch, jeweils vor dem zugehörigen Slice
 
 Ziel:
@@ -526,6 +528,8 @@ Aufgaben:
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-artist.md`.
   - Record/Tracks: erledigt, siehe
     `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-record.md`.
+  - Admin-Bereich: erledigt (2026-08-16), siehe
+    `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-admin.md`.
 - Die sechs Prüfkriterien der groben Testplanung als Grundlage nutzen.
 
 Abnahmekriterium:
@@ -2127,6 +2131,76 @@ Abnahmekriterium erfüllt (live verifiziert):
   `/dashboard` um (deterministisch über denselben Code-Pfad wie der
   positive Fall abgesichert, nicht zusätzlich live mit einem zweiten
   Testbenutzer nachgewiesen).
+
+### 7c. Admin-Bereich
+
+Status: **in Umsetzung** (Stand 2026-08-17): Backend und Frontend
+implementiert und automatisiert getestet, Live-Verifikation im Browser sowie
+Commit/Push/PR stehen noch aus.
+Arbeits-Prompt: `docs/prompts/2026-08-17-block-7c-admin-bereich.md`
+
+Anders als bei Genre/Label/Artist wird dieser Slice nicht in getrennte
+Backend-/Frontend-Blöcke aufgeteilt — die User Stories
+(`../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-admin.md`)
+beschreiben den Admin-Bereich durchgehend als ein zusammenhängendes Feature.
+
+Umgesetzt:
+
+- `GET /api/admin/users` (paginiert, analog zu Genre/Label/Artist) und
+  `DELETE /api/admin/users/{id}` — neue Kategorie `Verwaltung` unter
+  `Application/Features/` (siehe Wiki `architektur/application-layer.md`).
+- Erste serverseitige Rollenautorisierung im Projekt: eigene
+  `"Admin"`-Policy, die den rohen `realm_access`-Claim auswertet
+  (`src/MyMusic.Api/Authorization/`, siehe ADR 0015) — bisher gab es nur
+  die clientseitige Ausblendung des Admin-Buttons aus Block 7b.
+- Erster externer HTTP-Client der Anwendung: `KeycloakAdminClient`
+  (`src/MyMusic.Infrastructure/ExternalServices/Keycloak/`) für die
+  Keycloak Admin REST API (Benutzerliste, Benutzer löschen), authentifiziert
+  über einen neuen, dedizierten Service-Account-Client
+  `mymusic-admin-service` (Client-Credentials-Grant, minimale
+  `realm-management`-Rollen `view-users`/`query-users`/`manage-users` —
+  `query-users` empirisch bei der Live-Verifikation als zusätzlich nötig
+  ermittelt). Das Secret dieses Clients wird von Keycloak generiert und
+  beim API-Start einmalig ausgelesen, kein neues Secret in User Secrets
+  nötig; schlägt das Laden fehl, startet die API trotzdem — nur die
+  Admin-Endpunkte antworten dann mit 500 (siehe ADR 0016 samt Nachtrag).
+  Die Admin-Rolle je Benutzer wird über
+  `GET /users/{id}/role-mappings/realm` ermittelt (ein Aufruf pro Benutzer),
+  nicht über den Rollen-Mitglieder-Endpunkt (`/roles/{rolle}/users`) — der
+  lieferte trotz aller drei Rollen 403, vermutlich wegen Keycloaks
+  Fine-Grained-Admin-Permissions (siehe ADR-0016-Nachtrag).
+- `DeleteUserCommandHandler`: Selbstlöschung gesperrt (409), App-Daten
+  (Record, Label, Artist, Genre) werden vor dem Keycloak-Account gelöscht,
+  in dieser Reihenfolge wegen der bestehenden FK-Restrict-Beziehungen.
+- Angular-Feature `features/admin/` ersetzt den Platzhalter aus Block 7b:
+  Userliste mit Paginierung (`shared/pagination/`), Löschen mit
+  Bestätigungsmodal (stärkerer Warnhinweis als das sonst übliche knappe
+  Muster, da hier die gesamte Sammlung eines Benutzers mitgelöscht wird),
+  kein Löschen-Icon bei der eigenen Zeile.
+- Unit-Tests (`MyMusic.Api.Tests`, `MyMusic.Application.Tests`),
+  Integrationstest `AdminEndpointsTests.cs` (401/403/200, Selbstlöschung,
+  Löschung inkl. App-Daten-Bereinigung), `KeycloakTestClient.cs` um
+  Rollenzuweisung erweitert; Vitest-Tests `admin.spec.ts`,
+  `admin.service.spec.ts`. `dotnet build`, `dotnet format
+  --verify-no-changes`, alle Backend- und Frontend-Tests grün
+  (Domain 114, Application 248, Api 11, Infrastructure 5,
+  IntegrationTests 13/13, Frontend 375), `npm run build` grün.
+- Live gegen den laufenden Aspire-AppHost verifiziert: Der neue
+  Service-Account-Client wurde im lokalen `mymusic-keycloak-data`-Volume
+  nachträglich angelegt (`--import-realm` überspringt bereits importierte
+  Realms — `IGNORE_EXISTING`, dieselbe Einschränkung wie in Block 7f/ADR
+  0014 dokumentiert; einmalig per `kcadm.sh` im laufenden Container
+  nachgezogen, analog zum dortigen Vorgehen).
+
+Bewusst nicht Teil dieses Blocks (eigene, spätere Punkte):
+
+- Swagger-UI-Freischaltung für Production, Rate Limiting,
+  CORS-Production-Whitelist, CSP.
+
+Noch offen:
+
+- Live-Verifikation im Browser gegen den laufenden Aspire-AppHost.
+- Commit, Push, Pull Request (jeweils separate Freigabe erforderlich).
 
 ### 7f. Keycloak-Custom-Theme der Anmeldeseite
 
