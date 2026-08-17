@@ -1,13 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('angular-auth-oidc-client', () => ({
-  autoLoginPartialRoutesGuard: () => true,
-}));
+import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { of } from 'rxjs';
+import { describe, expect, it } from 'vitest';
 
 import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
@@ -22,8 +21,15 @@ import { Labels } from './features/labels/labels';
 import { Records } from './features/records/records';
 import { Search } from './features/search/search';
 
+// Für die Navigations-Tests wird der echte authGuard (autoLoginPartialRoutesGuard)
+// durch einen trivialen Passthrough ersetzt - er bräuchte sonst eine vollständige,
+// echte OIDC-Konfiguration. Die Verdrahtung selbst (dass authGuard/adminGuard an den
+// richtigen Routen hängen) wird unten separat gegen den unveränderten routes-Import
+// geprüft, `children` bleibt unverändert (adminGuard bleibt aktiv).
+const testRoutes = [{ ...routes[0], canActivate: [() => true] }];
+
 const routingTestProviders = [
-  provideRouter(routes),
+  provideRouter(testRoutes),
   provideHttpClient(),
   provideHttpClientTesting(),
   { provide: RuntimeConfigService, useValue: { apiBaseUrl: 'https://api.test' } },
@@ -33,6 +39,13 @@ function routingTestProvidersWithAdminRole(isAdmin: boolean) {
   return [
     ...routingTestProviders,
     { provide: UserRolesService, useValue: { isAdmin: () => isAdmin } },
+    {
+      provide: OidcSecurityService,
+      useValue: {
+        authenticated: signal({ isAuthenticated: true }),
+        getPayloadFromAccessToken: () => of({ sub: 'own-id' }),
+      },
+    },
   ];
 }
 

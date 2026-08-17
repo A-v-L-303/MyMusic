@@ -45,6 +45,9 @@ var api = builder.AddProject<Projects.MyMusic_Api>("api")
     .WaitFor(keycloak)
     .WithEnvironment("Keycloak__Authority", ReferenceExpression.Create(
         $"{keycloak.GetEndpoint("http")}/realms/mymusic"))
+    .WithEnvironment("Keycloak__AdminApiBaseUrl", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Keycloak__BootstrapAdminUsername", "admin")
+    .WithEnvironment("Keycloak__BootstrapAdminPassword", keycloakAdminPassword)
     .WithUrlForEndpoint("https", url =>
     {
         url.DisplayText = "Swagger UI";
