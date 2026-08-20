@@ -47,9 +47,14 @@ laufenden Aspire-AppHost verifiziert, PR #71, nach `main` gemergt. Block 7c
 Keycloak-Service-Account-Client für die Admin REST API, Angular-Feature
 `features/admin/` mit Userliste und Löschen, siehe Abschnitt 7c) umgesetzt,
 automatisiert getestet (alle Unit- und Integrationstests sowie 375
-Frontend-Tests grün), PR #74, nach `main` gemergt — die manuelle
-Live-Verifikation im Browser steht dabei noch aus, siehe Nachtrag in
-Abschnitt 7c. Block 7g (Registrierung: `registrationAllowed` aktiviert,
+Frontend-Tests grün), PR #74, nach `main` gemergt; die manuelle
+Live-Verifikation im Browser (Userliste, Löschen inkl. Bestätigungsmodal,
+Zugriffsschutz für Nicht-Admins, sowie eine vertiefte Prüfung direkt gegen
+Postgres und Keycloak, dass App-Daten und Keycloak-Account eines gelöschten
+Benutzers wirklich entfernt sind und ein Login danach mit 401 fehlschlägt)
+wurde am 2026-08-20 nachgeholt, siehe Nachtrag in Abschnitt 7c — Block 7c
+damit vollständig abgeschlossen. Block 7g (Registrierung:
+`registrationAllowed` aktiviert,
 automatische Zuweisung der Realm-Rolle `User` an neu registrierte
 Benutzer, Registrieren-Button in der Kopfzeile, unbewachte Landing-Route
 für den nicht angemeldeten Zustand, siehe Abschnitt 7g) umgesetzt,
@@ -109,10 +114,10 @@ dem MVP-Umfang der Phase 1:
   Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit Block 7f
   erledigt, das Rollenkonzept im Angular-Code — `AdminGuard`, Admin-Button,
   Platzhalter-Route `/admin` — mit Block 7b, der Admin-Bereich selbst
-  (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c,
-  siehe Abschnitt 7c — dort steht die manuelle Live-Verifikation im Browser
-  noch aus; die Registrierung neuer Benutzer ist mit Block 7g erledigt,
-  siehe Abschnitt 7g).
+  (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c
+  erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
+  Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
+  Block 7g erledigt, siehe Abschnitt 7g).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -1964,9 +1969,9 @@ Frontend-Fix, kein Backend-Change:
 ## 7. Authentifizierung und Mandantentrennung
 
 Status: teilweise offen; Block 7a (Angular-Login-Flow), Block 7b
-(Rollenkonzept im Angular-Code) und Block 7f (Keycloak-Custom-Theme der
-Anmeldeseite) abgeschlossen; Block 7c (Admin-Bereich) Backend und Frontend
-gemergt, Live-Verifikation im Browser offen (siehe Abschnitt 7c)
+(Rollenkonzept im Angular-Code), Block 7c (Admin-Bereich, inkl.
+Live-Verifikation) und Block 7f (Keycloak-Custom-Theme der Anmeldeseite)
+abgeschlossen (siehe Abschnitt 7c)
 Priorität: hoch; JWT-Validierung ist bereits im Walking Skeleton entstanden
 
 Ziel:
@@ -2154,9 +2159,8 @@ Abnahmekriterium erfüllt (live verifiziert):
 
 ### 7c. Admin-Bereich
 
-Status: **Backend und Frontend gemergt** (2026-08-17), automatisiert
-getestet; PR #74, nach `main` gemergt. Die manuelle Live-Verifikation im
-Browser steht weiterhin aus (siehe „Noch offen" unten).
+Status: **abgeschlossen** (Backend und Frontend: 2026-08-17, PR #74; manuelle
+Live-Verifikation im Browser: 2026-08-20, siehe Nachtrag unten).
 Arbeits-Prompt: `docs/prompts/2026-08-17-block-7c-admin-bereich.md`
 
 Anders als bei Genre/Label/Artist wird dieser Slice nicht in getrennte
@@ -2217,14 +2221,52 @@ Bewusst nicht Teil dieses Blocks (eigene, spätere Punkte):
 - Swagger-UI-Freischaltung für Production, Rate Limiting,
   CORS-Production-Whitelist, CSP.
 
-Noch offen:
+**Nachtrag (2026-08-20): Live-Verifikation im Browser nachgeholt, Ursache des
+AppHost-Starthängers korrigiert**
 
-- Live-Verifikation im Browser gegen den laufenden Aspire-AppHost. Laut
-  PR-#74-Beschreibung hing `dotnet run` auf dem AppHost beim Merge
-  reproduzierbar beim Start von Postgres/Keycloak (Seq startet, die anderen
-  nicht) — im Gegensatz zu `dotnet test`, das zuverlässig funktioniert.
-  Ursache noch nicht geklärt; betrifft nur die manuelle UI-Prüfung, nicht
-  die automatisierten Tests.
+Der in der PR-#74-Beschreibung dokumentierte Hänger („`dotnet run` auf dem
+AppHost hängt beim Merge reproduzierbar beim Start von Postgres/Keycloak,
+Seq startet, die anderen nicht, Ursache ungeklärt") beruhte **nicht** auf
+einem AppHost- oder Docker/DCP-Problem. Ursache war `dotnet run
+--no-launch-profile`: Dieses Flag überspringt `launchSettings.json` und
+damit `DOTNET_ENVIRONMENT=Development`; ohne diese Umgebung lädt .NET keine
+User Secrets, wodurch das Aspire-Dashboard mit „nicht aufgelöste Parameter"
+(Postgres-/API-DB-/Keycloak-Admin-Passwort) hängen blieb, obwohl die
+Secrets lokal längst vorhanden waren. Mit `dotnet run --launch-profile
+https` (bzw. ohne das Flag, dem Standardverhalten) starten alle Ressourcen
+zuverlässig durch. Analog zur Korrektur in Block 2 (CLAUDE.md §11,
+Git-Bash- statt PowerShell-Ausführung) eine weitere fälschlich als
+Aspire/DCP-Einschränkung eingeordnete Ursache, die tatsächlich an der
+Aufrufart lag.
+
+Live gegen den so gestarteten AppHost verifiziert:
+
+- Login als `testuser` (Rolle Admin, siehe
+  `03 Ressourcen/Keycloak Accounts.md`): Admin-Button sichtbar, `/admin`
+  zeigt die Userliste (Benutzername, E-Mail, Rolle) über alle 15
+  registrierten Benutzer auf einer Seite, eigene Zeile ohne Löschen-Icon
+  (US-AD1, US-AD3).
+- Löschen eines Alt-Testkontos (`smoketest-genre-block2b`) über das
+  Bestätigungsmodal: Benutzer verschwindet sofort aus der Liste ohne
+  Neuladen der Seite (US-AD3).
+- Login als `testhorst` (Rolle User): kein Admin-Button; direkter Aufruf
+  von `/admin` per URL leitet automatisch zu `/dashboard` um (`AdminGuard`,
+  US-AD2).
+- Vertiefte Prüfung der Löschung direkt gegen die Infrastruktur, nicht nur
+  über die Admin-Liste: Ein eigens registrierter Wegwerf-Testbenutzer
+  (`claude-delete-verify`) erhielt je einen Genre-, Label-, Artist- und
+  Record-Datensatz (inkl. Track). Vor der Löschung per `docker exec` gegen
+  `mymusicdb` bestätigt, dass alle fünf Zeilen existieren; nach der
+  Löschung über den Admin-Bereich per ID erneut geprüft — alle fünf Zeilen
+  vollständig entfernt. Zusätzlich per `kcadm.sh` (Bootstrap-Admin) direkt
+  gegen Keycloak geprüft, dass der Benutzer im Realm `mymusic` nicht mehr
+  existiert (`get users -q username=claude-delete-verify` liefert `[ ]`),
+  und ein Login-Versuch mit den alten Zugangsdaten gegen den
+  Token-Endpunkt mit 401 fehlschlägt. Testbenutzer und Testdaten waren
+  durch den Löschvorgang selbst bereits vollständig entfernt, keine
+  weitere Aufräumung nötig.
+
+Damit ist Block 7c vollständig abgeschlossen; keine offenen Punkte mehr.
 
 ### 7f. Keycloak-Custom-Theme der Anmeldeseite
 
