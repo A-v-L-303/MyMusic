@@ -14,11 +14,13 @@ public static class AdminEndpoints
     }
 
     /// <summary>
-    /// Gibt die registrierten Benutzer seitenweise zurück.
+    /// Gibt die registrierten Benutzer seitenweise zurück, optional gefiltert nach Benutzername,
+    /// E-Mail (Teilstring) oder Benutzer-ID (exakt).
     /// </summary>
     private static async Task<UserListResponse> GetPagedUsersAsync(
         int? page,
         int? pageSize,
+        string? search,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
@@ -26,7 +28,9 @@ public static class AdminEndpoints
 
         var normalizedPageSize = Math.Clamp(pageSize ?? 20, 1, 100);
 
-        var query = new GetPagedUsersQuery(normalizedPage, normalizedPageSize);
+        var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+
+        var query = new GetPagedUsersQuery(normalizedPage, normalizedPageSize, normalizedSearch);
 
         return await mediator.SendAsync(query, cancellationToken);
     }

@@ -2478,6 +2478,63 @@ Einschränkung (fehlende Verifikation gegen einen frischen Import) beseitigt.
 Alle neu angelegten Testkonten (inkl. eines Test-Genres) und der
 Wegwerf-Container wurden nach der Prüfung wieder entfernt.
 
+### 7h. Admin-Benutzersuche
+
+Status: **abgeschlossen** (2026-08-20), automatisiert getestet und live
+verifiziert, PR #80, noch nicht gemergt.
+Arbeits-Prompt: `docs/prompts/2026-08-20-block-7h-admin-benutzersuche.md`
+
+Anlass: Auf Wunsch des Projektinhabers ergänzt um US-AD5
+(`../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-admin.md`) — die
+Admin-Benutzertabelle (Block 7c) zeigte bisher nur eine ungefilterte,
+paginierte Liste; neu ist eine Suche nach Benutzername, E-Mail (mit
+Autocomplete) oder Benutzer-ID (exakt), ein gemeinsames Suchfeld für alle
+drei Kriterien.
+
+Umgesetzt:
+
+- Backend: `GetPagedUsersQuery` um `string? Search` erweitert;
+  `GetPagedUsersQueryHandler` filtert die bereits geladene Keycloak-
+  Benutzerliste vor Sortierung/Paginierung — bei gültiger GUID exakt nach
+  `Id`, sonst als Teilstring (case-insensitive) auf `Username`/`Email`.
+  `AdminEndpoints.GetPagedUsersAsync` normalisiert den neuen
+  `search`-Query-Parameter wie `page`/`pageSize`. Kein zusätzlicher Aufruf an
+  `IKeycloakAdminClient` nötig.
+- Frontend: `AutocompleteOption.id` von `number` auf `number | string`
+  erweitert (einzige Änderung am gemeinsamen `shared/autocomplete/`-Baustein;
+  `record-filter.ts` musste die beiden Auswahl-Handler für Artist/Label
+  entsprechend auf `number` zurückcasten). `AdminService.getPaged` bekommt
+  einen optionalen `search`-Parameter (Muster wie `ArtistService.getPaged`).
+  `Admin`-Komponente: neue Signals `searchText`/`selectedUserId`, neue
+  `searchSuggestionsResource` (liefert Autocomplete-Vorschläge über denselben
+  Endpunkt, `SUGGESTION_PAGE_SIZE = 10`, wie bereits bei Artist/Label in
+  `records.ts` etabliert), `usersResource` erhält zusätzlich
+  `search: selectedUserId() ?? searchText()` — Auswahl eines Vorschlags
+  filtert dadurch immer per exakter Benutzer-ID, nie per erneutem
+  Teilstring-Abgleich des Anzeigetexts.
+- Tests: `GetPagedUsersQueryHandlerTests` um fünf neue Fälle ergänzt
+  (Teilstring auf Username/E-Mail, Groß-/Kleinschreibung, exakte
+  Benutzer-ID, keine Treffer) — 253 Application-Tests insgesamt, alle grün.
+  `admin.service.spec.ts`/`admin.spec.ts` um Fälle für den `search`-Parameter
+  und das Autocomplete-Verhalten ergänzt — 384 Frontend-Tests insgesamt,
+  alle grün. `dotnet format --verify-no-changes` grün.
+- Doku: `wiki/user-stories/user-stories-admin.md` (neue Story US-AD5,
+  Klärungsabschnitt vom 2026-08-20), `wiki/architektur/api-endpunkte.md`
+  (neuer `search`-Parameter bei `GET /admin/users`).
+
+Live gegen den laufenden Aspire-AppHost verifiziert (2026-08-20): Suche nach
+Teil-Benutzername, Teil-E-Mail und vollständiger Benutzer-ID sowie die
+Auswahl eines Autocomplete-Vorschlags funktionieren korrekt, keine
+Korrekturen nötig.
+
+Offen: `npx prettier --check` meldet Formatierungsabweichungen — allerdings
+projektweit, auch bei unveränderten Dateien (z. B. `genres.ts`), vermutlich
+CRLF-Zeilenenden unter Windows gegen Prettiers LF-Default; kein durch diesen
+Block verursachter Befund. `ng lint` ist in diesem Frontend-Workspace nicht
+als Target konfiguriert (kein ESLint eingerichtet), abweichend von der
+Befehlsliste in CLAUDE.md §11 — dort bereits als „keine pauschale Freigabe"
+relativiert, wird hier als Doku-Abweichung gemeldet.
+
 ## 8. Discogs-Integration
 
 Status: offen

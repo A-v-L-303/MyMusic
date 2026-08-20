@@ -4,7 +4,7 @@ import { LucideSearch } from '@lucide/angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 export interface AutocompleteOption {
-  id: number;
+  id: number | string;
   label: string;
 }
 

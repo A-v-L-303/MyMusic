@@ -14,8 +14,12 @@ export class AdminService {
     return `${this.runtimeConfigService.apiBaseUrl}/api/admin`;
   }
 
-  getPaged(page: number, pageSize: number): Observable<AdminUserListResponse> {
-    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+  getPaged(page: number, pageSize: number, search?: string): Observable<AdminUserListResponse> {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+
+    if (search) {
+      params = params.set('search', search);
+    }
 
     return this.http.get<AdminUserListResponse>(`${this.baseUrl}/users`, { params });
   }

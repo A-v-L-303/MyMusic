@@ -9,7 +9,9 @@ public sealed class GetPagedUsersQueryHandler(
     {
         var users = await keycloakAdminClient.GetUsersAsync(cancellationToken);
 
-        var sortedUsers = users
+        var filteredUsers = FilterBySearch(users, query.Search);
+
+        var sortedUsers = filteredUsers
             .OrderBy(user => user.Username, StringComparer.InvariantCulture)
             .ToList();
 
@@ -19,5 +21,22 @@ public sealed class GetPagedUsersQueryHandler(
             .ToList();
 
         return responseBuilder.BuildPaged(pagedUsers, sortedUsers.Count, query.Page, query.PageSize);
+    }
+
+    private static IReadOnlyList<KeycloakUserSummary> FilterBySearch(
+        IReadOnlyList<KeycloakUserSummary> users,
+        string? search)
+    {
+        if (search is null)
+            return users;
+
+        if (Guid.TryParse(search, out var userId))
+            return users.Where(user => user.Id == userId).ToList();
+
+        return users
+            .Where(user =>
+                user.Username.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || user.Email.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 }
