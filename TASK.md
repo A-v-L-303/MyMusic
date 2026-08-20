@@ -2481,7 +2481,7 @@ Wegwerf-Container wurden nach der Prüfung wieder entfernt.
 ### 7h. Admin-Benutzersuche
 
 Status: **abgeschlossen** (2026-08-20), automatisiert getestet und live
-verifiziert, Branch `admin-benutzersuche`.
+verifiziert, PR #80, noch nicht gemergt.
 Arbeits-Prompt: `docs/prompts/2026-08-20-block-7h-admin-benutzersuche.md`
 
 Anlass: Auf Wunsch des Projektinhabers ergänzt um US-AD5
