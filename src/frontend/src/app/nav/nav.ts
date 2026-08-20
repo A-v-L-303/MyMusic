@@ -72,6 +72,17 @@ export class Nav {
     this.oidcSecurityService.authorize();
   }
 
+  protected register(): void {
+    this.oidcSecurityService.authorize(undefined, {
+      urlHandler: (url) => {
+        window.location.href = url.replace(
+          '/protocol/openid-connect/auth',
+          '/protocol/openid-connect/registrations',
+        );
+      },
+    });
+  }
+
   protected logout(): void {
     this.oidcSecurityService.logoff().subscribe();
   }

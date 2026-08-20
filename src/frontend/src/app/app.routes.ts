@@ -2,24 +2,28 @@ import { Routes } from '@angular/router';
 
 import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
+import { Landing } from './core/shell/landing/landing';
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', component: Landing },
   {
     path: '',
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',
-        loadChildren: () => import('./features/dashboard/dashboard.routes').then((m) => m.dashboardRoutes),
+        loadChildren: () =>
+          import('./features/dashboard/dashboard.routes').then((m) => m.dashboardRoutes),
       },
       {
         path: 'records',
-        loadChildren: () => import('./features/records/records.routes').then((m) => m.recordsRoutes),
+        loadChildren: () =>
+          import('./features/records/records.routes').then((m) => m.recordsRoutes),
       },
       {
         path: 'artists',
-        loadChildren: () => import('./features/artists/artists.routes').then((m) => m.artistsRoutes),
+        loadChildren: () =>
+          import('./features/artists/artists.routes').then((m) => m.artistsRoutes),
       },
       {
         path: 'labels',

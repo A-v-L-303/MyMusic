@@ -2286,6 +2286,149 @@ Abnahmekriterium erfüllt:
   Standard-Themes, Farben/Typografie entsprechen den Design-Tokens, Marke und
   Wortmarke erscheinen auf der Seite — live im Browser geprüft.
 
+### 7g. Registrierung
+
+Status: **abgeschlossen** (2026-08-20), automatisiert getestet und live
+verifiziert.
+Arbeits-Prompt: `docs/prompts/2026-08-20-block-7g-registrierung.md`
+
+Anlass: Bisher konnten sich Benutzer nicht selbst registrieren
+(`registrationAllowed: false`) — Testbenutzer wurden ausschließlich manuell
+über die Keycloak-Admin-Konsole angelegt (siehe Block 7b/7c). Auf Wunsch des
+Projektinhabers ergänzt um US-AU9
+(`../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-authentifizierung.md`),
+neue Story ausschließlich über Keycloak selbst umgesetzt (kein eigenes
+Passwort-Handling im Backend, folgt aus CLAUDE.md §1/§5.1).
+
+Umgesetzt:
+
+- `keycloak/mymusic-realm.json`: `"registrationAllowed": true`.
+- `src/frontend/src/app/nav/nav.ts`: neue Methode `register()`, leitet über
+  `OidcSecurityService.authorize(undefined, { urlHandler })` zu Keycloaks
+  Registrierungsendpunkt (`/protocol/openid-connect/registrations`) statt
+  zum Anmeldeendpunkt weiter — nutzt die PKCE-/State-Logik der Bibliothek
+  unverändert, siehe ADR-0010-Nachtrag (Registrierung).
+- `nav.html`: neuer Button „Registrieren" neben „Login" (nur sichtbar, wenn
+  nicht angemeldet).
+- `nav.spec.ts`: neuer Test, der den `urlHandler`-Callback abfängt und
+  prüft, dass er `/protocol/openid-connect/auth` durch
+  `/protocol/openid-connect/registrations` ersetzt; bestehender
+  Login-Button-Test auf einen präziseren Selektor (`title="Anmelden"`)
+  umgestellt, da beide Buttons seither dieselbe Klasse `btn-secondary`
+  teilen. 376 Frontend-Tests insgesamt, alle grün. Production-Build grün.
+
+Live gegen den laufenden Aspire-AppHost verifiziert (Browser,
+`claude-in-chrome`):
+
+- Default-Rolle `User` in der Keycloak-Admin-Konsole unter „Realm settings
+  → User registration → Default roles" ergänzt; anschließend per
+  `kcadm.sh get roles/default-roles-mymusic/composites -r mymusic` die
+  tatsächliche Zusammensetzung ausgelesen (`offline_access`,
+  `uma_authorization`, `User`, `account`-Client-Rollen
+  `manage-account`/`view-profile`) und exakt so — nicht geraten — in
+  `mymusic-realm.json` unter `roles.realm` als
+  `default-roles-mymusic`-Eintrag mit `composites` übernommen.
+- Manueller Nachzug auf dem bestehenden lokalen `mymusic-keycloak-data`-
+  Datenvolume (`--import-realm` läuft mit `IGNORE_EXISTING`, siehe
+  ADR 0014/0016): „User registration" in der Admin-Konsole auf „On"
+  gesetzt, Default-Rolle wie oben ergänzt.
+- Registrierungsformular erscheint im MyMusic-Design (Marke, Karten-Layout,
+  Emerald-Akzent) — keine Theme-Datei musste ergänzt werden, `register.ftl`
+  vom Parent-Theme übernimmt `template.ftl`/`mymusic.css` unverändert wie
+  erwartet.
+- Neues Testkonto über das echte Registrierungsformular angelegt: Rücksprung
+  in die App im angemeldeten Zustand, Kopfzeile zeigt den neuen
+  Benutzernamen; `GET /api/genres` (Liste) und `POST /api/genres`
+  (Neuanlage) gelingen ohne manuellen Rollen-Eingriff.
+- Keycloak-Admin-Konsole bestätigt: Der neue Benutzer hat die Rolle `User`
+  (über `default-roles-mymusic` geerbt) automatisch erhalten.
+- Test-Genre und Test-Benutzerkonto nach der Prüfung wieder entfernt.
+
+**Nachtrag (2026-08-20, noch am selben Tag): Nav-Buttons unerreichbar — Routing-Fix**
+
+Bei der ersten Live-Verifikation zeigte sich: Die Nav-Buttons
+„Registrieren"/„Login" waren über normale Navigation praktisch nicht
+klickbar. `app.routes.ts` hängte `canActivate: [authGuard]` an den
+Wurzelknoten, `''` redirectete auf `/dashboard` — ein nicht angemeldeter
+Aufruf von `localhost:4200` löste dadurch sofort `authorize()` aus, noch
+bevor ein Klick auf den Header-Button möglich war. Betraf auch den
+bestehenden „Login"-Button und war kein durch diesen Block eingeführtes
+Problem, sondern eine Eigenschaft der Routing-Architektur aus Block 0g.
+
+Nach Rückfrage mit dem Projektinhaber behoben (siehe ADR 0017): Der
+Wurzelpfad `''` ist jetzt eine eigene, unbewachte Route mit neuer
+Komponente `core/shell/landing/` — bereits angemeldete Benutzer werden
+weiterhin sofort zu `/dashboard` geleitet, nicht angemeldete sehen die
+Kopfzeile mit klickbaren Registrieren-/Login-Buttons. Alle anderen Routen
+bleiben unverändert vollständig geschützt (US-AU3 nicht betroffen). Neue
+Tests: `landing.spec.ts` (2 Fälle), `app.routes.spec.ts` erweitert
+(Verdrahtung der Landing-Route, Verhalten mit/ohne Anmeldung). 380
+Frontend-Tests insgesamt, alle grün. Production-Build grün.
+
+Live erneut verifiziert: Klick auf den echten „Registrieren"-Button in der
+Kopfzeile (nicht mehr nur der Ausweich-Link auf Keycloaks Anmeldeseite)
+leitet korrekt zu `/protocol/openid-connect/registrations` weiter, neues
+Testkonto erfolgreich angelegt und angemeldet.
+
+**Nachtrag (2026-08-20): Registrierungsformular auf Benutzername/E-Mail/Passwort reduziert**
+
+Auf Wunsch des Projektinhabers: `Vorname`/`Nachname` werden in MyMusic
+nirgends verwendet (auch der Admin-Bereich zeigt nur Benutzername, E-Mail,
+Rolle, siehe US-AD1). Die Attribute `firstName`/`lastName` wurden aus
+Keycloaks „User profile"-Konfiguration entfernt (Realm settings → User
+profile → Attributes, live in der Admin-Konsole gelöscht — der JSON-Editor
+der Admin-Konsole erwies sich dabei als unzuverlässig, da er beim Tippen
+Klammern automatisch schließt und den Inhalt verschachtelt; das direkte
+Löschen der Attribute über die Attributliste war der zuverlässige Weg).
+Für frische Realm-Imports in `mymusic-realm.json` als neuer
+`components`-Block (`org.keycloak.userprofile.UserProfileProvider`,
+`providerId: declarative-user-profile`) nachgezogen — die exakte
+JSON-Repräsentation wurde per `kcadm.sh create
+realms/mymusic/partial-export` gegen den echten Server ermittelt, nicht
+geraten. Live erneut verifiziert: Registrierungsformular zeigt nur noch
+Benutzername, Passwort, Passwort bestätigen, E-Mail; neues Testkonto ohne
+Vor-/Nachname erfolgreich angelegt.
+
+**Nachtrag (2026-08-20): CI-Fehler durch frischen Realm-Import — korrigiert**
+
+Der erste Push (PR #77) ließ `build-and-check` mit Timeout in
+`MyMusic.IntegrationTests` fehlschlagen (15-Minuten-CI-Timeout erreicht).
+Ursache war kein Timing-/Flaky-Problem, sondern ein harter Fehlschlag des
+Keycloak-Containers beim Start, isoliert nachgestellt mit einem
+Wegwerf-Container (frisches, nie zuvor importiertes Datenverzeichnis, nicht
+das lokale Entwicklungs-Volume):
+
+```
+ERROR: Unable to find composite realm role: uma_authorization
+```
+
+Der `default-roles-mymusic`-Eintrag in `mymusic-realm.json` referenzierte
+`offline_access`/`uma_authorization`/`account`-Client-Rollen explizit —
+diese existieren bei einem wirklich frischen Import zu diesem Zeitpunkt
+noch nicht (sie werden sonst von Keycloaks eigener interner
+Standard-Initialisierung erzeugt, die bei einer selbst angegebenen
+`roles.realm`-Liste offenbar nicht mehr greift). Auf dem lokalen
+Entwicklungsvolume war das nicht aufgefallen, weil die Rolle dort live über
+die Admin-Konsole gesetzt wurde, nicht per Neuimport.
+
+Fix: `default-roles-mymusic` referenziert nur noch `User`
+(`"composites": {"realm": ["User"]}`), keine Referenz mehr auf die
+Standard-Rollen. Bewusster Funktionsverzicht: Neu registrierte Benutzer
+erhalten dadurch nicht automatisch `offline_access`/`uma_authorization`/
+Account-Console-Rechte — für MyMusic ohne Auswirkung, da der Scope
+`offline_access` ohnehin nicht angefragt wird (ADR 0010) und weder UMA noch
+die Keycloak-Account-Console Teil des Produkts sind.
+
+Erneut mit demselben isolierten Wegwerf-Container gegen einen wirklich
+frischen Import verifiziert: Realm-Import erfolgreich
+(„Import finished successfully"), `default-roles-mymusic` enthält `User`,
+`registrationAllowed: true`, User-Profile-Konfiguration korrekt auf
+Benutzername/E-Mail reduziert. Damit ist auch die zuvor offene
+Einschränkung (fehlende Verifikation gegen einen frischen Import) beseitigt.
+
+Alle neu angelegten Testkonten (inkl. eines Test-Genres) und der
+Wegwerf-Container wurden nach der Prüfung wieder entfernt.
+
 ## 8. Discogs-Integration
 
 Status: offen
