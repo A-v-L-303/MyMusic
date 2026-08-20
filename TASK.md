@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-15 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-20 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -49,14 +49,20 @@ Keycloak-Service-Account-Client für die Admin REST API, Angular-Feature
 automatisiert getestet (alle Unit- und Integrationstests sowie 375
 Frontend-Tests grün), PR #74, nach `main` gemergt — die manuelle
 Live-Verifikation im Browser steht dabei noch aus, siehe Nachtrag in
-Abschnitt 7c.
+Abschnitt 7c. Block 7g (Registrierung: `registrationAllowed` aktiviert,
+automatische Zuweisung der Realm-Rolle `User` an neu registrierte
+Benutzer, Registrieren-Button in der Kopfzeile, unbewachte Landing-Route
+für den nicht angemeldeten Zustand, siehe Abschnitt 7g) umgesetzt,
+automatisiert getestet (380 Frontend-Tests grün) und live gegen den
+laufenden Aspire-AppHost verifiziert, PR #77, nach `main` gemergt.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
 Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
-PR #69, Block 7b per PR #71, Block 7c per PR #74 nach `main` gemergt)
+PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77
+nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -105,7 +111,8 @@ dem MVP-Umfang der Phase 1:
   Platzhalter-Route `/admin` — mit Block 7b, der Admin-Bereich selbst
   (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c,
   siehe Abschnitt 7c — dort steht die manuelle Live-Verifikation im Browser
-  noch aus).
+  noch aus; die Registrierung neuer Benutzer ist mit Block 7g erledigt,
+  siehe Abschnitt 7g).
 - Discogs-Integration, Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -2289,7 +2296,7 @@ Abnahmekriterium erfüllt:
 ### 7g. Registrierung
 
 Status: **abgeschlossen** (2026-08-20), automatisiert getestet und live
-verifiziert.
+verifiziert, PR #77, nach `main` gemergt.
 Arbeits-Prompt: `docs/prompts/2026-08-20-block-7g-registrierung.md`
 
 Anlass: Bisher konnten sich Benutzer nicht selbst registrieren
