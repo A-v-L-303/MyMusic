@@ -23,7 +23,7 @@ Die vollständige Projektdokumentation ist im [Wiki](https://github.com/A-v-L-30
 - **Artists** — CRUD, Tabellenansicht, Filter und Sortierung
 - **Labels** — CRUD, Tabellenansicht, Filter und Sortierung
 - **Genres** — CRUD, Tabellenansicht
-- **Authentifizierung** — Anmeldung via Keycloak (Authorization Code + PKCE), Mandantentrennung
+- **Authentifizierung** — Anmeldung und Selbstregistrierung via Keycloak (Authorization Code + PKCE), Mandantentrennung
 - **Dashboard** — Anzahl Records je Format, Top Artists, Top Labels, Verteilung nach Erscheinungsjahr
 - **Volltext-Suche** — Globale Suche über Records, Artists und Labels
 - **Discogs-Integration** — Metadaten-Suche beim Anlegen eines Records, manuell editierbar
@@ -526,6 +526,28 @@ kein Icon) nur mit der Rolle, zwischen Theme-Toggle und Username/Login.
 eigentliche Admin-Bereich (Userliste/-löschung über die Keycloak Admin REST
 API) folgt mit einem eigenen, späteren Block (`TASK.md` Abschnitt 7).
 
+### Registrierung (Block 7g)
+
+Neben „Login" sitzt in der Kopfzeile ein „Registrieren"-Button, der über
+`OidcSecurityService.authorize(undefined, { urlHandler })` gezielt zu
+Keycloaks Registrierungsendpunkt (`/protocol/openid-connect/registrations`
+statt `/protocol/openid-connect/auth`) weiterleitet — dieselbe PKCE-/
+State-Logik wie beim normalen Login, nur mit anderem Ziel-Pfad
+(`docs/adr/0010-angular-oidc-bibliothek.md`, Nachtrag). Das
+Registrierungsformular fragt nur Benutzername, Passwort und E-Mail ab
+(Vorname/Nachname wurden aus Keycloaks User-Profile-Konfiguration entfernt,
+siehe `keycloak/mymusic-realm.json`); neu registrierte Benutzer erhalten
+automatisch die Realm-Rolle `User` über eine Default-Rollen-Konfiguration.
+
+Damit der Registrieren-/Login-Button für nicht angemeldete Benutzer
+überhaupt erreichbar ist, ist der Wurzelpfad `''` seit diesem Block eine
+eigene, unbewachte `Landing`-Route (`core/shell/landing/`) statt eines
+sofortigen Redirects auf das geschützte `/dashboard` — vorher leitete der
+`AuthGuard` nicht angemeldete Aufrufe sofort zu Keycloak weiter, bevor ein
+Klick im Header möglich war. Bereits angemeldete Benutzer landen weiterhin
+automatisch auf `/dashboard`; alle anderen Routen bleiben unverändert
+vollständig geschützt (Details: `docs/adr/0017-unbewachte-landing-route.md`).
+
 ### Prüfen
 
 ```powershell
@@ -536,8 +558,8 @@ dotnet test MyMusic.slnx
 Der Integrationstest startet den kompletten AppHost inklusive Container und braucht daher
 rund eine Minute je Testklasse.
 
-Restore, Build, `dotnet format --verify-no-changes`, ein Zeilenlängen-Check und die
-Unit-Test-Projekte (Domain, Application, Infrastructure, Api) laufen zusätzlich automatisch
-bei jedem Push und Pull Request auf `main` in `.github/workflows/ci.yml`.
-`MyMusic.IntegrationTests` läuft dort bewusst nicht mit (siehe
-`docs/adr/0003-ci-gate-codequalitaet.md`).
+Restore, Build, `dotnet format --verify-no-changes`, ein Zeilenlängen-Check, die
+Unit-Test-Projekte (Domain, Application, Infrastructure, Api) sowie
+`MyMusic.IntegrationTests` laufen zusätzlich automatisch bei jedem Push und
+Pull Request auf `main` in `.github/workflows/ci.yml` (Integrationstest-Job mit
+15-Minuten-Timeout).
