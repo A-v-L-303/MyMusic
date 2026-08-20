@@ -28,8 +28,7 @@
         </button>
         @if (optionMenuOpen()) {
           <div
-            class="absolute left-0 top-full z-10 mt-1 min-w-[160px] rounded border border-line
-              bg-surface py-1 shadow-md"
+            class="absolute left-0 top-full z-10 mt-1 min-w-[160px] rounded border border-line bg-surface py-1 shadow-md"
           >
             <a
               routerLink="/artists"
@@ -78,6 +77,9 @@
           Logout
         </button>
       } @else {
+        <button type="button" class="btn btn-secondary" title="Registrieren" (click)="register()">
+          Registrieren
+        </button>
         <button type="button" class="btn btn-secondary" title="Anmelden" (click)="login()">
           Login
         </button>

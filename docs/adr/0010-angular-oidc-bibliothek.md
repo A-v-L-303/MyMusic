@@ -118,3 +118,45 @@ wieder echtes Login-Formular statt stillem Durchschlupf). US-AU5/US-AU6
 (zeitbasierte Token-Erneuerung/-Ablauf) bleiben mangels praktikabler
 Wartezeit in dieser Sitzung nur durch die bestehenden Unit-Tests des
 `unauthorized-redirect.interceptor.ts` abgedeckt, nicht live nachgewiesen.
+
+## Nachtrag (2026-08-20): Registrierungs-Redirect über `urlHandler`
+
+Block 7g (US-AU9, Registrierung) brauchte einen Weg, den Browser statt zu
+Keycloaks Anmeldeseite (`{authority}/protocol/openid-connect/auth`) zu
+Keycloaks Registrierungsseite (`{authority}/protocol/openid-connect/
+registrations`, gleiche Query-Parameter, zeigt direkt das
+Registrierungsformular) zu leiten — ohne die PKCE-/State-/Nonce-Logik der
+Bibliothek nachzubauen.
+
+`angular-auth-oidc-client` v21 bietet dafür keinen dedizierten Aufruf
+(kein `register()` wie bei `keycloak-js`), aber einen passenden, im
+Bibliothekscode verifizierten Hook:
+
+- `node_modules/angular-auth-oidc-client/types/angular-auth-oidc-client.d.ts`,
+  Zeile 257–264: `AuthOptions.urlHandler(url: string)`.
+- `fesm2022/angular-auth-oidc-client.mjs`,
+  `StandardLoginService.loginStandard`, Zeile 4944–4969: Ist `urlHandler`
+  gesetzt, baut die Bibliothek die Autorisierungs-URL ganz normal
+  (`createAuthorizeUrl`, inklusive PKCE `code_challenge`, `state`, `nonce`),
+  ruft aber nicht selbst `redirectService.redirectTo(url)` auf, sondern
+  übergibt die fertige URL an `urlHandler`. Das Discovery-Dokument wird bei
+  jedem `authorize()`-Aufruf frisch geladen, ein String-Replace auf der
+  fertigen URL ist damit robust.
+
+Umgesetzt in `src/frontend/src/app/nav/nav.ts`:
+
+```ts
+protected register(): void {
+  this.oidcSecurityService.authorize(undefined, {
+    urlHandler: (url) => {
+      window.location.href = url.replace(
+        '/protocol/openid-connect/auth',
+        '/protocol/openid-connect/registrations',
+      );
+    },
+  });
+}
+```
+
+Derselbe Mechanismus existiert laut Typdefinitionen auch bei
+`LogoutAuthOptions.urlHandler` (Zeile 5065–5070) und bei PAR-Flows.

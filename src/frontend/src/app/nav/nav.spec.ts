@@ -250,15 +250,47 @@ describe('Nav', () => {
     const fixture = TestBed.createComponent(Nav);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const button = compiled.querySelector<HTMLButtonElement>('button.btn-secondary');
+    const button = compiled.querySelector<HTMLButtonElement>('button[title="Anmelden"]');
 
     // act
     button?.click();
 
     // assert
     expect(button?.textContent).toContain('Login');
-    expect(button?.title).toBe('Anmelden');
     expect(authorizeMock).toHaveBeenCalledTimes(1);
+    expect(authorizeMock).toHaveBeenCalledWith();
+  });
+
+  it('zeigt den Registrieren-Button, wenn nicht angemeldet, und leitet zur Keycloak-Registrierung um', () => {
+    // arrange
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const button = compiled.querySelector<HTMLButtonElement>('button[title="Registrieren"]');
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, href: '' },
+    });
+
+    // act
+    button?.click();
+    const authOptions = authorizeMock.mock.calls[0]?.[1] as {
+      urlHandler: (url: string) => void;
+    };
+    authOptions.urlHandler(
+      'http://localhost:8080/realms/mymusic/protocol/openid-connect/auth?client_id=mymusic-angular',
+    );
+
+    // assert: nur der Pfad wechselt auf die Registrierungsseite, der Rest der URL bleibt gleich
+    expect(button?.textContent).toContain('Registrieren');
+    expect(authorizeMock).toHaveBeenCalledWith(undefined, { urlHandler: expect.any(Function) });
+    expect(window.location.href).toBe(
+      'http://localhost:8080/realms/mymusic/protocol/openid-connect/registrations?client_id=mymusic-angular',
+    );
+
+    // cleanup
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
   });
 
   it('zeigt den Logout-Button und den Benutzernamen, wenn angemeldet, und löst logoff() aus', () => {

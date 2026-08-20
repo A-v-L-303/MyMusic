@@ -20,19 +20,28 @@ import { Genres } from './features/genres/genres';
 import { Labels } from './features/labels/labels';
 import { Records } from './features/records/records';
 import { Search } from './features/search/search';
+import { Landing } from './core/shell/landing/landing';
 
 // Für die Navigations-Tests wird der echte authGuard (autoLoginPartialRoutesGuard)
 // durch einen trivialen Passthrough ersetzt - er bräuchte sonst eine vollständige,
 // echte OIDC-Konfiguration. Die Verdrahtung selbst (dass authGuard/adminGuard an den
 // richtigen Routen hängen) wird unten separat gegen den unveränderten routes-Import
-// geprüft, `children` bleibt unverändert (adminGuard bleibt aktiv).
-const testRoutes = [{ ...routes[0], canActivate: [() => true] }];
+// geprüft, `children` bleibt unverändert (adminGuard bleibt aktiv). `routes[0]` ist die
+// unbewachte Landing-Route (path ''), `routes[1]` der bewachte Eltern-Knoten.
+const testRoutes = [routes[0], { ...routes[1], canActivate: [() => true] }];
 
 const routingTestProviders = [
   provideRouter(testRoutes),
   provideHttpClient(),
   provideHttpClientTesting(),
   { provide: RuntimeConfigService, useValue: { apiBaseUrl: 'https://api.test' } },
+  {
+    provide: OidcSecurityService,
+    useValue: {
+      authenticated: signal({ isAuthenticated: true }),
+      getPayloadFromAccessToken: () => of({ sub: 'own-id' }),
+    },
+  },
 ];
 
 function routingTestProvidersWithAdminRole(isAdmin: boolean) {
@@ -49,21 +58,45 @@ function routingTestProvidersWithAdminRole(isAdmin: boolean) {
   ];
 }
 
+function routingTestProvidersUnauthenticated() {
+  return [
+    provideRouter(testRoutes),
+    provideHttpClient(),
+    provideHttpClientTesting(),
+    { provide: RuntimeConfigService, useValue: { apiBaseUrl: 'https://api.test' } },
+    {
+      provide: OidcSecurityService,
+      useValue: { authenticated: signal({ isAuthenticated: false }) },
+    },
+  ];
+}
+
 describe('app.routes', () => {
-  it('verdrahtet authGuard auf dem Eltern-Knoten', () => {
+  it('verdrahtet authGuard auf dem geschützten Eltern-Knoten', () => {
     // arrange & act
-    const root = routes[0];
+    const guardedRoot = routes[1];
 
     // assert
-    expect(root.canActivate).toEqual([authGuard]);
+    expect(guardedRoot.canActivate).toEqual([authGuard]);
   });
 
   it('verdrahtet adminGuard auf der /admin-Route', () => {
     // arrange & act
-    const adminRoute = routes[0].children?.find((route) => route.path === 'admin');
+    const adminRoute = routes[1].children?.find((route) => route.path === 'admin');
 
     // assert
     expect(adminRoute?.canActivate).toEqual([adminGuard]);
+  });
+
+  it('verdrahtet die unbewachte Landing-Komponente auf dem Wurzelpfad', () => {
+    // arrange & act
+    const landingRoute = routes[0];
+
+    // assert
+    expect(landingRoute.path).toBe('');
+    expect(landingRoute.pathMatch).toBe('full');
+    expect(landingRoute.component).toBe(Landing);
+    expect(landingRoute.canActivate).toBeUndefined();
   });
 
   it('lädt /admin, wenn die Rolle Admin vorhanden ist', async () => {
@@ -90,7 +123,7 @@ describe('app.routes', () => {
     expect(TestBed.inject(Router).url).toBe('/dashboard');
   });
 
-  it('redirectet den Wurzelpfad auf /dashboard', async () => {
+  it('redirectet den Wurzelpfad auf /dashboard, wenn bereits angemeldet', async () => {
     // arrange
     TestBed.configureTestingModule({ providers: routingTestProviders });
     const harness = await RouterTestingHarness.create();
@@ -100,6 +133,18 @@ describe('app.routes', () => {
 
     // assert
     expect(TestBed.inject(Router).url).toBe('/dashboard');
+  });
+
+  it('bleibt auf der Landing-Seite, wenn nicht angemeldet - Login/Registrieren bleiben erreichbar', async () => {
+    // arrange
+    TestBed.configureTestingModule({ providers: routingTestProvidersUnauthenticated() });
+    const harness = await RouterTestingHarness.create();
+
+    // act
+    await harness.navigateByUrl('/', Landing);
+
+    // assert
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 
   it('redirectet einen unbekannten Pfad auf /dashboard', async () => {
