@@ -59,6 +59,15 @@ describe('Admin', () => {
     );
   }
 
+  function expectRequestWithParams(params: Record<string, string>) {
+    return httpTesting.expectOne(
+      (req) =>
+        req.method === 'GET' &&
+        req.url === 'https://api.test/api/admin/users' &&
+        Object.entries(params).every(([key, value]) => req.params.get(key) === value),
+    );
+  }
+
   function compiled(fixture: { nativeElement: unknown }): HTMLElement {
     return fixture.nativeElement as HTMLElement;
   }
@@ -206,5 +215,70 @@ describe('Admin', () => {
     expect(request.request.params.get('page')).toBe('2');
     request.flush({ ...twoPages, page: 2 });
     await fixture.whenStable();
+  });
+
+  it('zeigt Autocomplete-Vorschläge nach Sucheingabe an', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+    const searchInput = compiled(fixture).querySelector(
+      '[aria-label="Benutzer suchen"]',
+    ) as HTMLInputElement;
+
+    // act
+    searchInput.value = 'eri';
+    searchInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await wait(350);
+    fixture.detectChanges();
+    const suggestionRequest = expectRequestWithParams({ pageSize: '10', search: 'eri' });
+    suggestionRequest.flush({ items: [other], totalCount: 1, page: 1, pageSize: 10, totalPages: 1 });
+    const listRequest = expectRequestWithParams({ pageSize: '20', search: 'eri' });
+    listRequest.flush({ items: [other], totalCount: 1, page: 1, pageSize: 20, totalPages: 1 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(compiled(fixture).textContent).toContain('erika (erika@example.com)');
+  });
+
+  it('filtert nach Auswahl eines Autocomplete-Vorschlags auf genau einen Benutzer', async () => {
+    // arrange
+    const fixture = await createLoadedFixture();
+    const searchInput = compiled(fixture).querySelector(
+      '[aria-label="Benutzer suchen"]',
+    ) as HTMLInputElement;
+    searchInput.value = 'eri';
+    searchInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await wait(350);
+    fixture.detectChanges();
+    expectRequestWithParams({ pageSize: '10', search: 'eri' }).flush({
+      items: [other],
+      totalCount: 1,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    });
+    expectRequestWithParams({ pageSize: '20', search: 'eri' }).flush({
+      items: [other],
+      totalCount: 1,
+      page: 1,
+      pageSize: 20,
+      totalPages: 1,
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // act
+    const option = compiled(fixture).querySelector('li[role="option"]') as HTMLLIElement;
+    option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    const selectedRequest = expectRequestWithParams({ pageSize: '20', search: 'other-id' });
+    selectedRequest.flush({ items: [other], totalCount: 1, page: 1, pageSize: 20, totalPages: 1 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert: die Auswahl filtert per Benutzer-ID, nicht per Freitext
+    expect(selectedRequest.request.params.get('search')).toBe('other-id');
   });
 });

@@ -53,6 +53,46 @@ describe('AdminService', () => {
     expect(result).toEqual(response);
   });
 
+  it('setzt den search-Parameter, wenn ein Suchtext übergeben wird', () => {
+    // arrange
+    const response: AdminUserListResponse = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 20,
+      totalPages: 0,
+    };
+
+    // act
+    service.getPaged(1, 20, 'erika').subscribe();
+    const request = httpTesting.expectOne(
+      (req) => req.url === 'https://api.test/api/admin/users' && req.params.get('search') === 'erika',
+    );
+    request.flush(response);
+
+    // assert
+    expect(request.request.params.get('search')).toBe('erika');
+  });
+
+  it('lässt den search-Parameter weg, wenn kein Suchtext übergeben wird', () => {
+    // arrange
+    const response: AdminUserListResponse = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 20,
+      totalPages: 0,
+    };
+
+    // act
+    service.getPaged(1, 20).subscribe();
+    const request = httpTesting.expectOne((req) => req.url === 'https://api.test/api/admin/users');
+    request.flush(response);
+
+    // assert
+    expect(request.request.params.has('search')).toBe(false);
+  });
+
   it('sendet deleteUser als DELETE gegen die Id-Route', () => {
     // arrange
     let completed = false;

@@ -91,10 +91,10 @@ export class RecordFilter {
   }
 
   protected onArtistSelected(option: AutocompleteOption | undefined): void {
-    this.selectedArtistId.set(option?.id);
+    this.selectedArtistId.set(option?.id as number | undefined);
   }
 
   protected onLabelSelected(option: AutocompleteOption | undefined): void {
-    this.selectedLabelId.set(option?.id);
+    this.selectedLabelId.set(option?.id as number | undefined);
   }
 }

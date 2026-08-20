@@ -6,7 +6,17 @@
     </span>
   </div>
 
-  <div class="mt-6">
+  <div class="mt-6 max-w-[360px]">
+    <app-autocomplete
+      placeholder="Name, E-Mail oder Benutzer-ID suchen"
+      ariaLabel="Benutzer suchen"
+      [options]="searchSuggestions()"
+      (queryChange)="onSearchQueryChange($event)"
+      (selected)="onSearchSelected($event)"
+    />
+  </div>
+
+  <div class="mt-4">
     <app-admin-user-table
       [users]="users()"
       [loading]="usersResource.isLoading()"
