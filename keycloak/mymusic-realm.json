@@ -30,10 +30,7 @@
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
-          "realm": ["offline_access", "uma_authorization", "User"],
-          "client": {
-            "account": ["view-profile", "manage-account"]
-          }
+          "realm": ["User"]
         }
       }
     ]

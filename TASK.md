@@ -2389,15 +2389,45 @@ geraten. Live erneut verifiziert: Registrierungsformular zeigt nur noch
 Benutzername, Passwort, Passwort bestätigen, E-Mail; neues Testkonto ohne
 Vor-/Nachname erfolgreich angelegt.
 
-Nicht separat verifiziert: Ob ein wirklich frischer `--import-realm`
-(neues, noch nie importiertes `mymusic-keycloak-data`-Volume) diesen
-`components`-Block korrekt übernimmt — das hätte das bestehende lokale
-Datenvolume löschen müssen, was ohne gesonderte Freigabe nicht
-durchgeführt wurde. Die Struktur folgt exakt der empirisch ermittelten
-Server-Repräsentation, das Restrisiko ist ein reiner Fresh-Import-Fall.
+**Nachtrag (2026-08-20): CI-Fehler durch frischen Realm-Import — korrigiert**
 
-Alle neu angelegten Testkonten (inkl. eines Test-Genres) wurden nach der
-Prüfung wieder gelöscht.
+Der erste Push (PR #77) ließ `build-and-check` mit Timeout in
+`MyMusic.IntegrationTests` fehlschlagen (15-Minuten-CI-Timeout erreicht).
+Ursache war kein Timing-/Flaky-Problem, sondern ein harter Fehlschlag des
+Keycloak-Containers beim Start, isoliert nachgestellt mit einem
+Wegwerf-Container (frisches, nie zuvor importiertes Datenverzeichnis, nicht
+das lokale Entwicklungs-Volume):
+
+```
+ERROR: Unable to find composite realm role: uma_authorization
+```
+
+Der `default-roles-mymusic`-Eintrag in `mymusic-realm.json` referenzierte
+`offline_access`/`uma_authorization`/`account`-Client-Rollen explizit —
+diese existieren bei einem wirklich frischen Import zu diesem Zeitpunkt
+noch nicht (sie werden sonst von Keycloaks eigener interner
+Standard-Initialisierung erzeugt, die bei einer selbst angegebenen
+`roles.realm`-Liste offenbar nicht mehr greift). Auf dem lokalen
+Entwicklungsvolume war das nicht aufgefallen, weil die Rolle dort live über
+die Admin-Konsole gesetzt wurde, nicht per Neuimport.
+
+Fix: `default-roles-mymusic` referenziert nur noch `User`
+(`"composites": {"realm": ["User"]}`), keine Referenz mehr auf die
+Standard-Rollen. Bewusster Funktionsverzicht: Neu registrierte Benutzer
+erhalten dadurch nicht automatisch `offline_access`/`uma_authorization`/
+Account-Console-Rechte — für MyMusic ohne Auswirkung, da der Scope
+`offline_access` ohnehin nicht angefragt wird (ADR 0010) und weder UMA noch
+die Keycloak-Account-Console Teil des Produkts sind.
+
+Erneut mit demselben isolierten Wegwerf-Container gegen einen wirklich
+frischen Import verifiziert: Realm-Import erfolgreich
+(„Import finished successfully"), `default-roles-mymusic` enthält `User`,
+`registrationAllowed: true`, User-Profile-Konfiguration korrekt auf
+Benutzername/E-Mail reduziert. Damit ist auch die zuvor offene
+Einschränkung (fehlende Verifikation gegen einen frischen Import) beseitigt.
+
+Alle neu angelegten Testkonten (inkl. eines Test-Genres) und der
+Wegwerf-Container wurden nach der Prüfung wieder entfernt.
 
 ## 8. Discogs-Integration
 
