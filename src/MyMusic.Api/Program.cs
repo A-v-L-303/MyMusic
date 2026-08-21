@@ -69,6 +69,16 @@ builder.Services.AddHttpClient<KeycloakServiceAccountProvisioner>(client =>
 builder.Services.AddHttpClient<IKeycloakAdminClient, KeycloakAdminClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Keycloak:AdminApiBaseUrl"]!));
 
+builder.Services.AddHttpClient<IDiscogsClient, DiscogsClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Discogs:BaseUrl"]!);
+
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MyMusic/1.0");
+
+    client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Discogs", $"token={builder.Configuration["Discogs:Token"]}");
+});
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddCors(options =>
@@ -160,5 +170,7 @@ app.MapArtistEndpoints();
 app.MapRecordEndpoints();
 
 app.MapAdminEndpoints();
+
+app.MapDiscogsEndpoints();
 
 app.Run();

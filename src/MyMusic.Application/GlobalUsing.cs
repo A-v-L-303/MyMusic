@@ -1,4 +1,5 @@
 global using System.Reflection;
+global using System.Text.Json;
 global using FluentValidation;
 global using FluentValidation.Results;
 global using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,8 @@ global using MyMusic.Application.Common.CQRS.Validation;
 global using MyMusic.Application.Common.Exceptions;
 global using MyMusic.Application.Common.Exceptions.ExceptionManager;
 global using MyMusic.Application.Common.Services;
+global using MyMusic.Application.Features.Integration.Discogs.ResponseDtos;
+global using MyMusic.Application.Features.Integration.Discogs.ResponseDtos.Builder;
 global using MyMusic.Application.Features.Stammdaten.Artist.ResponseDtos;
 global using MyMusic.Application.Features.Stammdaten.Artist.ResponseDtos.Builder;
 global using MyMusic.Application.Features.Stammdaten.Country.ResponseDtos;

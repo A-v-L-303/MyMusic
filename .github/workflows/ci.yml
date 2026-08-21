@@ -61,6 +61,7 @@ jobs:
           Parameters__postgres-password: ${{ secrets.CI_POSTGRES_PASSWORD }}
           Parameters__api-database-password: ${{ secrets.CI_API_DATABASE_PASSWORD }}
           Parameters__keycloak-admin-password: ${{ secrets.CI_KEYCLOAK_ADMIN_PASSWORD }}
+          Parameters__discogs-access-token: ${{ secrets.CI_DISCOGS_ACCESS_TOKEN }}
 
   frontend-check:
     runs-on: ubuntu-latest

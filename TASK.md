@@ -123,7 +123,10 @@ dem MVP-Umfang der Phase 1:
   erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
   Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
   Block 7g erledigt, siehe Abschnitt 7g).
-- Discogs-Integration, Dashboard und Volltext-Suche.
+- Discogs-Integration: Backend-Proxy (Block 8a) umgesetzt und automatisiert
+  getestet, Live-Verifikation gegen die echte Discogs-API steht noch aus,
+  siehe Abschnitt 8; Frontend-Integration (Block 8b) offen.
+- Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
 
@@ -2542,20 +2545,59 @@ relativiert, wird hier als Doku-Abweichung gemeldet.
 
 ## 8. Discogs-Integration
 
-Status: offen
+Status: **Backend-Proxy (Block 8a) umgesetzt und automatisiert getestet**
+(2026-08-21); manuelle Live-Verifikation gegen die echte Discogs-API steht
+noch aus; Frontend-Integration (Block 8b) offen.
 Priorität: mittel
+Arbeits-Prompt: `docs/prompts/2026-08-21-block-8a-discogs-backend-proxy.md`
 
-Aufgaben:
+Voraussetzung erledigt:
 
-- Serverseitiger Proxy `/discogs/search` (Wiki `tech-stack/discogs-api.md`).
-- Metadaten-Suche beim Anlegen eines Records; Treffer als Vorausfüllung,
-  manuell editierbar.
-- Fehlerdarstellung gemäß Fehlerkonzept (Modal mit Hinweis auf manuelle Eingabe).
+- User Stories und Akzeptanzkriterien liegen vor, siehe
+  `../../02 Wiki/MyMusic Wiki/wiki/user-stories/user-stories-discogs.md`
+  (US-DI1–DI4, 2026-08-21).
+
+Umgesetzt (Backend, Block 8a):
+
+- Zwei Endpunkte, serverseitiger Proxy zur Discogs-API:
+  `GET /api/discogs/search?q=...` (Kurzdaten-Trefferliste, unpaginiert,
+  Suchbegriff mindestens 2 Zeichen) und `GET /api/discogs/releases/{id}`
+  (Volldaten: Cover, Tracklist, Artist(s), Label(s), Genre/Style,
+  Format-Rohdaten).
+- Neuer externer HTTP-Client `IDiscogsClient`/`DiscogsClient`
+  (`Application/Common/Services/`, `Infrastructure/ExternalServices/Discogs/`)
+  nach Vorbild des `KeycloakAdminClient` (ADR 0016); Authentifizierung über
+  einen Discogs Personal Access Token als `Authorization`-Header, statischer
+  Aspire-Secret-Parameter `discogs-access-token` (ADR 0018).
+- Neue Fehlerklasse `DiscogsUnavailableException`, gemappt auf HTTP 502 Bad
+  Gateway (nicht 404/500/503) — deckt Nichterreichbarkeit, Rate-Limit und
+  unbekannte Release-IDs einheitlich ab (ADR 0018).
+- Neue CQRS-Namenskategorie „Integration"
+  (`Application/Features/Integration/`, `Api/Endpoints/Integration/`) — passte
+  in keine bestehende Kategorie (Stammdaten/Sammlung/System/Verwaltung).
+- Unit-Tests (Application, gemockter `IDiscogsClient` per NSubstitute) und ein
+  minimaler Integrationstest (nur 401 ohne Token für beide Endpunkte, kein
+  echter Discogs-Aufruf in Tests) — 411 Tests insgesamt, alle grün.
+- ADR `docs/adr/0018-discogs-proxy-token-und-fehlerbehandlung.md`.
+
+Bewusst nicht Teil von Block 8a:
+
+- Kein automatisierter Test für `DiscogsClient` selbst gegen die echte
+  Discogs-API (externe, ratenlimitierte Drittanbieter-API ohne Sandbox,
+  gleiche Einschränkungsklasse wie `KeycloakAdminClient`) — Ausgleich über
+  manuelle Live-Verifikation, die noch aussteht.
+- Frontend-Integration (verschachteltes Modal im RecordForm, Vorausfüllung,
+  Rückfrage bei neuen Artist-/Label-/Genre-Referenzen, Track-Nachimport nach
+  dem ersten Speichern) — folgt mit Block 8b.
 
 Abnahmekriterium:
 
 - Ein Record kann mit Discogs-Vorausfüllung angelegt werden; bei
   Discogs-Ausfall bleibt die manuelle Anlage uneingeschränkt möglich.
+  **Backend-Teil automatisiert erfüllt** (beide Endpunkte liefern die
+  vorgesehenen Daten bzw. HTTP 502 bei Discogs-Fehlern); Live-Verifikation
+  gegen die reale Discogs-API und die UI-seitige Vorausfüllung folgen mit der
+  ausstehenden Prüfung bzw. mit Block 8b.
 
 ## 9. Dashboard
 
