@@ -43,6 +43,14 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
                     Detail = conflictException.Message,
                     Status = StatusCodes.Status409Conflict
                 }),
+            DiscogsUnavailableException discogsException => (
+                StatusCodes.Status502BadGateway,
+                new ProblemDetails
+                {
+                    Title = "Discogs nicht erreichbar",
+                    Detail = discogsException.Message,
+                    Status = StatusCodes.Status502BadGateway
+                }),
             _ => (
                 StatusCodes.Status500InternalServerError,
                 new ProblemDetails

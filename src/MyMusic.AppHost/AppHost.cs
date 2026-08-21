@@ -6,6 +6,8 @@ var apiDatabasePassword = builder.AddParameter("api-database-password", secret: 
 
 var keycloakAdminPassword = builder.AddParameter("keycloak-admin-password", secret: true);
 
+var discogsAccessToken = builder.AddParameter("discogs-access-token", secret: true);
+
 var postgres = builder.AddPostgres("postgres", password: postgresPassword)
     .WithDataVolume("mymusic-postgres-data")
     .WithEnvironment("MYMUSIC_API_PASSWORD", apiDatabasePassword)
@@ -48,6 +50,8 @@ var api = builder.AddProject<Projects.MyMusic_Api>("api")
     .WithEnvironment("Keycloak__AdminApiBaseUrl", keycloak.GetEndpoint("http"))
     .WithEnvironment("Keycloak__BootstrapAdminUsername", "admin")
     .WithEnvironment("Keycloak__BootstrapAdminPassword", keycloakAdminPassword)
+    .WithEnvironment("Discogs__Token", discogsAccessToken)
+    .WithEnvironment("Discogs__BaseUrl", "https://api.discogs.com")
     .WithUrlForEndpoint("https", url =>
     {
         url.DisplayText = "Swagger UI";

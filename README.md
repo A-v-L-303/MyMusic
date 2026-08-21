@@ -115,7 +115,7 @@ TASK.md          Operative Arbeitsliste der nächsten Umsetzungsschritte
 
 ### Secrets einrichten
 
-Der AppHost erwartet drei Parameter als User Secrets. Sie liegen außerhalb des Repositories
+Der AppHost erwartet vier Parameter als User Secrets. Sie liegen außerhalb des Repositories
 und gehören nie ins Git:
 
 ```powershell
@@ -123,7 +123,12 @@ cd src/MyMusic.AppHost
 dotnet user-secrets set "Parameters:postgres-password" "<wert>"
 dotnet user-secrets set "Parameters:api-database-password" "<wert>"
 dotnet user-secrets set "Parameters:keycloak-admin-password" "<wert>"
+dotnet user-secrets set "Parameters:discogs-access-token" "<wert>"
 ```
+
+`discogs-access-token` ist ein Discogs Personal Access Token (unter
+discogs.com/settings/developers manuell zu erzeugen) für den serverseitigen
+Discogs-Proxy (`GET /api/discogs/...`, siehe ADR 0018).
 
 ### Starten
 

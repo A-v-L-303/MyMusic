@@ -24,6 +24,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<UserResponseBuilder>();
 
+        services.AddScoped<DiscogsResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

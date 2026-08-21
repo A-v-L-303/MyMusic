@@ -48,4 +48,16 @@ public class ExceptionManagerTests
         // assert
         Assert.Equal("Ein Genre mit diesem Namen existiert bereits.", exception.Message);
     }
+
+    [Fact]
+    public void DiscogsUnavailable_ErzeugtFesteDeutscheFehlermeldung()
+    {
+        // arrange
+
+        // act
+        var exception = _exceptionManager.DiscogsUnavailable();
+
+        // assert
+        Assert.Equal("Die Discogs-API ist aktuell nicht erreichbar oder liefert einen Fehler.", exception.Message);
+    }
 }

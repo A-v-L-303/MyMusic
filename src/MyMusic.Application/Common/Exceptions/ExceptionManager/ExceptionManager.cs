@@ -22,4 +22,9 @@ public sealed class ExceptionManager
     {
         return new ConflictException(message);
     }
+
+    public DiscogsUnavailableException DiscogsUnavailable()
+    {
+        return new DiscogsUnavailableException();
+    }
 }
