@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-20 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-21 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -64,7 +64,14 @@ laufenden Aspire-AppHost verifiziert, PR #77, nach `main` gemergt. Block 7h
 `search`-Parameter erweitert, Suchfeld mit Autocomplete im Admin-Bereich,
 siehe Abschnitt 7h) umgesetzt, automatisiert getestet (253
 Application-Tests und 384 Frontend-Tests grün) und live gegen den
-laufenden Aspire-AppHost verifiziert, PR #80, nach `main` gemergt.
+laufenden Aspire-AppHost verifiziert, PR #80, nach `main` gemergt. Block 8a
+(Discogs-Backend-Proxy: `GET /api/discogs/search`, `GET /api/discogs/
+releases/{id}`, externer HTTP-Client `IDiscogsClient`/`DiscogsClient` nach
+Vorbild des `KeycloakAdminClient`, neue Fehlerklasse
+`DiscogsUnavailableException` auf HTTP 502 Bad Gateway, siehe Abschnitt 8)
+umgesetzt und automatisiert getestet (411 Tests grün), PR #82, nach `main`
+gemergt; die manuelle Live-Verifikation gegen die echte Discogs-API steht
+noch aus.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -72,7 +79,7 @@ Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
-Block 7h per PR #80 nach `main` gemergt)
+Block 7h per PR #80, Block 8a per PR #82 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -2545,9 +2552,9 @@ relativiert, wird hier als Doku-Abweichung gemeldet.
 
 ## 8. Discogs-Integration
 
-Status: **Backend-Proxy (Block 8a) umgesetzt und automatisiert getestet**
-(2026-08-21); manuelle Live-Verifikation gegen die echte Discogs-API steht
-noch aus; Frontend-Integration (Block 8b) offen.
+Status: **Backend-Proxy (Block 8a) umgesetzt, automatisiert getestet, PR #82
+nach `main` gemergt** (2026-08-21); manuelle Live-Verifikation gegen die
+echte Discogs-API steht noch aus; Frontend-Integration (Block 8b) offen.
 Priorität: mittel
 Arbeits-Prompt: `docs/prompts/2026-08-21-block-8a-discogs-backend-proxy.md`
 
