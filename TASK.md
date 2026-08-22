@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-21 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-22 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -70,8 +70,18 @@ releases/{id}`, externer HTTP-Client `IDiscogsClient`/`DiscogsClient` nach
 Vorbild des `KeycloakAdminClient`, neue Fehlerklasse
 `DiscogsUnavailableException` auf HTTP 502 Bad Gateway, siehe Abschnitt 8)
 umgesetzt und automatisiert getestet (411 Tests grün), PR #82, nach `main`
-gemergt; die manuelle Live-Verifikation gegen die echte Discogs-API steht
-noch aus.
+gemergt. Block 8b (Discogs-Frontend-Integration: Such-Modal
+`discogs-search/` im `RecordForm`, automatische Übernahme von Albumname,
+Erscheinungsjahr, Label, Record-Artist, Cover und aller Tracks nach
+Auswahl eines Treffers, Rückfrage bei neuer Label-/Artist-/Genre-Referenz,
+dazu eine gezielte Erweiterung von Block 8a um ein Pro-Track-Artist-Feld
+und die serverseitige Cover-Einbettung als Data-URL, siehe Abschnitt 8)
+umgesetzt, automatisiert getestet (397 Backend- und 437 Frontend-Tests
+grün), PR #84, nach `main` gemergt; die manuelle Live-Verifikation gegen
+die echte Discogs-API wurde in mehreren Runden durchgeführt (u. a. anhand
+des Various-Artists-Release 91831 „Atmos – Headcleaner") und zuletzt ohne
+weitere Befunde bestätigt — Block 8 (Backend+Frontend) damit vollständig
+abgeschlossen.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -79,7 +89,8 @@ Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
-Block 7h per PR #80, Block 8a per PR #82 nach `main` gemergt)
+Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84 nach `main`
+gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -130,9 +141,6 @@ dem MVP-Umfang der Phase 1:
   erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
   Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
   Block 7g erledigt, siehe Abschnitt 7g).
-- Discogs-Integration: Backend-Proxy (Block 8a) umgesetzt und automatisiert
-  getestet, Live-Verifikation gegen die echte Discogs-API steht noch aus,
-  siehe Abschnitt 8; Frontend-Integration (Block 8b) offen.
 - Dashboard und Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
@@ -2552,13 +2560,14 @@ relativiert, wird hier als Doku-Abweichung gemeldet.
 
 ## 8. Discogs-Integration
 
-Status: **Backend-Proxy (Block 8a) umgesetzt, automatisiert getestet, PR #82
-nach `main` gemergt** (2026-08-21); **Frontend-Integration (Block 8b) inkl.
-einer gezielten Erweiterung von Block 8a um ein Pro-Track-Artist-Feld
-umgesetzt und automatisiert getestet** (2026-08-22, Branch
-`block-8b-discogs-frontend`, noch nicht committet/gemergt); manuelle
-Live-Verifikation gegen die echte Discogs-API steht für Block 8a **und**
-8b noch aus.
+Status: **Vollständig abgeschlossen.** Backend-Proxy (Block 8a) umgesetzt,
+automatisiert getestet, PR #82 nach `main` gemergt (2026-08-21).
+Frontend-Integration (Block 8b) inkl. einer gezielten Erweiterung von
+Block 8a um ein Pro-Track-Artist-Feld und die serverseitige Cover-
+Einbettung umgesetzt, automatisiert getestet, PR #84 nach `main` gemergt
+(2026-08-22). Manuelle Live-Verifikation gegen die echte Discogs-API
+durchgeführt (mehrere Runden, siehe „Nachbesserungen" unten) —
+abschließend vom Projektinhaber ohne weitere Befunde bestätigt.
 Priorität: mittel
 Arbeits-Prompt Block 8a: `docs/prompts/2026-08-21-block-8a-discogs-backend-proxy.md`
 Arbeits-Prompt Block 8b: `docs/prompts/2026-08-22-block-8b-discogs-frontend.md`
@@ -2628,8 +2637,8 @@ Umgesetzt (Backend-Erweiterung + Frontend, Block 8b):
   `discogs` (HTTP 502) erweitert — bereits in ADR 0013 als möglicher
   sechster Fall vorgesehen.
 - Tests: 397 Backend-Unit-Tests (Domain 114, Api 11, Application 267,
-  Infrastructure 5) und 424 Frontend-Tests, alle grün; `dotnet format` und
-  `prettier --check` sauber für alle geänderten/neuen Dateien.
+  Infrastructure 5) und 437 Frontend-Tests (nach den Nachbesserungen unten),
+  alle grün; `dotnet format` und `prettier --check` sauber.
 
 Nachbesserungen aus der manuellen Live-Verifikation (2026-08-22):
 
@@ -2675,12 +2684,10 @@ Abnahmekriterium:
 
 - Ein Record kann mit Discogs-Vorausfüllung angelegt werden; bei
   Discogs-Ausfall bleibt die manuelle Anlage uneingeschränkt möglich.
-  **Automatisiert erfüllt** (Backend liefert die vorgesehenen Daten bzw.
-  HTTP 502 bei Discogs-Fehlern; Frontend übernimmt sie vollständig inkl.
-  Tracks und Cover). **Offen**: erneute manuelle Live-Verifikation nach den
-  obigen Nachbesserungen, insbesondere Cover-Einbettung und
-  Artist-Namensbereinigung bei einem echten Various-Artists-Release mit
-  Disambiguierungs-Suffixen.
+  **Vollständig erfüllt** — automatisierte Tests grün und zusätzlich in
+  mehreren Runden live gegen die echte Discogs-API verifiziert (u. a.
+  anhand des Various-Artists-Release 91831 „Atmos – Headcleaner"), zuletzt
+  ohne weitere Befunde.
 
 ## 9. Dashboard
 
