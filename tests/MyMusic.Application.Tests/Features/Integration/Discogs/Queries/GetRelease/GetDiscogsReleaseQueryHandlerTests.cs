@@ -16,7 +16,7 @@ public class GetDiscogsReleaseQueryHandlerTests
             ["Grunge"],
             [new DiscogsFormat("Vinyl", ["LP", "Album"])],
             "https://example.com/cover.jpg",
-            [new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01")]);
+            [new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01", "Nirvana")]);
 
         var discogsClient = Substitute.For<IDiscogsClient>();
 
@@ -43,6 +43,7 @@ public class GetDiscogsReleaseQueryHandlerTests
         Assert.Equal("A1", track.Position);
         Assert.Equal("Smells Like Teen Spirit", track.Title);
         Assert.Equal("5:01", track.Duration);
+        Assert.Equal("Nirvana", track.Artist);
     }
 
     [Fact]

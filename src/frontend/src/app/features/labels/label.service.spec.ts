@@ -97,6 +97,29 @@ describe('LabelService', () => {
     expect(request.request.params.has('countryId')).toBe(true);
   });
 
+  it('ruft getAll ohne Query-Parameter gegen die all-Route auf', () => {
+    // arrange
+    const labels: Label[] = [
+      {
+        id: 1,
+        name: 'Rough Trade',
+        countryId: 1,
+        countryName: 'Vereinigtes Königreich',
+        information: null,
+      },
+    ];
+    let result: Label[] | undefined;
+
+    // act
+    service.getAll().subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/labels/all');
+    request.flush(labels);
+
+    // assert
+    expect(request.request.method).toBe('GET');
+    expect(result).toEqual(labels);
+  });
+
   it('sendet create als POST mit name, countryId und information im Body', () => {
     // arrange
     const created: Label = {

@@ -34,6 +34,6 @@ public sealed class DiscogsResponseBuilder
 
     private static DiscogsTrackResponse BuildTrack(DiscogsTrack track)
     {
-        return new DiscogsTrackResponse(track.Position, track.Title, track.Duration);
+        return new DiscogsTrackResponse(track.Position, track.Title, track.Duration, track.Artist);
     }
 }

@@ -24,6 +24,10 @@ export class ArtistService {
     return this.http.get<ArtistListResponse>(this.baseUrl, { params });
   }
 
+  getAll(): Observable<Artist[]> {
+    return this.http.get<Artist[]>(`${this.baseUrl}/all`);
+  }
+
   create(request: CreateArtistRequest): Observable<Artist> {
     return this.http.post<Artist>(this.baseUrl, request);
   }

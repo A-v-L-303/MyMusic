@@ -4,12 +4,7 @@ import { Injectable, isDevMode, signal } from '@angular/core';
 import { ProblemDetails, ValidationProblemDetails } from '../http/problem-details';
 
 export type ErrorModalKind =
-  | 'not-found'
-  | 'conflict'
-  | 'server'
-  | 'rate-limit'
-  | 'network'
-  | 'validation';
+  'not-found' | 'conflict' | 'server' | 'rate-limit' | 'network' | 'validation' | 'discogs';
 
 export interface ErrorModalState {
   kind: ErrorModalKind;
@@ -58,6 +53,13 @@ export class ErrorModalService {
 
     if (error.status === 404) {
       return { kind: 'not-found', message: `${entityName} wurde nicht gefunden.` };
+    }
+
+    if (error.status === 502) {
+      return {
+        kind: 'discogs',
+        message: 'Discogs ist aktuell nicht erreichbar. Bitte die Daten manuell eingeben.',
+      };
     }
 
     if (error.status === 400) {

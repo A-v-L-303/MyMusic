@@ -1,9 +1,18 @@
 <app-modal (closed)="onCancel()">
   <form (submit)="$event.preventDefault(); onSubmit()">
-    <div class="modal-head">
+    <div class="modal-head flex items-center justify-between gap-4">
       <h2 class="text-base font-semibold text-fg">
         {{ isEditMode() ? 'Record bearbeiten' : 'Record anlegen' }}
       </h2>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        title="Nach Discogs-Metadaten suchen"
+        (click)="onDiscogsSearchOpen()"
+      >
+        <svg lucideDisc3 [size]="15" aria-hidden="true"></svg>
+        Discogs-Suche
+      </button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -157,18 +166,37 @@
 @if (labelCreateOpen()) {
   <app-label-form
     [countries]="countries()"
+    [initialName]="discogsLabelPrefillName()"
     (cancelled)="onLabelCreateCancelled()"
     (saved)="onLabelCreateSaved($event)"
   />
 }
 
-@if (pendingNewArtistName(); as newArtistName) {
+@if (pendingArtistConfirmName(); as newArtistName) {
   <app-confirm-modal
     title="Künstler anlegen"
     [message]="'Soll der Künstler „' + newArtistName + '“ neu angelegt werden?'"
     confirmLabel="Anlegen"
     confirmVariant="primary"
-    (confirmed)="onCreateArtistConfirmed()"
-    (cancelled)="onCreateArtistCancelled()"
+    (confirmed)="onArtistCreateConfirmed()"
+    (cancelled)="onArtistCreateCancelled()"
+  />
+}
+
+@if (pendingGenreConfirmName(); as newGenreName) {
+  <app-confirm-modal
+    title="Genre anlegen"
+    [message]="'Soll das Genre „' + newGenreName + '“ neu angelegt werden?'"
+    confirmLabel="Anlegen"
+    confirmVariant="primary"
+    (confirmed)="onGenreCreateConfirmed()"
+    (cancelled)="onGenreCreateCancelled()"
+  />
+}
+
+@if (discogsSearchOpen()) {
+  <app-discogs-search
+    (cancelled)="onDiscogsSearchCancelled()"
+    (applied)="onDiscogsReleaseApplied($event)"
   />
 }

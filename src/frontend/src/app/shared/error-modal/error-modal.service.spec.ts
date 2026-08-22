@@ -60,6 +60,22 @@ describe('ErrorModalService', () => {
     );
   });
 
+  it('mappt Status 502 auf discogs mit Hinweis zur manuellen Eingabe', () => {
+    // arrange
+    const error = new HttpErrorResponse({ status: 502 });
+
+    // act
+    service.showFromHttpError(error, 'Discogs');
+
+    // assert
+    expect(service.current()).toEqual(
+      expect.objectContaining({
+        kind: 'discogs',
+        message: 'Discogs ist aktuell nicht erreichbar. Bitte die Daten manuell eingeben.',
+      }),
+    );
+  });
+
   it('mappt Status 429 auf rate-limit', () => {
     // arrange
     const error = new HttpErrorResponse({ status: 429 });
