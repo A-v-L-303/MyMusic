@@ -81,6 +81,44 @@ describe('LabelForm', () => {
     return (fixture.nativeElement as HTMLElement).querySelector('.hint.is-error')?.textContent;
   }
 
+  it('füllt das Namensfeld im Anlegen-Modus mit initialName vor', () => {
+    // arrange
+    const fixture = TestBed.createComponent(LabelForm);
+    fixture.componentRef.setInput('countries', countries);
+    fixture.componentRef.setInput('initialName', 'Sub Pop');
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const nameInput = (fixture.nativeElement as HTMLElement).querySelector(
+      '#label-name',
+    ) as HTMLInputElement;
+    expect(nameInput.value).toBe('Sub Pop');
+  });
+
+  it('ignoriert initialName im Bearbeiten-Modus zugunsten des bestehenden Namens', () => {
+    // arrange
+    const existing: Label = {
+      id: 5,
+      name: 'Rough Trade',
+      countryId: 2,
+      countryName: 'Vereinigtes Königreich',
+      information: null,
+    };
+    const fixture = createFixture(existing);
+    fixture.componentRef.setInput('initialName', 'Sub Pop');
+
+    // act
+    fixture.detectChanges();
+
+    // assert
+    const nameInput = (fixture.nativeElement as HTMLElement).querySelector(
+      '#label-name',
+    ) as HTMLInputElement;
+    expect(nameInput.value).toBe('Rough Trade');
+  });
+
   it('zeigt einen Pflichtfeld-Fehler bei leerem Namen nach Blur', () => {
     // arrange
     const fixture = createFixture();

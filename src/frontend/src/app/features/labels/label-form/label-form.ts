@@ -38,6 +38,7 @@ export class LabelForm {
 
   readonly label = input<Label | null>(null);
   readonly countries = input.required<Country[]>();
+  readonly initialName = input('');
 
   readonly cancelled = output<void>();
   readonly saved = output<Label>();
@@ -61,7 +62,7 @@ export class LabelForm {
     const label = this.label();
 
     return {
-      name: label?.name ?? '',
+      name: label?.name ?? this.initialName(),
       countryId: label ? String(label.countryId) : '',
       information: label?.information ?? '',
     };

@@ -50,15 +50,20 @@ public class DiscogsResponseBuilderTests
             ["Grunge"],
             [new DiscogsFormat("Vinyl", ["LP", "Album"])],
             "https://example.com/cover.jpg",
-            [new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01"), new DiscogsTrack("A2", "In Bloom", null)]);
+            [
+                new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01", "Nirvana"),
+                new DiscogsTrack("A2", "In Bloom", null, null),
+            ]);
 
         // act
         var response = _builder.BuildRelease(release);
 
         // assert
         Assert.Equal(2, response.Tracklist.Count);
+        Assert.Equal("Nirvana", response.Tracklist[0].Artist);
         Assert.Equal("A2", response.Tracklist[1].Position);
         Assert.Null(response.Tracklist[1].Duration);
+        Assert.Null(response.Tracklist[1].Artist);
         var format = Assert.Single(response.Formats);
         Assert.Equal("Vinyl", format.Name);
         Assert.Equal(["LP", "Album"], format.Descriptions);

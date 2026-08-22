@@ -40,7 +40,9 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
         if (release is null)
             throw new HttpRequestException("Discogs hat keine Release-Daten geliefert.");
 
-        return MapRelease(release);
+        var coverImageDataUrl = await DownloadCoverImageAsDataUrlAsync(release.Images, cancellationToken);
+
+        return MapRelease(release, coverImageDataUrl);
     }
 
     private static DiscogsSearchResult MapSearchResult(DiscogsSearchResultRepresentation result)
@@ -52,7 +54,7 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
         return new DiscogsSearchResult(result.Id, result.Title ?? string.Empty, year, label, result.Thumb);
     }
 
-    private static DiscogsRelease MapRelease(DiscogsReleaseRepresentation release)
+    private static DiscogsRelease MapRelease(DiscogsReleaseRepresentation release, string? coverImageDataUrl)
     {
         var artists = (release.Artists ?? [])
             .Select(artist => artist.Name)
@@ -66,11 +68,6 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
             .Select(name => name!)
             .ToList();
 
-        var images = release.Images ?? [];
-
-        var coverImageUrl = images.FirstOrDefault(image => image.Type == "primary")?.Uri
-            ?? images.FirstOrDefault()?.Uri;
-
         var formats = (release.Formats ?? [])
             .Select(format => new DiscogsFormat(format.Name ?? string.Empty, format.Descriptions ?? []))
             .ToList();
@@ -79,7 +76,8 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
             .Select(track => new DiscogsTrack(
                 track.Position ?? string.Empty,
                 track.Title ?? string.Empty,
-                track.Duration))
+                track.Duration,
+                MapTrackArtist(track.Artists)))
             .ToList();
 
         return new DiscogsRelease(
@@ -91,7 +89,51 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
             release.Genres ?? [],
             release.Styles ?? [],
             formats,
-            coverImageUrl,
+            coverImageDataUrl,
             tracklist);
+    }
+
+    /// <summary>
+    /// Lädt das Cover-Bild serverseitig über den authentifizierten Discogs-Client herunter und
+    /// bettet es als Data-URL ein, damit der Browser nicht direkt gegen Discogs' Bild-CDN
+    /// zugreifen muss (Discogs blockiert Hotlinking ohne passenden User-Agent/Referer).
+    /// </summary>
+    private async Task<string?> DownloadCoverImageAsDataUrlAsync(
+        List<DiscogsImageRepresentation>? images,
+        CancellationToken cancellationToken)
+    {
+        var nonNullImages = images ?? [];
+        var coverImageUrl = nonNullImages.FirstOrDefault(image => image.Type == "primary")?.Uri
+            ?? nonNullImages.FirstOrDefault()?.Uri;
+
+        if (coverImageUrl is null)
+            return null;
+
+        try
+        {
+            var imageResponse = await httpClient.GetAsync(coverImageUrl, cancellationToken);
+
+            imageResponse.EnsureSuccessStatusCode();
+
+            var bytes = await imageResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+            var contentType = imageResponse.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+
+            return $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    private static string? MapTrackArtist(List<DiscogsArtistRepresentation>? artists)
+    {
+        var names = (artists ?? [])
+            .Select(artist => artist.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
+            .ToList();
+
+        return names.Count > 0 ? string.Join(", ", names) : null;
     }
 }

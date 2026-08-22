@@ -33,6 +33,10 @@ export class LabelService {
     return this.http.get<LabelListResponse>(this.baseUrl, { params });
   }
 
+  getAll(): Observable<Label[]> {
+    return this.http.get<Label[]>(`${this.baseUrl}/all`);
+  }
+
   create(request: CreateLabelRequest): Observable<Label> {
     return this.http.post<Label>(this.baseUrl, request);
   }

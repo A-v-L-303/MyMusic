@@ -88,6 +88,18 @@ describe('Records', () => {
     );
   }
 
+  function flushRecordFormReferenceLists(): void {
+    httpTesting
+      .expectOne((req) => req.method === 'GET' && req.url === 'https://api.test/api/artists/all')
+      .flush([]);
+    httpTesting
+      .expectOne((req) => req.method === 'GET' && req.url === 'https://api.test/api/labels/all')
+      .flush([]);
+    httpTesting
+      .expectOne((req) => req.method === 'GET' && req.url === 'https://api.test/api/genres/all')
+      .flush([]);
+  }
+
   function compiled(fixture: { nativeElement: unknown }): HTMLElement {
     return fixture.nativeElement as HTMLElement;
   }
@@ -343,6 +355,7 @@ describe('Records', () => {
     findButton(compiled(fixture), 'Anlegen').click();
     fixture.detectChanges();
     expectCountriesRequest().flush(countries);
+    flushRecordFormReferenceLists();
     await selectFormLabel(fixture, 'Apple Records', 1);
     const formatSelect = compiled(fixture).querySelector('#record-format') as HTMLSelectElement;
     formatSelect.value = 'Album';
@@ -394,6 +407,7 @@ describe('Records', () => {
     ).click();
     fixture.detectChanges();
     expectCountriesRequest().flush(countries);
+    flushRecordFormReferenceLists();
     const formHost = compiled(fixture).querySelector('app-record-form') as HTMLElement;
     const autocompleteInputs = formHost.querySelectorAll(
       'app-autocomplete input',

@@ -67,6 +67,24 @@ describe('ArtistService', () => {
     expect(request.request.params.has('name')).toBe(true);
   });
 
+  it('ruft getAll ohne Query-Parameter gegen die all-Route auf', () => {
+    // arrange
+    const artists: Artist[] = [
+      { id: 1, name: 'AC/DC' },
+      { id: 2, name: 'Nirvana' },
+    ];
+    let result: Artist[] | undefined;
+
+    // act
+    service.getAll().subscribe((value) => (result = value));
+    const request = httpTesting.expectOne('https://api.test/api/artists/all');
+    request.flush(artists);
+
+    // assert
+    expect(request.request.method).toBe('GET');
+    expect(result).toEqual(artists);
+  });
+
   it('sendet create als POST mit dem Namen im Body', () => {
     // arrange
     const created: Artist = { id: 1, name: 'AC/DC' };

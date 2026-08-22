@@ -11,6 +11,7 @@ const TITLES: Record<ErrorModalKind, string> = {
   'rate-limit': 'Zu viele Anfragen',
   network: 'Verbindungsfehler',
   validation: 'Ungültige Eingabe',
+  discogs: 'Discogs nicht verfügbar',
 };
 
 @Component({

@@ -1,0 +1,64 @@
+<app-modal (closed)="onCancel()">
+  <div class="modal-head">
+    <h2 class="text-base font-semibold text-fg">Discogs-Suche</h2>
+  </div>
+  <div class="modal-body">
+    <div class="search">
+      <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+      <input
+        type="text"
+        class="input"
+        aria-label="Discogs durchsuchen"
+        title="Discogs durchsuchen"
+        placeholder="Titel suchen"
+        [value]="queryText()"
+        (input)="onQueryInput($event)"
+      />
+    </div>
+
+    <div class="mt-4">
+      @if (searchResource.isLoading() || loadingRelease()) {
+        <div class="flex justify-center py-8">
+          <div class="spinner"></div>
+        </div>
+      } @else if (results().length === 0) {
+        <p class="empty">Keine Daten vorhanden.</p>
+      } @else {
+        <ul class="flex max-h-80 flex-col gap-2 overflow-y-auto">
+          @for (result of results(); track result.id) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 rounded-md border border-line p-2 text-left hover:bg-hover"
+                [title]="'„' + result.title + '“ übernehmen'"
+                (click)="onResultSelected(result)"
+              >
+                <div class="record-cover w-12 flex-none rounded-md">
+                  @if (result.thumbnailUrl; as thumbnailUrl) {
+                    <img [src]="thumbnailUrl" alt="" />
+                  } @else {
+                    <svg lucideDisc3 [size]="18" class="text-fg-subtle" aria-hidden="true"></svg>
+                  }
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-fg">{{ result.title }}</p>
+                  <p class="truncate text-xs text-fg-subtle">
+                    {{ result.year ?? '—' }}
+                    @if (result.label) {
+                      · {{ result.label }}
+                    }
+                  </p>
+                </div>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button type="button" class="btn btn-secondary" title="Abbrechen" (click)="onCancel()">
+      Abbrechen
+    </button>
+  </div>
+</app-modal>

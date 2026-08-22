@@ -2553,10 +2553,15 @@ relativiert, wird hier als Doku-Abweichung gemeldet.
 ## 8. Discogs-Integration
 
 Status: **Backend-Proxy (Block 8a) umgesetzt, automatisiert getestet, PR #82
-nach `main` gemergt** (2026-08-21); manuelle Live-Verifikation gegen die
-echte Discogs-API steht noch aus; Frontend-Integration (Block 8b) offen.
+nach `main` gemergt** (2026-08-21); **Frontend-Integration (Block 8b) inkl.
+einer gezielten Erweiterung von Block 8a um ein Pro-Track-Artist-Feld
+umgesetzt und automatisiert getestet** (2026-08-22, Branch
+`block-8b-discogs-frontend`, noch nicht committet/gemergt); manuelle
+Live-Verifikation gegen die echte Discogs-API steht für Block 8a **und**
+8b noch aus.
 Priorität: mittel
-Arbeits-Prompt: `docs/prompts/2026-08-21-block-8a-discogs-backend-proxy.md`
+Arbeits-Prompt Block 8a: `docs/prompts/2026-08-21-block-8a-discogs-backend-proxy.md`
+Arbeits-Prompt Block 8b: `docs/prompts/2026-08-22-block-8b-discogs-frontend.md`
 
 Voraussetzung erledigt:
 
@@ -2593,18 +2598,89 @@ Bewusst nicht Teil von Block 8a:
   Discogs-API (externe, ratenlimitierte Drittanbieter-API ohne Sandbox,
   gleiche Einschränkungsklasse wie `KeycloakAdminClient`) — Ausgleich über
   manuelle Live-Verifikation, die noch aussteht.
-- Frontend-Integration (verschachteltes Modal im RecordForm, Vorausfüllung,
-  Rückfrage bei neuen Artist-/Label-/Genre-Referenzen, Track-Nachimport nach
-  dem ersten Speichern) — folgt mit Block 8b.
+- Frontend-Integration — umgesetzt mit Block 8b.
+
+Umgesetzt (Backend-Erweiterung + Frontend, Block 8b):
+
+- Backend-Erweiterung an Block 8a: `DiscogsTrackResponse` (und die
+  zugrunde liegenden Schichten `DiscogsTrack`/`DiscogsTrackRepresentation`)
+  um ein optionales Pro-Track-Artist-Feld erweitert, im `DiscogsClient` aus
+  Discogs' Tracklist-`artists`-Array gemappt (nur bei Various-Artists-
+  Releases vorhanden, sonst `null`) — siehe ADR
+  `docs/adr/0019-discogs-track-artist-zuordnung.md`.
+- Neue Komponente `discogs-search/` (verschachteltes Modal im RecordForm):
+  Suchfeld (ab 2 Zeichen), Ergebnisliste mit Thumbnail/Titel/Jahr/Label,
+  Leer- und Ladezustand, Detailabruf bei Auswahl eines Treffers.
+- `RecordForm` übernimmt nach Auswahl eines Discogs-Treffers automatisch
+  Albumname, Erscheinungsjahr, Label, Record-Artist und Cover (per `fetch()`
+  heruntergeladen und über den bestehenden Cover-Upload-Mechanismus
+  gespeichert) sowie — nach dem Speichern — alle Tracks der Discogs-
+  Tracklist inkl. geparster Seite/Nummer. Track-Artist folgt dabei der
+  Discogs-Realität: bei Various-Artists-Releases der jeweilige
+  Pro-Track-Artist, sonst einheitlich der Record-Artist.
+- Rückfrage bei neuer Artist-/Label-/Genre-Referenz (US-DI3) einmal je
+  distinktem Namen — bei Compilations potenziell mehrfach für Artist, da
+  jeder Track seinen eigenen Namen mitbringen kann.
+- Neue `getAll()`-Methoden an `ArtistService`/`LabelService` (bereits seit
+  Block 6e bestehende, bisher ungenutzte `/all`-Endpunkte) für den
+  Existenz-Abgleich; `LabelForm` um `initialName` für die Vorbefüllung bei
+  Discogs-Neuanlage erweitert; `ErrorModalService` um den `ErrorModalKind`
+  `discogs` (HTTP 502) erweitert — bereits in ADR 0013 als möglicher
+  sechster Fall vorgesehen.
+- Tests: 397 Backend-Unit-Tests (Domain 114, Api 11, Application 267,
+  Infrastructure 5) und 424 Frontend-Tests, alle grün; `dotnet format` und
+  `prettier --check` sauber für alle geänderten/neuen Dateien.
+
+Nachbesserungen aus der manuellen Live-Verifikation (2026-08-22):
+
+- **Cover-Download umgestellt**: Der ursprünglich geplante client-seitige
+  `fetch()` der Discogs-Bild-URL scheiterte live am Hotlink-Schutz von
+  Discogs (Cover blieb leer). Fix: `DiscogsClient` lädt das Cover jetzt
+  serverseitig über denselben authentifizierten Client herunter und
+  bettet es als Base64-Data-URL in die Release-Antwort ein — siehe ADR
+  `docs/adr/0020-discogs-cover-serverseitig-eingebettet.md`. Keine
+  Frontend-Änderung nötig.
+- **Ergebnisliste der Discogs-Suche begrenzt** (`max-h-80` mit
+  vertikalem Scrollbereich) — war bei vielen Treffern unbrauchbar groß.
+- **Tooltips ergänzt**: Discogs-Button („Nach Discogs-Metadaten suchen")
+  und Sucheingabefeld („Discogs durchsuchen").
+- **Namensbereinigung für Artist/Label/Genre**: Discogs-Namen können
+  Zeichen enthalten, die die jeweiligen Formular-Validierungsmuster nicht
+  erlauben (v. a. Disambiguierungs-Suffixe wie „ (2)", Kommas,
+  Anführungszeichen). Neues gemeinsames Modul
+  `discogs-name-sanitizer.ts` mit drei Funktionen
+  (`sanitizeDiscogsArtistName`/`-LabelName`/`-GenreName`, je eigener
+  Zeichensatz und Maximallänge passend zum jeweiligen Formular — Genre
+  erlaubt anders als Artist/Label kein „." und kein „/"). Greift in
+  `resolveArtistId`/`resolveLabelId`/`resolveGenreId` vor dem
+  Existenz-Abgleich und vor einer Neuanlage — beim Artist sowohl für den
+  Record-Artist als auch für jeden Track-Artist.
+- Tests entsprechend ergänzt (Sanitizer-Unit-Tests je Entität plus
+  Integrationstests im RecordForm), weiterhin alle grün.
+- **Seitenzuordnung bei Einzeltrack-Seiten korrigiert**: Discogs lässt bei
+  einer Seite mit nur einem Track die Tracknummer in der Positionsangabe
+  weg (z. B. `"A"` statt `"A1"`) — `parseDiscogsPosition` verlangte bisher
+  zwingend eine Ziffer und ließ solche Tracks auf Seite „0" mit einer
+  zufälligen, vom Array-Index abhängigen Nummer fallen; zwei verschiedene
+  Seiten konnten dadurch fälschlich auf derselben „Seite 0" landen (live
+  entdeckt an Discogs-Release 91831, „Atmos – Headcleaner": Seite A und C
+  hatten je einen Track ohne Ziffer, wurden beide als „Seite 0" mit
+  Tracknummer 1 bzw. 4 importiert, Seite C erschien dadurch scheinbar als
+  fehlend). Fix: neuer Erkennungsfall für eine reine Seitenangabe ohne
+  Ziffer (Tracknummer wird dann implizit 1). Mit einem echten Abruf gegen
+  `api.discogs.com/releases/91831` verifiziert, nicht nur angenommen.
+  Regressionstest mit genau dieser realen Tracklist ergänzt.
 
 Abnahmekriterium:
 
 - Ein Record kann mit Discogs-Vorausfüllung angelegt werden; bei
   Discogs-Ausfall bleibt die manuelle Anlage uneingeschränkt möglich.
-  **Backend-Teil automatisiert erfüllt** (beide Endpunkte liefern die
-  vorgesehenen Daten bzw. HTTP 502 bei Discogs-Fehlern); Live-Verifikation
-  gegen die reale Discogs-API und die UI-seitige Vorausfüllung folgen mit der
-  ausstehenden Prüfung bzw. mit Block 8b.
+  **Automatisiert erfüllt** (Backend liefert die vorgesehenen Daten bzw.
+  HTTP 502 bei Discogs-Fehlern; Frontend übernimmt sie vollständig inkl.
+  Tracks und Cover). **Offen**: erneute manuelle Live-Verifikation nach den
+  obigen Nachbesserungen, insbesondere Cover-Einbettung und
+  Artist-Namensbereinigung bei einem echten Various-Artists-Release mit
+  Disambiguierungs-Suffixen.
 
 ## 9. Dashboard
 

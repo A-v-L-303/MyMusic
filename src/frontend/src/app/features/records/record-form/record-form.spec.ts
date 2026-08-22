@@ -1,13 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ArtistService } from '../../artists/artist.service';
+import { GenreService } from '../../genres/genre.service';
 import { Label } from '../../labels/label';
 import { LabelService } from '../../labels/label.service';
 import { CountryService } from '../../../shared/country/country.service';
 import { ErrorModalService } from '../../../shared/error-modal/error-modal.service';
+import { DiscogsRelease } from '../discogs';
+import { DiscogsSearch } from '../discogs-search/discogs-search';
+import { DiscogsService } from '../discogs.service';
 import { Record } from '../record';
 import { RecordService } from '../record.service';
 import { RecordForm } from './record-form';
@@ -36,17 +41,36 @@ describe('RecordForm', () => {
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     uploadCover: ReturnType<typeof vi.fn>;
+    createTrack: ReturnType<typeof vi.fn>;
   };
-  let labelServiceMock: { getPaged: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
-  let artistServiceMock: { getPaged: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
+  let labelServiceMock: {
+    getPaged: ReturnType<typeof vi.fn>;
+    getAll: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+  };
+  let artistServiceMock: {
+    getPaged: ReturnType<typeof vi.fn>;
+    getAll: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+  };
+  let genreServiceMock: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
   let countryServiceMock: { getAll: ReturnType<typeof vi.fn> };
+  let discogsServiceMock: {
+    search: ReturnType<typeof vi.fn>;
+    getRelease: ReturnType<typeof vi.fn>;
+  };
   let errorModalServiceMock: {
     showFromHttpError: ReturnType<typeof vi.fn>;
     showValidationMessage: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
-    recordServiceMock = { create: vi.fn(), update: vi.fn(), uploadCover: vi.fn() };
+    recordServiceMock = {
+      create: vi.fn(),
+      update: vi.fn(),
+      uploadCover: vi.fn(),
+      createTrack: vi.fn(),
+    };
     labelServiceMock = {
       getPaged: vi.fn().mockReturnValue(
         of({
@@ -57,6 +81,11 @@ describe('RecordForm', () => {
           totalPages: 1,
         }),
       ),
+      getAll: vi
+        .fn()
+        .mockReturnValue(
+          of([{ id: 1, name: 'Columbia', countryId: 1, countryName: 'USA', information: null }]),
+        ),
       create: vi.fn(),
     };
     artistServiceMock = {
@@ -69,9 +98,12 @@ describe('RecordForm', () => {
           totalPages: 1,
         }),
       ),
+      getAll: vi.fn().mockReturnValue(of([{ id: 2, name: 'Miles Davis' }])),
       create: vi.fn(),
     };
+    genreServiceMock = { getAll: vi.fn().mockReturnValue(of([])), create: vi.fn() };
     countryServiceMock = { getAll: vi.fn().mockReturnValue(of([])) };
+    discogsServiceMock = { search: vi.fn(() => of([])), getRelease: vi.fn() };
     errorModalServiceMock = { showFromHttpError: vi.fn(), showValidationMessage: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -79,7 +111,9 @@ describe('RecordForm', () => {
         { provide: RecordService, useValue: recordServiceMock },
         { provide: LabelService, useValue: labelServiceMock },
         { provide: ArtistService, useValue: artistServiceMock },
+        { provide: GenreService, useValue: genreServiceMock },
         { provide: CountryService, useValue: countryServiceMock },
+        { provide: DiscogsService, useValue: discogsServiceMock },
         { provide: ErrorModalService, useValue: errorModalServiceMock },
       ],
     });
@@ -183,6 +217,48 @@ describe('RecordForm', () => {
     typeAlbumName(fixture, 'Kind of Blue');
     typeReleaseYear(fixture, '1959');
   }
+
+  async function applyDiscogsRelease(
+    fixture: ReturnType<typeof createFixture>,
+    release: DiscogsRelease,
+  ): Promise<void> {
+    (
+      compiled(fixture).querySelector(
+        '[title="Nach Discogs-Metadaten suchen"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+    const discogsSearch = fixture.debugElement.query(By.directive(DiscogsSearch))
+      .componentInstance as DiscogsSearch;
+    discogsSearch.applied.emit(release);
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function confirmButtonWithLabel(
+    fixture: ReturnType<typeof createFixture>,
+    label: string,
+  ): HTMLButtonElement | undefined {
+    return Array.from(compiled(fixture).querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === label,
+    ) as HTMLButtonElement | undefined;
+  }
+
+  const nevermindRelease: DiscogsRelease = {
+    id: 100,
+    title: 'Nevermind',
+    year: 1991,
+    artists: ['Miles Davis'],
+    labels: ['Columbia'],
+    genres: ['Jazz'],
+    styles: [],
+    formats: [],
+    coverImageUrl: null,
+    tracklist: [
+      { position: 'A1', title: 'So What', duration: '9:22', artist: null },
+      { position: 'A2', title: 'Freddie Freeloader', duration: '9:46', artist: null },
+    ],
+  };
 
   it('zeigt im Bearbeiten-Modus Label/Künstler-Namen in den Autocomplete-Feldern vorbefüllt', () => {
     // arrange & act
@@ -544,10 +620,7 @@ describe('RecordForm', () => {
     await fixture.whenStable();
 
     // assert
-    expect(errorModalServiceMock.showFromHttpError).toHaveBeenCalledWith(
-      coverError,
-      'Album-Cover',
-    );
+    expect(errorModalServiceMock.showFromHttpError).toHaveBeenCalledWith(coverError, 'Album-Cover');
     expect(savedHandler).toHaveBeenCalledTimes(1);
   });
 
@@ -706,7 +779,7 @@ describe('RecordForm', () => {
     expect(artistInput.value).toBe('Neuer Künstler');
   });
 
-  it('leert das Künstlerfeld, wenn das Anlegen abgelehnt wird', () => {
+  it('leert das Künstlerfeld, wenn das Anlegen abgelehnt wird', async () => {
     // arrange
     const fixture = createFixture();
     const artistInput = compiled(fixture).querySelectorAll(
@@ -722,6 +795,7 @@ describe('RecordForm', () => {
 
     // act
     cancelButton.click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     // assert
@@ -759,5 +833,348 @@ describe('RecordForm', () => {
 
     // assert
     expect(compiled(fixture).textContent).not.toContain('neu angelegt werden?');
+  });
+
+  describe('Discogs-Integration', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('öffnet über den Discogs-Button die Discogs-Suche', () => {
+      // arrange
+      const fixture = createFixture();
+
+      // act
+      (
+        compiled(fixture).querySelector(
+          '[title="Nach Discogs-Metadaten suchen"]',
+        ) as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+
+      // assert
+      expect(compiled(fixture).querySelector('app-discogs-search')).not.toBeNull();
+    });
+
+    it('übernimmt Albumname und Erscheinungsjahr aus einem Discogs-Treffer', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const fixture = createFixture();
+
+      // act
+      await applyDiscogsRelease(fixture, nevermindRelease);
+
+      // assert
+      expect(
+        (compiled(fixture).querySelector('#record-album-name') as HTMLInputElement).value,
+      ).toBe('Nevermind');
+      expect(
+        (compiled(fixture).querySelector('#record-release-year') as HTMLInputElement).value,
+      ).toBe('1991');
+    });
+
+    it('referenziert bestehende Label-, Artist- und Genre-Referenzen ohne Rückfrage', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const fixture = createFixture();
+
+      // act
+      await applyDiscogsRelease(fixture, nevermindRelease);
+
+      // assert
+      const inputs = compiled(fixture).querySelectorAll('app-autocomplete input');
+      expect((inputs[0] as HTMLInputElement).value).toBe('Columbia');
+      expect((inputs[1] as HTMLInputElement).value).toBe('Miles Davis');
+      expect(compiled(fixture).textContent).not.toContain('neu angelegt werden?');
+      expect(compiled(fixture).querySelector('app-label-form')).toBeNull();
+    });
+
+    it('fragt bei einer neuen Artist-Referenz aus Discogs nach, bevor sie übernommen wird', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const fixture = createFixture();
+      const release: DiscogsRelease = { ...nevermindRelease, artists: ['Nirvana'] };
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert
+      expect(compiled(fixture).textContent).toContain('Künstler anlegen');
+      expect(compiled(fixture).textContent).toContain('Nirvana');
+    });
+
+    it('bereinigt einen Discogs-Artist-Namen mit unerlaubten Zeichen vor der Rückfrage und Neuanlage', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      artistServiceMock.create.mockReturnValue(of({ id: 30, name: 'Prince' }));
+      const fixture = createFixture();
+      const release: DiscogsRelease = { ...nevermindRelease, artists: ['Prince (2)'] };
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert: Rückfrage zeigt bereits den bereinigten Namen, nicht den Discogs-Rohwert
+      expect(compiled(fixture).textContent).toContain('Künstler anlegen');
+      expect(compiled(fixture).textContent).toContain('Prince');
+      expect(compiled(fixture).textContent).not.toContain('Prince (2)');
+
+      // act: Neuanlage bestätigen
+      confirmButtonWithLabel(fixture, 'Anlegen')?.click();
+      await fixture.whenStable();
+
+      // assert
+      expect(artistServiceMock.create).toHaveBeenCalledWith({ name: 'Prince' });
+      const inputs = compiled(fixture).querySelectorAll('app-autocomplete input');
+      expect((inputs[1] as HTMLInputElement).value).toBe('Prince');
+    });
+
+    it('fragt bei einer neuen Label-Referenz aus Discogs nach und befüllt den Namen vor', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const fixture = createFixture();
+      const release: DiscogsRelease = { ...nevermindRelease, labels: ['Sub Pop'] };
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert
+      const nameInput = compiled(fixture).querySelector('#label-name') as HTMLInputElement;
+      expect(nameInput).not.toBeNull();
+      expect(nameInput.value).toBe('Sub Pop');
+    });
+
+    it('bereinigt einen Discogs-Label-Namen mit unerlaubten Zeichen vor der Rückfrage', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const fixture = createFixture();
+      const release: DiscogsRelease = { ...nevermindRelease, labels: ['Atlantic (2)'] };
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert: Vorbefülltes Namensfeld zeigt bereits den bereinigten Namen
+      const nameInput = compiled(fixture).querySelector('#label-name') as HTMLInputElement;
+      expect(nameInput).not.toBeNull();
+      expect(nameInput.value).toBe('Atlantic');
+    });
+
+    it('fragt bei einer neuen Genre-Referenz aus Discogs nach, bevor sie für den Track-Import übernommen wird', async () => {
+      // arrange
+      const fixture = createFixture();
+
+      // act
+      await applyDiscogsRelease(fixture, nevermindRelease);
+
+      // assert
+      expect(compiled(fixture).textContent).toContain('Genre anlegen');
+      expect(compiled(fixture).textContent).toContain('Jazz');
+    });
+
+    it('bereinigt einen Discogs-Genre-Namen mit unerlaubten Zeichen vor der Rückfrage und Neuanlage', async () => {
+      // arrange
+      genreServiceMock.create.mockReturnValue(of({ id: 40, name: 'Folk World Country' }));
+      const fixture = createFixture();
+      const release: DiscogsRelease = { ...nevermindRelease, genres: ['Folk, World, Country'] };
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert: Rückfrage zeigt bereits den bereinigten Namen
+      expect(compiled(fixture).textContent).toContain('Genre anlegen');
+      expect(compiled(fixture).textContent).toContain('Folk World Country');
+      expect(compiled(fixture).textContent).not.toContain('Folk, World, Country');
+
+      // act: Neuanlage bestätigen
+      confirmButtonWithLabel(fixture, 'Anlegen')?.click();
+      await fixture.whenStable();
+
+      // assert
+      expect(genreServiceMock.create).toHaveBeenCalledWith({ name: 'Folk World Country' });
+    });
+
+    it('legt nach dem Speichern alle Tracks eines Discogs-Albums mit dem Record-Artist an', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+      recordServiceMock.createTrack.mockReturnValue(of({}));
+      const fixture = createFixture();
+      await applyDiscogsRelease(fixture, nevermindRelease);
+      selectFormat(fixture, 'Album');
+
+      // act
+      submitForm(fixture);
+      await fixture.whenStable();
+
+      // assert
+      expect(recordServiceMock.createTrack).toHaveBeenCalledTimes(2);
+      expect(recordServiceMock.createTrack).toHaveBeenNthCalledWith(1, 9, {
+        artistId: 2,
+        genreId: 3,
+        trackName: 'So What',
+        recordSide: 'A',
+        trackNumber: 1,
+        information: 'Dauer: 9:22',
+      });
+      expect(recordServiceMock.createTrack).toHaveBeenNthCalledWith(2, 9, {
+        artistId: 2,
+        genreId: 3,
+        trackName: 'Freddie Freeloader',
+        recordSide: 'A',
+        trackNumber: 2,
+        information: 'Dauer: 9:46',
+      });
+    });
+
+    it('ordnet Seiten mit nur einem Track (Discogs-Position ohne Ziffer, z. B. "A") korrekt zu, statt sie unter Seite 0 zu vermischen', async () => {
+      // arrange: reale Discogs-Positionen von Release 91831 ("Atmos – Headcleaner") —
+      // Seite A und C haben je nur einen Track, Discogs liefert dafür keine Ziffer.
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+      recordServiceMock.createTrack.mockReturnValue(of({}));
+      const release: DiscogsRelease = {
+        ...nevermindRelease,
+        tracklist: [
+          { position: 'A', title: 'Fill The Hat', duration: null, artist: null },
+          { position: 'B1', title: 'Average Beverage', duration: null, artist: null },
+          { position: 'B2', title: 'Sonic Kipper', duration: null, artist: null },
+          { position: 'C', title: 'Cable Enable', duration: null, artist: null },
+          { position: 'D1', title: 'Jimmy The Plate', duration: null, artist: null },
+          { position: 'D2', title: 'Qualität Im Quadrat', duration: null, artist: null },
+        ],
+      };
+      const fixture = createFixture();
+      await applyDiscogsRelease(fixture, release);
+      selectFormat(fixture, 'Album');
+
+      // act
+      submitForm(fixture);
+      await fixture.whenStable();
+
+      // assert: keine der sechs Seiten-/Nummer-Kombinationen ist "0" oder doppelt/übersprungen
+      expect(recordServiceMock.createTrack).toHaveBeenCalledTimes(6);
+      const sideAndNumberPairs = recordServiceMock.createTrack.mock.calls.map((call: unknown[]) => {
+        const request = call[1] as { recordSide: string; trackNumber: number };
+        return [request.recordSide, request.trackNumber];
+      });
+      expect(sideAndNumberPairs).toEqual([
+        ['A', 1],
+        ['B', 1],
+        ['B', 2],
+        ['C', 1],
+        ['D', 1],
+        ['D', 2],
+      ]);
+    });
+
+    it('legt bei einem Various-Artists-Release für jeden Track den jeweils aufgelösten Track-Artist an', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      artistServiceMock.create.mockReturnValue(of({ id: 20, name: 'Cannonball Adderley' }));
+      recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+      recordServiceMock.createTrack.mockReturnValue(of({}));
+      const vaRelease: DiscogsRelease = {
+        ...nevermindRelease,
+        tracklist: [
+          { position: 'A1', title: 'So What', duration: '9:22', artist: 'Miles Davis' },
+          {
+            position: 'A2',
+            title: 'Autumn Leaves',
+            duration: '10:59',
+            artist: 'Cannonball Adderley',
+          },
+        ],
+      };
+      const fixture = createFixture();
+      await applyDiscogsRelease(fixture, vaRelease);
+      selectFormat(fixture, 'Album');
+
+      // act
+      submitForm(fixture);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      confirmButtonWithLabel(fixture, 'Anlegen')?.click();
+      await fixture.whenStable();
+
+      // assert
+      expect(artistServiceMock.create).toHaveBeenCalledWith({ name: 'Cannonball Adderley' });
+      expect(recordServiceMock.createTrack).toHaveBeenNthCalledWith(1, 9, {
+        artistId: 2,
+        genreId: 3,
+        trackName: 'So What',
+        recordSide: 'A',
+        trackNumber: 1,
+        information: 'Dauer: 9:22',
+      });
+      expect(recordServiceMock.createTrack).toHaveBeenNthCalledWith(2, 9, {
+        artistId: 20,
+        genreId: 3,
+        trackName: 'Autumn Leaves',
+        recordSide: 'A',
+        trackNumber: 2,
+        information: 'Dauer: 10:59',
+      });
+    });
+
+    it('überspringt den Track-Import komplett, wenn die neue Genre-Referenz abgelehnt wird', async () => {
+      // arrange: genreServiceMock.getAll bleibt beim Default [] – „Jazz" ist eine neue Referenz
+      recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
+      const fixture = createFixture();
+      await applyDiscogsRelease(fixture, nevermindRelease);
+      const cancelButtons = compiled(fixture).querySelectorAll('app-confirm-modal .btn-secondary');
+      (cancelButtons[cancelButtons.length - 1] as HTMLButtonElement).click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      selectFormat(fixture, 'Album');
+
+      // act
+      submitForm(fixture);
+      await fixture.whenStable();
+
+      // assert
+      expect(recordServiceMock.createTrack).not.toHaveBeenCalled();
+    });
+
+    it('lädt bei Übernahme automatisch das Discogs-Cover herunter und übernimmt es als Vorschau', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const blob = new Blob(['cover-bytes'], { type: 'image/jpeg' });
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: () => Promise.resolve(blob) });
+      vi.stubGlobal('fetch', fetchMock);
+      const release: DiscogsRelease = {
+        ...nevermindRelease,
+        coverImageUrl: 'https://example.com/cover.jpg',
+      };
+      const fixture = createFixture();
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert
+      expect(fetchMock).toHaveBeenCalledWith('https://example.com/cover.jpg');
+      const preview = compiled(fixture).querySelector(
+        'img[alt="Cover-Vorschau"]',
+      ) as HTMLImageElement;
+      expect(preview).not.toBeNull();
+      expect(preview.src.startsWith('blob:')).toBe(true);
+    });
+
+    it('lässt das Cover leer, wenn der Discogs-Bild-Download fehlschlägt', async () => {
+      // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      const fetchMock = vi.fn().mockRejectedValue(new Error('Netzwerkfehler'));
+      vi.stubGlobal('fetch', fetchMock);
+      const release: DiscogsRelease = {
+        ...nevermindRelease,
+        coverImageUrl: 'https://example.com/cover.jpg',
+      };
+      const fixture = createFixture();
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert
+      expect(fetchMock).toHaveBeenCalled();
+      expect(compiled(fixture).querySelector('img[alt="Cover-Vorschau"]')).toBeNull();
+    });
   });
 });
