@@ -553,6 +553,56 @@ Klick im Header möglich war. Bereits angemeldete Benutzer landen weiterhin
 automatisch auf `/dashboard`; alle anderen Routen bleiben unverändert
 vollständig geschützt (Details: `docs/adr/0017-unbewachte-landing-route.md`).
 
+### Discogs-Integration (Block 8a Backend, Block 8b Frontend)
+
+Serverseitiger Proxy zur Discogs-API — der Angular-Client kommuniziert nie
+direkt mit Discogs, das Personal Access Token bleibt im Backend:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/discogs/search?q=` | Kurzdaten-Trefferliste (Titel, Jahr, Label als Text, Thumbnail), unpaginiert, `q` mindestens 2 Zeichen |
+| GET | `/api/discogs/releases/{id}` | Volldaten eines Treffers: Cover (serverseitig heruntergeladen und als Data-URL eingebettet), Tracklist inkl. Pro-Track-Artist, Artist(s), Label(s), Genre/Style, Format-Rohdaten |
+
+Ein neuer externer HTTP-Client `IDiscogsClient`/`DiscogsClient`
+(`Infrastructure/ExternalServices/Discogs/`) nach Vorbild des
+`KeycloakAdminClient` übernimmt Authentifizierung (Token als
+`Authorization`-Header) und Fehlerbehandlung: Jeder Discogs-Fehler
+(Nichterreichbarkeit, Rate-Limit, unbekannte Release-Id) liefert einheitlich
+HTTP 502, nicht 404/500 (`docs/adr/0018-discogs-proxy-token-und-fehlerbehandlung.md`).
+
+Das Cover wird **nicht** an den Browser durchgereicht und dort per `fetch()`
+geladen — Discogs blockiert das Hotlinking seiner Bilder ohne passenden
+`User-Agent`/Referer. Stattdessen lädt `DiscogsClient` das Bild serverseitig
+über denselben authentifizierten Client und bettet es als Base64-Data-URL in
+die Release-Antwort ein (`docs/adr/0020-discogs-cover-serverseitig-eingebettet.md`).
+
+Bei Various-Artists-Releases liefert Discogs pro Tracklist-Eintrag einen
+eigenen Artist, der vom Release-Artist abweichen kann — `DiscogsTrackResponse`
+bildet das über ein optionales Pro-Track-Artist-Feld ab
+(`docs/adr/0019-discogs-track-artist-zuordnung.md`).
+
+Im `RecordForm` (`features/records/`) öffnet ein „Discogs-Suche"-Button ein
+verschachteltes Such-Modal (`discogs-search/`, Muster wie `LabelForm` im
+`RecordForm`). Nach Auswahl eines Treffers werden automatisch übernommen:
+Albumname, Erscheinungsjahr, Label, Record-Artist, Cover sowie — nach dem
+ersten Speichern des Records, da das Formular selbst keine Track-Eingabe hat
+(Block 6j) — alle Tracks der Tracklist inkl. Seite/Tracknummer. Referenziert
+ein Treffer einen beim Benutzer noch nicht vorhandenen Artist, ein Label oder
+ein Genre, fragt vor der Übernahme ein Bestätigungsdialog nach (je
+distinktem Namen, bei Compilations potenziell mehrfach für Artist).
+
+Zwei Discogs-Eigenheiten, mit einem echten Release verifiziert (Discogs
+91831, „Atmos – Headcleaner"), statt aus der API-Dokumentation angenommen:
+
+- Discogs lässt bei einer Seite mit nur einem Track die Tracknummer in der
+  Positionsangabe weg (`"A"` statt `"A1"`) — `discogs-position.ts` erkennt
+  das als Tracknummer 1 dieser Seite, statt es auf eine Fallback-Seite „0"
+  fallen zu lassen.
+- Discogs-Namen (Artist/Label/Genre) können Disambiguierungs-Suffixe wie
+  `" (2)"` und Zeichen enthalten, die die jeweilige Namensvalidierung nicht
+  erlaubt — `discogs-name-sanitizer.ts` bereinigt sie vor Existenz-Abgleich
+  und Neuanlage.
+
 ### Prüfen
 
 ```powershell
