@@ -1,0 +1,25 @@
+<div class="card card-pad h-full">
+  <h2 class="mb-3 text-sm font-semibold text-fg">Top Labels</h2>
+  <div class="flex h-[34rem] flex-col gap-3">
+    @if (items().length === 0) {
+      <p class="empty">Keine Daten vorhanden.</p>
+    } @else {
+      @for (item of items(); track item.labelId; let i = $index) {
+        <div class="flex flex-col gap-1">
+          <span class="truncate text-sm text-fg" [title]="item.labelName">
+            {{ i + 1 }}. {{ item.labelName }}
+          </span>
+          <div class="flex items-center gap-2">
+            <span class="relative h-2 flex-1 rounded-full bg-inset">
+              <span
+                class="absolute inset-y-0 left-0 rounded-full bg-accent-solid"
+                [style.width.%]="(item.count / maxCount()) * 100"
+              ></span>
+            </span>
+            <span class="w-8 text-right text-xs tabular-nums text-fg-muted">{{ item.count }}</span>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

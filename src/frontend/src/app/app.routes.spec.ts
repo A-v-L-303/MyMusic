@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { signal } from '@angular/core';
+import { Type, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -158,7 +158,7 @@ describe('app.routes', () => {
     );
   });
 
-  it.each([
+  it.each<[string, Type<unknown>]>([
     ['/dashboard', Dashboard],
     ['/records', Records],
     ['/artists', Artists],

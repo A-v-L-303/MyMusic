@@ -39,6 +39,14 @@ public sealed class Repository<TEntity>(MyMusicDbContext context) : IRepository<
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyList<TProjection>> GetProjectedAsync<TProjection>(
+        Expression<Func<TEntity, bool>> filter,
+        Expression<Func<TEntity, TProjection>> selector,
+        CancellationToken cancellationToken)
+    {
+        return await _dbSet.Where(filter).Select(selector).ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(TEntity entity, CancellationToken cancellationToken)
     {
         await _dbSet.AddAsync(entity, cancellationToken);

@@ -173,4 +173,6 @@ app.MapAdminEndpoints();
 
 app.MapDiscogsEndpoints();
 
+app.MapDashboardEndpoints();
+
 app.Run();

@@ -26,6 +26,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<DiscogsResponseBuilder>();
 
+        services.AddScoped<DashboardResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

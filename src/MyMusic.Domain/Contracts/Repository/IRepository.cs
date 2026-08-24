@@ -36,6 +36,20 @@ public interface IRepository<TEntity>
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Ruft Entitäten dieses Typs asynchron gefiltert ab und projiziert sie auf die angegebene Form. Nur die im
+    /// Projektions-Ausdruck referenzierten Spalten werden aus der Datenbank gelesen.
+    /// </summary>
+    /// <typeparam name="TProjection">Der Zieltyp der Projektion.</typeparam>
+    /// <param name="filter">Der Ausdruck, der die zurückzugebenden Entitäten einschränkt.</param>
+    /// <param name="selector">Der Ausdruck, der eine Entität auf die Projektion abbildet.</param>
+    /// <param name="cancellationToken">Ein Token zur Überwachung von Abbruchanforderungen.</param>
+    /// <returns>Die projizierten Ergebnisse aller Entitäten, die dem Filter entsprechen.</returns>
+    Task<IReadOnlyList<TProjection>> GetProjectedAsync<TProjection>(
+        Expression<Func<TEntity, bool>> filter,
+        Expression<Func<TEntity, TProjection>> selector,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Fügt eine neue Entität asynchron hinzu.
     /// </summary>
     /// <param name="entity">Die hinzuzufügende Entität.</param>

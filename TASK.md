@@ -2691,18 +2691,51 @@ Abnahmekriterium:
 
 ## 9. Dashboard
 
-Status: offen
+Status: abgeschlossen — automatisiert getestet und live gegen den
+Aspire-AppHost verifiziert
 Priorität: mittel bis niedrig
 
 Aufgaben:
 
-- Kennzahlen: Anzahl Records je Format, Top Artists, Top Labels,
+- [x] Kennzahlen: Anzahl Records je Format, Top Artists, Top Labels,
   Verteilung nach Erscheinungsjahr (Komponenten gemäß
   Wiki `architektur/angular-projektstruktur.md`).
+- [x] Backend: `GET /api/dashboard` (`Features/Sammlung/Dashboard/`),
+  Aggregation über eine neue Projektions-Methode `IRepository<T>.
+  GetProjectedAsync` (siehe ADR 0021), damit die Aggregation nicht die
+  potenziell großen `album_cover`-Daten jedes Records mitlädt.
+- [x] Frontend: `DashboardComponent` mit `StatTileComponent` (×4),
+  `FormatChartComponent`, `TopArtistsComponent`, `TopLabelsComponent`,
+  `YearDistributionComponent` — ersetzt den Platzhalter aus Block 0g.
 
 Abnahmekriterium:
 
 - Das Dashboard zeigt die vier Kennzahlen für die eigene Sammlung korrekt an.
+  Automatisierte Tests (Backend: `GetDashboardQueryHandlerTests`,
+  `DashboardResponseBuilderTests`; Frontend: Komponenten- und Service-Tests,
+  451 grün) sind grün. **Vollständig erfüllt** — zusätzlich live gegen den
+  laufenden Aspire-AppHost mit echten Daten verifiziert, nach mehreren
+  Korrekturrunden ohne weitere Befunde bestätigt. Dabei aufgedeckt und
+  behoben (Wiki-Klärung nach Live-Test, siehe
+  `wiki/user-stories/user-stories-dashboard.md`):
+  - Die vier Detail-Kacheln waren unterschiedlich groß, weil die
+    Angular-Komponente selbst (nicht die `.card`-Div darin) die
+    Grid-Zelle bildete — behoben über `host: { class: 'contents' }` an
+    allen fünf Dashboard-Kindkomponenten, dazu ein fester Inhaltsbereich
+    (Platz für zehn Zeilen) für Format/Top Artists/Top Labels.
+  - Lange Artist-/Label-Namen (bis 120/60 Zeichen) wurden in der
+    ursprünglichen einzeiligen Darstellung abgeschnitten und unlesbar —
+    Name und Balken/Zahl stehen jetzt in zwei Zeilen je Eintrag.
+  - Die Jahresverteilung zeigte ursprünglich nur Balken für Jahre mit
+    Records nebeneinander (Wiki-Vorgabe zu diesem Zeitpunkt), wodurch
+    zeitliche Lücken (z. B. zwischen 1990 und 2004) nicht erkennbar
+    waren — korrigiert auf eine lückenlose Balkenreihe vom ersten bis
+    zum letzten vorhandenen Jahr (Jahre ohne Records als 0-Balken).
+  - Die Jahresverteilung stand ursprünglich in der 2×2-Kachel-Reihe und
+    wäre bei einer großen Zeitspanne (z. B. 1950 bis heute) mit vielen
+    Balken unlesbar geworden — steht jetzt als eigene volle Zeile unter
+    einer 3er-Reihe (Format, Top Artists, Top Labels); Jahres- und
+    Anzahl-Beschriftung werden bei vielen Balken automatisch ausgedünnt.
 
 ## 10. Volltext-Suche
 
