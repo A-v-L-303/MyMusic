@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-22 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-24 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -81,7 +81,15 @@ grün), PR #84, nach `main` gemergt; die manuelle Live-Verifikation gegen
 die echte Discogs-API wurde in mehreren Runden durchgeführt (u. a. anhand
 des Various-Artists-Release 91831 „Atmos – Headcleaner") und zuletzt ohne
 weitere Befunde bestätigt — Block 8 (Backend+Frontend) damit vollständig
-abgeschlossen.
+abgeschlossen. Block 9 (Dashboard: `GET /api/dashboard` mit einer neuen
+Projektions-Methode `IRepository<T>.GetProjectedAsync` gegen unnötig
+geladene Cover-Daten, ADR 0021; `DashboardComponent` mit fünf
+Kind-Komponenten, siehe Abschnitt 9) umgesetzt, automatisiert getestet
+(406 Backend- und 451 Frontend-Tests grün), PR #86, nach `main` gemergt;
+die manuelle Live-Verifikation wurde in mehreren Runden durchgeführt und
+deckte dabei Layout- und Lesbarkeitsprobleme auf (siehe Abschnitt 9), die
+jeweils korrigiert und erneut live bestätigt wurden — Block 9
+(Backend+Frontend) damit vollständig abgeschlossen.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -89,8 +97,8 @@ Block 2 Frontend per PR #47, Block 4 Frontend per PR #49, Block 5 Frontend
 per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
-Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84 nach `main`
-gemergt)
+Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84, Block 9 per
+PR #86 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -141,7 +149,7 @@ dem MVP-Umfang der Phase 1:
   erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
   Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
   Block 7g erledigt, siehe Abschnitt 7g).
-- Dashboard und Volltext-Suche.
+- Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
 
@@ -2691,8 +2699,8 @@ Abnahmekriterium:
 
 ## 9. Dashboard
 
-Status: abgeschlossen — automatisiert getestet und live gegen den
-Aspire-AppHost verifiziert
+Status: Vollständig abgeschlossen. Automatisiert getestet und live gegen
+den Aspire-AppHost verifiziert, PR #86 nach `main` gemergt (2026-08-24).
 Priorität: mittel bis niedrig
 
 Aufgaben:
