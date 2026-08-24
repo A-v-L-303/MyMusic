@@ -603,6 +603,52 @@ Zwei Discogs-Eigenheiten, mit einem echten Release verifiziert (Discogs
   erlaubt — `discogs-name-sanitizer.ts` bereinigt sie vor Existenz-Abgleich
   und Neuanlage.
 
+### Dashboard (Block 9)
+
+Aggregierte Statistik-Übersicht der eigenen Sammlung unter `/dashboard` —
+ersetzt den Platzhalter aus Block 0g:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/dashboard` | Aggregierte Kennzahlen des angemeldeten Benutzers: Records/Artists/Labels/Genres gesamt, Records nach Format, Top-10-Artists, Top-10-Labels, Verteilung nach Erscheinungsjahr |
+
+Die ursprünglich vorgesehene Aggregation über volle `Record`-Entitäten
+(analog `GetAllArtistsQueryHandler`) hätte pro Datensatz auch das
+potenziell bis zu 5 MB große `album_cover`-Feld mitgeladen, obwohl die
+Auswertung nur wenige Spalten braucht. Stattdessen bekam `IRepository<T>`
+eine neue, generische Projektions-Methode `GetProjectedAsync`, die EF Core
+in ein SQL-`SELECT` nur der referenzierten Spalten übersetzt
+(`docs/adr/0021-repository-projektion-fuer-dashboard-aggregation.md`).
+
+Frontend (`features/dashboard/`): `DashboardComponent` mit fünf
+Kind-Komponenten — vier `StatTileComponent` für die Kennzahlen-Kacheln,
+`FormatChartComponent`, `TopArtistsComponent`, `TopLabelsComponent` als
+horizontale Balkenlisten sowie `YearDistributionComponent` als eigene,
+volle Zeile unterhalb der drei übrigen Detail-Kacheln.
+
+Bei der manuellen Live-Verifikation gegen echte Sammlungsdaten zeigten
+sich mehrere Layout- und Lesbarkeitsprobleme, die jeweils korrigiert und
+erneut live bestätigt wurden:
+
+- Die vier Detail-Kacheln waren unterschiedlich groß, weil die
+  Angular-Komponente selbst (nicht die `.card`-Div darin) die Grid-Zelle
+  bildete — behoben über `host: { class: 'contents' }` an allen fünf
+  Dashboard-Kindkomponenten, dazu ein fester Inhaltsbereich für zehn
+  Zeilen bei Format/Top Artists/Top Labels.
+- Lange Artist-/Label-Namen wurden bei fester, schmaler Namensbreite
+  abgeschnitten — Name sowie Balken/Zahl stehen jetzt in zwei Zeilen je
+  Eintrag.
+- Die Jahresverteilung zeigte ursprünglich nur Balken für Jahre mit
+  Records nebeneinander, wodurch zeitliche Lücken (z. B. zwischen 1990
+  und 2004) nicht erkennbar waren — korrigiert auf eine lückenlose
+  Balkenreihe vom ersten bis zum letzten vorhandenen Jahr, Jahre ohne
+  Records innerhalb dieser Spanne als Balken mit Anzahl 0.
+- Die Jahresverteilung stand ursprünglich in einem 2×2-Grid mit den drei
+  übrigen Detail-Kacheln und wäre bei einer großen Zeitspanne (z. B. 1950
+  bis heute) mit vielen Balken darin nicht mehr lesbar geworden — steht
+  jetzt als eigene volle Zeile; Jahres- und Anzahl-Beschriftung werden bei
+  vielen Balken automatisch ausgedünnt.
+
 ### Prüfen
 
 ```powershell
