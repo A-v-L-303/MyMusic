@@ -1,0 +1,31 @@
+<div class="card card-pad">
+  <h2 class="mb-3 text-sm font-semibold text-fg">Erscheinungsjahre</h2>
+  @if (bars().length === 0) {
+    <p class="empty">Keine Daten vorhanden.</p>
+  } @else {
+    <div class="flex h-64 flex-col">
+      <div class="flex flex-1 items-end gap-px border-b border-line">
+        @for (bar of bars(); track bar.year) {
+          <div class="flex h-full flex-1 flex-col items-center justify-end gap-1">
+            @if (bar.showLabel) {
+              <span class="text-2xs tabular-nums text-fg-subtle">{{ bar.count }}</span>
+            }
+            <div
+              class="w-full rounded-t"
+              [class.bg-accent-solid]="bar.count > 0"
+              [style.height.px]="bar.heightPx"
+              [title]="bar.year + ': ' + bar.count"
+            ></div>
+          </div>
+        }
+      </div>
+      <div class="mt-1 flex">
+        @for (bar of bars(); track bar.year) {
+          <div class="flex-1 text-center text-2xs text-fg-subtle">
+            {{ bar.showLabel ? bar.year : '' }}
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

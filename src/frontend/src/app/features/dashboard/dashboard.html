@@ -1,4 +1,26 @@
-<section class="p-6">
+<section class="mx-auto max-w-[1080px] px-6 pb-16 pt-6">
   <h1 class="text-lg font-bold text-fg">Dashboard</h1>
-  <p class="empty">Diese Ansicht folgt in einem späteren Block.</p>
+
+  @if (dashboardResource.isLoading()) {
+    <div class="flex justify-center py-12">
+      <div class="spinner"></div>
+    </div>
+  } @else if (dashboardResource.value(); as data) {
+    <div class="mt-6 grid grid-cols-4 gap-4">
+      <app-stat-tile label="Records" [value]="data.recordsTotal" />
+      <app-stat-tile label="Artists" [value]="data.artistsTotal" />
+      <app-stat-tile label="Labels" [value]="data.labelsTotal" />
+      <app-stat-tile label="Genres" [value]="data.genresTotal" />
+    </div>
+
+    <div class="mt-4 grid grid-cols-3 gap-4">
+      <app-format-chart [items]="data.formatDistribution" />
+      <app-top-artists [items]="data.topArtists" />
+      <app-top-labels [items]="data.topLabels" />
+    </div>
+
+    <div class="mt-4">
+      <app-year-distribution [items]="data.yearDistribution" />
+    </div>
+  }
 </section>
