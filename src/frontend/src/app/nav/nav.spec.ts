@@ -192,7 +192,7 @@ describe('Nav', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/search'], { queryParams: { q: 'jazz' } });
   });
 
-  it('navigiert nicht bei leerer Sucheingabe', () => {
+  it('navigiert nicht bei leerer Sucheingabe und zeigt keine Fehlermeldung', () => {
     // arrange
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(Nav);
@@ -202,9 +202,61 @@ describe('Nav', () => {
 
     // act
     form?.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
 
     // assert
     expect(navigateSpy).not.toHaveBeenCalled();
+    expect(compiled.querySelector('form.search .hint.is-error')).toBeFalsy();
+  });
+
+  it('zeigt eine Fehlermeldung und navigiert nicht bei zu kurzer Sucheingabe', () => {
+    // arrange
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('form.search input');
+    const form = compiled.querySelector<HTMLFormElement>('form.search');
+    if (input) {
+      input.value = 'a';
+      input.dispatchEvent(new Event('input'));
+    }
+    fixture.detectChanges();
+
+    // act
+    form?.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    // assert
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect(compiled.querySelector('form.search .hint.is-error')?.textContent).toContain(
+      'mindestens 2 Zeichen',
+    );
+  });
+
+  it('zeigt eine Fehlermeldung und navigiert nicht bei verbotenen Sonderzeichen', () => {
+    // arrange
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('form.search input');
+    const form = compiled.querySelector<HTMLFormElement>('form.search');
+    if (input) {
+      input.value = 'jazz!';
+      input.dispatchEvent(new Event('input'));
+    }
+    fixture.detectChanges();
+
+    // act
+    form?.dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+
+    // assert
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect(compiled.querySelector('form.search .hint.is-error')?.textContent).toContain(
+      'Buchstaben, Zahlen',
+    );
   });
 
   it('zeigt keinen Admin-Button, wenn die Rolle Admin fehlt', () => {

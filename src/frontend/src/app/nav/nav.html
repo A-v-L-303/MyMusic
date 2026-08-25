@@ -61,7 +61,20 @@
 
     <form class="search max-w-sm" (submit)="$event.preventDefault(); submitSearch()">
       <svg lucideSearch [size]="16" aria-hidden="true"></svg>
-      <input type="search" class="input" placeholder="Suche" [formField]="searchForm.query" />
+      <input
+        type="search"
+        class="input"
+        placeholder="Suche"
+        [class.is-error]="
+          searchForm.query().invalid() && (searchForm.query().touched() || attemptedSubmit())
+        "
+        [formField]="searchForm.query"
+      />
+      @if (searchForm.query().invalid() && (searchForm.query().touched() || attemptedSubmit())) {
+        <span class="hint is-error absolute left-0 top-full z-10 mt-1 whitespace-nowrap">
+          {{ searchForm.query().errors()[0].message }}
+        </span>
+      }
     </form>
 
     <div class="ml-auto flex items-center gap-3">

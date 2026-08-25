@@ -11,7 +11,7 @@ Die Anwendung besteht aus folgenden fachlichen Teilen:
 
 1. CRUD für Records, Tracks, Artists, Labels und Genres.
 2. Dashboard mit Sammlungsstatistiken.
-3. Volltext-Suche über Records, Artists und Labels.
+3. Volltext-Suche über Records (Titel, Artist, Label, Genre und Land).
 4. Metadaten-Import über die Discogs-API (serverseitig proxied).
 5. Zustandsbewertung physischer Tonträger nach dem Goldmine-Standard.
 6. Multi-User-Betrieb mit Keycloak-Authentifizierung und strikter Mandantentrennung.
@@ -208,8 +208,20 @@ ersetzt (paginierte Userliste, Löschen eines Benutzers inkl. aller
 App-Daten) — dafür erstmals eine echte serverseitige Rollenautorisierung
 (`Admin`-Policy, ADR 0015) und ein externer HTTP-Client der Anwendung
 (Keycloak Admin REST API über einen dedizierten Service-Account-Client,
-ADR 0016); `dashboard/` und `search/` enthalten weiterhin nur
-Platzhalterseiten. Die C#-Projekte
+ADR 0016); `dashboard/` hat seit Block 9 (`DashboardComponent` mit fünf
+Kind-Komponenten) und `search/` hat seit Block 10 (`Search`-Komponente mit
+`RecordCard`-Raster wie die Records-Ansicht, voll editierbar, Klick auf
+eine Card navigiert zur Detailansicht inkl. Tracklist) jeweils den
+ursprünglichen Platzhalter ersetzt — korrigiert, da dieser Absatz nach
+Block 9 nicht nachgezogen worden war. Block 10 (`GET /api/search`,
+`Features/Sammlung/Search/`) durchsucht ausschließlich Records des
+angemeldeten Benutzers über Titel, Record- und Track-Artist, Label, Genre
+(nur über Track) und Land (über Label→Country) per ILIKE-Teilstring;
+eigene Response-DTOs (`SearchResultResponse`, `SearchResponseBuilder`)
+statt Wiederverwendung der Record-Response, um die Feature-Kapselung aus
+Abschnitt 4.3 zu wahren; zusätzlich eine Eingabevalidierung am
+Kopfzeilen-Suchfeld (mindestens 2 Zeichen, gleiches Zeichenset wie
+`album_name`). Die C#-Projekte
 sind überwiegend leere Gerüste — vorhandene Dateien vor jeder Änderung
 prüfen, nichts blind erzeugen.
 

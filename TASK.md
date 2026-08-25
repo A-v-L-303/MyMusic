@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-24 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-25 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -89,7 +89,16 @@ Kind-Komponenten, siehe Abschnitt 9) umgesetzt, automatisiert getestet
 die manuelle Live-Verifikation wurde in mehreren Runden durchgeführt und
 deckte dabei Layout- und Lesbarkeitsprobleme auf (siehe Abschnitt 9), die
 jeweils korrigiert und erneut live bestätigt wurden — Block 9
-(Backend+Frontend) damit vollständig abgeschlossen.
+(Backend+Frontend) damit vollständig abgeschlossen. Block 10
+(Volltext-Suche: `GET /api/search`, durchsucht ausschließlich Records über
+Titel, Record-/Track-Artist, Label, Genre und Land per ILIKE, eigene
+Response-DTOs statt Wiederverwendung der Record-Response wegen der
+Feature-Kapselung aus CLAUDE.md 4.3; Frontend-Darstellung als Card-Raster
+wie die Records-Ansicht, voll editierbar, Klick auf eine Card navigiert zur
+Detailansicht inkl. Tracklist, dazu eine Eingabevalidierung am
+Kopfzeilen-Suchfeld, siehe Abschnitt 10) umgesetzt, automatisiert getestet
+und live gegen den laufenden Aspire-AppHost verifiziert (Branch
+`block-10-volltext-suche`, noch nicht nach `main` gemergt).
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -149,7 +158,6 @@ dem MVP-Umfang der Phase 1:
   erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
   Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
   Block 7g erledigt, siehe Abschnitt 7g).
-- Volltext-Suche.
 
 ## 0. Fundament: Walking Skeleton
 
@@ -2747,17 +2755,57 @@ Abnahmekriterium:
 
 ## 10. Volltext-Suche
 
-Status: offen
+Status: Vollständig abgeschlossen. Automatisiert getestet und live gegen
+den laufenden Aspire-AppHost verifiziert (2026-08-25).
 Priorität: mittel bis niedrig
 
 Aufgaben:
 
-- Globale Suche über Records, Artists und Labels in kombinierter Ansicht
-  (`/search?q=...`).
+- [x] Backend: `GET /api/search` (`Features/Sammlung/Search/`) — durchsucht
+  ausschließlich Records des angemeldeten Benutzers über Titel, Artist
+  (Record- und Track-Artist), Label, Genre (nur über Track) und Land (über
+  Label→Country), jeweils per ILIKE-Teilstring (case-insensitive). Kein
+  Navigationsproperty auf den Domain-Entities verfügbar — Kriterien werden
+  wie beim bestehenden `countryId`-Filter in `GetPagedRecordsQueryHandler`
+  über vorab aufgelöste Id-Sets (`IRepository<T>.GetProjectedAsync`)
+  kombiniert. Eigene Response-DTOs (`SearchResultResponse`,
+  `SearchResultListResponse`, `SearchResponseBuilder`) statt Wiederverwendung
+  der Record-Response, um die Feature-Kapselung aus CLAUDE.md 4.3 zu wahren.
+  Leerer/fehlender `q`-Parameter liefert 0 Treffer ohne Repository-Zugriff,
+  keine serverseitige Validierung von `q` (Queries werden im CQRS-Framework
+  nicht validiert).
+- [x] Frontend: `SearchService`, `Search`-Komponente ersetzt den Platzhalter
+  aus Block 0g — Suchergebnisse als Card-Raster (`RecordCard`) wie die
+  normale Records-Ansicht, nicht als Tabelle (Zwischenstand kurz auf
+  Tabelle geklärt, siehe [[suche]]-Log — noch am selben Tag zurück auf
+  Card-Raster korrigiert: eine Tabelle hätte nur die Record-Kopfdaten
+  gezeigt, nicht aber die Tracks, über die ein Treffer per Track-Artist
+  oder Genre erst zustande kam). Suchergebnisse sind voll editierbar
+  (RecordForm-Modal, Lösch-Bestätigung direkt aus der Card); ein Klick auf
+  eine Card navigiert zusätzlich zur Record-Detailansicht inkl. Tracklist.
+- [x] Eingabevalidierung am Kopfzeilen-Suchfeld (`NavComponent`): mindestens
+  2 Zeichen, Zeichenset identisch zu `Record.AlbumNamePattern`, Inline-
+  Fehlermeldung („Die Eingabe muss ...", nicht „Die Suche muss ..."), keine
+  Navigation bei Verstoß. Leere Eingabe löst weiterhin keine Aktion aus.
+  Prüfung ausschließlich im Frontend (Signal Forms).
 
 Abnahmekriterium:
 
 - Das MVP-Szenario der Feature-Roadmap ist damit vollständig durchspielbar.
+  **Erfüllt.** Automatisierte Tests: 18 neue Application-Tests
+  (`GetPagedSearchQueryHandlerTests`, `SearchResponseBuilderTests`), ein
+  neuer Integrationstest (`SearchEndpointsTests`, gegen echten
+  Aspire-AppHost mit Postgres/Keycloak, deckt alle Suchkriterien und
+  Mandantentrennung ab), 9 neue/geänderte Frontend-Tests (`search.spec.ts`,
+  `search.service.spec.ts`, Erweiterung `nav.spec.ts`). Live gegen den
+  laufenden Aspire-AppHost verifiziert: Suche nach Titel, Record-Artist,
+  Track-Artist (weicht vom Record-Artist ab), Genre (nur über Track) und
+  Land (über Label) liefert jeweils den erwarteten Treffer; zu kurze
+  Eingabe und verbotene Sonderzeichen zeigen die Inline-Fehlermeldung ohne
+  Navigation; leere Eingabe löst keine Aktion aus; Bearbeiten und Löschen
+  direkt aus der Card-Ansicht funktionieren und aktualisieren die
+  Ergebnisliste korrekt; Klick auf eine Card öffnet die Detailansicht
+  inklusive Tracklist.
 
 ## Dokumentations-Nacharbeit
 

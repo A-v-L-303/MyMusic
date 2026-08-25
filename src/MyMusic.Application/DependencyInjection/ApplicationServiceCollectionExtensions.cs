@@ -28,6 +28,8 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<DashboardResponseBuilder>();
 
+        services.AddScoped<SearchResponseBuilder>();
+
         services.AddScoped<CommandValidationDecorator>();
 
         services.AddScoped<IMediator, Mediator>();

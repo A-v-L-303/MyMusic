@@ -169,6 +169,8 @@ app.MapArtistEndpoints();
 
 app.MapRecordEndpoints();
 
+app.MapSearchEndpoints();
+
 app.MapAdminEndpoints();
 
 app.MapDiscogsEndpoints();

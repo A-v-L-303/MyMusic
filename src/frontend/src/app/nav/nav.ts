@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormField, form } from '@angular/forms/signals';
+import { FormField, form, minLength, pattern } from '@angular/forms/signals';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideChevronDown,
@@ -20,6 +20,10 @@ import { ThemeToggle } from '../core/theme/theme-toggle/theme-toggle';
 interface OidcUserClaims {
   preferred_username?: string;
 }
+
+const SEARCH_QUERY_MIN_LENGTH = 2;
+
+const SEARCH_QUERY_PATTERN = /^[\p{L}\p{N} \-&'./()]+$/u;
 
 @Component({
   selector: 'app-nav',
@@ -66,7 +70,17 @@ export class Nav {
   });
 
   protected readonly searchModel = signal({ query: '' });
-  protected readonly searchForm = form(this.searchModel);
+  protected readonly searchForm = form(this.searchModel, (path) => {
+    minLength(path.query, SEARCH_QUERY_MIN_LENGTH, {
+      message: `Die Eingabe muss mindestens ${SEARCH_QUERY_MIN_LENGTH} Zeichen lang sein.`,
+    });
+    pattern(path.query, SEARCH_QUERY_PATTERN, {
+      message:
+        "Die Eingabe darf nur Buchstaben, Zahlen, Leerzeichen sowie - & ' . / ( ) enthalten.",
+    });
+  });
+
+  protected readonly attemptedSubmit = signal(false);
 
   protected login(): void {
     this.oidcSecurityService.authorize();
@@ -96,8 +110,12 @@ export class Nav {
   }
 
   protected submitSearch(): void {
+    this.attemptedSubmit.set(true);
     const query = this.searchModel().query.trim();
     if (!query) {
+      return;
+    }
+    if (this.searchForm.query().invalid()) {
       return;
     }
     this.router.navigate(['/search'], { queryParams: { q: query } });
