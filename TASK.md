@@ -103,7 +103,20 @@ eingebauten `Microsoft.AspNetCore.RateLimiting`-Middleware, 100
 Requests/Minute partitioniert über den `sub`-Claim, HTTP 429 mit
 `Retry-After`-Header, begrenzt auf Pfade unter `/api`, siehe Abschnitt 7i)
 umgesetzt, automatisiert getestet (440 Backend-Tests grün), PR #90, nach
-`main` gemergt.
+`main` gemergt. Block 7j (Production-Zugriffsschutz: Swagger-UI außerhalb
+Development hinter einem Middleware-Gate auf die bestehende
+`"Admin"`-Policy, neue `ProductionCors`-Policy mit Origin-Whitelist aus
+Konfiguration, CSP für Development/lokal per Meta-Tag mit Angulars
+`CSP_NONCE`-Mechanismus, siehe Abschnitt 7j) umgesetzt, automatisiert
+getestet (443 Backend- und 460 Frontend-Tests grün) und live gegen den
+laufenden Aspire-AppHost verifiziert, PR #92, nach `main` gemergt; dabei
+zusätzlich zwei Nebenbefunde behoben — `RequireHttpsMetadata` war an
+`IsDevelopment()` gekoppelt und hätte außerhalb Development jede Anfrage
+mit 500 beantwortet (ADR 0024), und das CI-Timeout für Integrationstests
+war mit 15 Minuten bereits vor diesem Block strukturell knapp (12m48s bei
+17 Tests im letzten Lauf zuvor) und wurde auf 20 Minuten angehoben. CSP für
+Production (HTTP-Header vom Nginx) bleibt offen, abhängig vom noch nicht
+begonnenen Production-/Docker-Compose-Setup.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -112,7 +125,8 @@ per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
 Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84, Block 9 per
-PR #86, Block 10 per PR #88, Block 7i per PR #90 nach `main` gemergt)
+PR #86, Block 10 per PR #88, Block 7i per PR #90, Block 7j per PR #92 nach
+`main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -2646,9 +2660,8 @@ Abnahmekriterium:
 
 ### 7j. Production-Zugriffsschutz (Swagger, CORS, CSP)
 
-Status: **Backend und Frontend umgesetzt, automatisiert getestet und live
-gegen den laufenden Aspire-AppHost verifiziert** (2026-08-26), noch nicht
-committet/gepusht/gemergt.
+Status: **abgeschlossen** (2026-08-26), automatisiert getestet, live gegen
+den laufenden Aspire-AppHost verifiziert, PR #92, nach `main` gemergt.
 Arbeits-Prompt: `docs/prompts/2026-08-26-block-7j-production-zugriffsschutz.md`
 
 Anlass: letzte drei offenen Punkte aus
