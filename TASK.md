@@ -149,7 +149,7 @@ dem MVP-Umfang der Phase 1:
   vollständig).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
-- Swagger-UI-Freischaltung für die Admin-Rolle in Production, Rate Limiting,
+- Swagger-UI-Freischaltung für die Admin-Rolle in Production,
   CORS-Production-Whitelist, CSP (siehe Abschnitt 7; das Keycloak-
   Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit Block 7f
   erledigt, das Rollenkonzept im Angular-Code — `AdminGuard`, Admin-Button,
@@ -157,7 +157,8 @@ dem MVP-Umfang der Phase 1:
   (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c
   erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
   Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
-  Block 7g erledigt, siehe Abschnitt 7g).
+  Block 7g erledigt, siehe Abschnitt 7g; Rate Limiting ist mit Block 7i
+  erledigt, siehe Abschnitt 7i).
 
 ## 0. Fundament: Walking Skeleton
 
@@ -2122,7 +2123,7 @@ Aufgaben (noch offen):
 - Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
   zurückgestellt aus Block 0e, siehe
   `docs/adr/0007-swagger-openapi-nur-development.md`).
-- Rate Limiting (100 req/min pro Benutzer), CORS-Production-Whitelist, CSP.
+- CORS-Production-Whitelist, CSP.
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
 
 Abnahmekriterium (Gesamtabschnitt 7):
@@ -2573,6 +2574,65 @@ Block verursachter Befund. `ng lint` ist in diesem Frontend-Workspace nicht
 als Target konfiguriert (kein ESLint eingerichtet), abweichend von der
 Befehlsliste in CLAUDE.md §11 — dort bereits als „keine pauschale Freigabe"
 relativiert, wird hier als Doku-Abweichung gemeldet.
+
+### 7i. Rate Limiting
+
+Status: **umgesetzt, automatisiert getestet** (2026-08-26). Noch nicht
+gemergt — auf Branch `block-7i-rate-limiting`.
+Arbeits-Prompt: `docs/prompts/2026-08-26-block-7i-rate-limiting.md`
+
+Anlass: letzter offener Sicherheitspunkt aus
+`wiki/sicherheit/sicherheitskonzept.md` (Zeile 26/133-136) neben CORS-
+Production-Whitelist, CSP und der Swagger-UI-Freischaltung für die
+Admin-Rolle, nachdem mit Block 10 (Volltext-Suche) der komplette
+MVP-Feature-Umfang abgeschlossen war.
+
+Umgesetzt:
+
+- `Program.cs`: `builder.Services.AddRateLimiter(...)` mit einem
+  Fixed-Window-Limiter (100 Requests/Minute, `QueueLimit = 0` — sofortige
+  Ablehnung statt Warteschlange), partitioniert über den `sub`-Claim aus dem
+  JWT (dieselbe Claim-Quelle wie `CurrentUserService`), Fallback-Partition
+  `"anonym"` ohne gültiges Token. Der Limiter greift ausschließlich für
+  Pfade unter `/api` — Aspires `/health`/`/alive` (nur Development) und
+  `/swagger` bleiben unlimitiert, damit das Health-Check-Polling der
+  Aspire-Orchestrierung nicht selbst blockiert wird.
+- `RejectionStatusCode` explizit auf 429 gesetzt (Default der Middleware ist
+  sonst 503); `OnRejected` schreibt einen `ProblemDetails`-Body im Stil von
+  `GlobalExceptionHandler.cs` sowie einen `Retry-After`-Header aus den
+  Limiter-Metadaten. `app.UseRateLimiter()` sitzt zwischen
+  `UseAuthentication()` und `UseAuthorization()`, da die Partitionierung die
+  bereits authentifizierte `HttpContext.User` braucht.
+- Neuer Integrationstest `RateLimitingTests.cs` (zwei Fälle): ein
+  Testbenutzer schöpft das echte Limit von 100 `GET /api/me`-Aufrufen
+  innerhalb einer Minute aus, der 101. Aufruf liefert 429 samt
+  `Retry-After`-Header; ein zweiter, unabhängiger Testbenutzer bekommt im
+  selben Testlauf weiterhin 200 (Partitionierung pro Benutzer). Zweiter
+  Testfall: 105 unauthentifizierte Anfragen gegen `/health` bleiben alle
+  mit 200 erreichbar (sichert die `/api`-Pfad-Ausnahme ab).
+- ADR `docs/adr/0022-rate-limiting.md`: Fixed-Window- vs. Sliding-Window-/
+  Token-Bucket-Abwägung, Partitionierungs- und Scoping-Begründung, Form der
+  429-Antwort.
+
+Automatisiert getestet: vollständige Testsuite grün — 11 Api.Tests,
+114 Domain.Tests, 5 Infrastructure.Tests, 294 Application.Tests und 16
+IntegrationTests (davon 2 neu für `RateLimitingTests`), macht 440 Tests
+insgesamt. `dotnet format --verify-no-changes` und der Zeilenlängen-Check
+(120 Zeichen) sind sauber.
+
+Auf eine zusätzliche manuelle Live-Prüfung gegen einen separat gestarteten
+Aspire-AppHost wurde mit dem Projektinhaber bewusst verzichtet: Block 7i
+hat keinen Frontend-Anteil, und der Integrationstest deckt bereits den
+identischen echten Stack ab (echter AppHost, echtes Postgres/Keycloak,
+echte HTTP-Aufrufe) — ein zusätzlicher manueller Lauf hätte denselben Pfad
+nur ein zweites Mal geprüft, bei zusätzlichem Risiko verwaister
+Docker-Container aus einer Ad-hoc-Session.
+
+Abnahmekriterium:
+
+- Ein Benutzer, der 100 Anfragen pro Minute überschreitet, bekommt HTTP 429;
+  andere Benutzer sind davon unabhängig; Aspires Health-Checks und Swagger
+  bleiben unlimitiert. **Erfüllt**, automatisiert nachgewiesen (siehe oben).
 
 ## 8. Discogs-Integration
 
