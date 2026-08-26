@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-25 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-26 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -97,8 +97,8 @@ Feature-Kapselung aus CLAUDE.md 4.3; Frontend-Darstellung als Card-Raster
 wie die Records-Ansicht, voll editierbar, Klick auf eine Card navigiert zur
 Detailansicht inkl. Tracklist, dazu eine Eingabevalidierung am
 Kopfzeilen-Suchfeld, siehe Abschnitt 10) umgesetzt, automatisiert getestet
-und live gegen den laufenden Aspire-AppHost verifiziert (Branch
-`block-10-volltext-suche`, noch nicht nach `main` gemergt).
+und live gegen den laufenden Aspire-AppHost verifiziert, PR #88, nach
+`main` gemergt.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -107,7 +107,7 @@ per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
 Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84, Block 9 per
-PR #86 nach `main` gemergt)
+PR #86, Block 10 per PR #88 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -2756,7 +2756,7 @@ Abnahmekriterium:
 ## 10. Volltext-Suche
 
 Status: Vollständig abgeschlossen. Automatisiert getestet und live gegen
-den laufenden Aspire-AppHost verifiziert (2026-08-25).
+den Aspire-AppHost verifiziert, PR #88 nach `main` gemergt (2026-08-26).
 Priorität: mittel bis niedrig
 
 Aufgaben:

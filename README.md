@@ -649,6 +649,38 @@ erneut live bestätigt wurden:
   jetzt als eigene volle Zeile; Jahres- und Anzahl-Beschriftung werden bei
   vielen Balken automatisch ausgedünnt.
 
+### Volltext-Suche (Block 10)
+
+Globale Suche über die eigene Sammlung unter `/search` — ersetzt den
+Platzhalter aus Block 0g:
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/search?q=` | Durchsucht ausschließlich Records des angemeldeten Benutzers über Titel, Artist (Record- und Track-Artist), Label, Genre (nur über Track) und Land (über Label→Country), jeweils per ILIKE-Teilstring (case-insensitive) |
+
+Da die Domain-Entities keine EF-Navigationsproperties besitzen, werden die
+Suchkriterien wie beim bestehenden `countryId`-Filter im Record-Slice über
+vorab aufgelöste Id-Mengen (`IRepository<T>.GetProjectedAsync`, siehe
+ADR 0021) kombiniert. Eigene Response-DTOs (`SearchResultResponse`,
+`SearchResponseBuilder`) statt einer Wiederverwendung der Record-Response,
+um die im Projekt geltende Feature-Kapselung („kein Handler greift in den
+Ordner eines anderen Features") auch für dieses Feature ohne eigene
+Entität einzuhalten.
+
+Frontend (`features/search/`): Die `Search`-Komponente ersetzt den
+Platzhalter aus Block 0g — Treffer erscheinen als Card-Raster
+(`RecordCard`), identisch zur normalen Records-Ansicht, und sind voll
+editierbar (Bearbeiten/Löschen direkt aus der Card); ein Klick auf eine
+Card navigiert zusätzlich zur Record-Detailansicht inklusive Tracklist,
+damit auch Treffer über Track-Artist oder Genre (beide nur auf den Tracks
+vorhanden) nachvollziehbar bleiben. Eine zunächst geplante
+Tabellendarstellung nach dem Tabellen-Slice-Muster wurde noch am selben
+Tag wieder verworfen, da sie diese Tracks nicht gezeigt hätte.
+
+Zusätzlich eine Eingabevalidierung am Kopfzeilen-Suchfeld
+(`NavComponent`): mindestens 2 Zeichen, gleiches Zeichenset wie
+`album_name`, ausschließlich im Frontend geprüft.
+
 ### Prüfen
 
 ```powershell
