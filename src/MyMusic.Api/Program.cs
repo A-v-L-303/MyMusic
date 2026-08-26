@@ -91,6 +91,50 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
+const int rateLimitPermitLimit = 100;
+
+var rateLimitWindow = TimeSpan.FromMinutes(1);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+        }
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ProblemDetails
+            {
+                Title = "Zu viele Anfragen",
+                Detail = "Das Anfragelimit wurde überschritten. Bitte in Kürze erneut versuchen.",
+                Status = StatusCodes.Status429TooManyRequests
+            },
+            cancellationToken);
+    };
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        if (!httpContext.Request.Path.StartsWithSegments("/api"))
+        {
+            return RateLimitPartition.GetNoLimiter("infrastruktur");
+        }
+
+        var userId = httpContext.User.FindFirst("sub")?.Value ?? "anonym";
+
+        return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = rateLimitPermitLimit,
+            Window = rateLimitWindow,
+            QueueLimit = 0,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+        });
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
@@ -145,6 +189,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+
+app.UseRateLimiter();
 
 app.UseAuthorization();
 

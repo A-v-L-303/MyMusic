@@ -681,6 +681,26 @@ Zusätzlich eine Eingabevalidierung am Kopfzeilen-Suchfeld
 (`NavComponent`): mindestens 2 Zeichen, gleiches Zeichenset wie
 `album_name`, ausschließlich im Frontend geprüft.
 
+### Rate Limiting (Block 7i)
+
+`Program.cs` registriert einen Fixed-Window-Limiter der eingebauten
+`Microsoft.AspNetCore.RateLimiting`-Middleware (kein externes Paket): 100
+Anfragen pro Minute, partitioniert über den `sub`-Claim aus dem JWT —
+jeder Benutzer hat sein eigenes Kontingent, unabhängig von anderen. Der
+Limiter greift ausschließlich für Pfade unter `/api`; Aspires
+`/health`/`/alive`-Endpunkte (nur Development) und `/swagger` bleiben
+unlimitiert, damit häufiges Health-Check-Polling der Aspire-Orchestrierung
+nicht selbst blockiert wird (Details und verworfene Alternativen:
+`docs/adr/0022-rate-limiting.md`).
+
+Bei Überschreitung antwortet die API mit HTTP 429 (statt des
+Middleware-Defaults 503) sowie einem `Retry-After`-Header; der
+`ErrorModalService` im Frontend behandelt 429 bereits seit Block 0c/7a als
+eigene Fehlerart mit passender Modal-Meldung. Der neue Integrationstest
+`RateLimitingTests.cs` schöpft das echte Limit von 100 Anfragen pro
+Testbenutzer aus (101. Anfrage liefert 429) und bestätigt zusätzlich, dass
+`/health` unabhängig von der Anzahl der Anfragen erreichbar bleibt.
+
 ### Prüfen
 
 ```powershell
