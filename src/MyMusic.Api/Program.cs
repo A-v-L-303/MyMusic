@@ -44,7 +44,11 @@ builder.Services
     {
         options.Authority = builder.Configuration["Keycloak:Authority"];
 
-        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        // TLS wird ausschliesslich am Reverse Proxy terminiert (Wiki
+        // projekt/deployment-konzept.md); die interne Kommunikation zwischen den
+        // Containern - auch API zu Keycloak - bleibt in Development wie in Production
+        // unverschluesselt, siehe ADR 0024.
+        options.RequireHttpsMetadata = false;
 
         options.MapInboundClaims = false;
 
@@ -86,6 +90,18 @@ if (builder.Environment.IsDevelopment())
         options.AddPolicy("DevelopmentCors", policy => policy
             .SetIsOriginAllowed(origin =>
                 Uri.TryCreate(origin, UriKind.Absolute, out var uri) && uri.IsLoopback)
+            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .WithHeaders("Authorization", "Content-Type"));
+    });
+}
+else
+{
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("ProductionCors", policy => policy
+            .WithOrigins(allowedOrigins)
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type"));
     });
@@ -183,10 +199,7 @@ app.UseExceptionHandler();
 
 app.UseSerilogRequestLogging();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("DevelopmentCors");
-}
+app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentCors" : "ProductionCors");
 
 app.UseAuthentication();
 
@@ -199,6 +212,40 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
 
     app.UseSwaggerUI();
+}
+else
+{
+    app.MapWhen(
+        context => context.Request.Path.StartsWithSegments("/swagger"),
+        branch =>
+        {
+            branch.Use(async (context, next) =>
+            {
+                if (context.User.Identity?.IsAuthenticated != true)
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                    return;
+                }
+
+                var authorizationService = context.RequestServices.GetRequiredService<IAuthorizationService>();
+
+                var authorizationResult = await authorizationService.AuthorizeAsync(context.User, "Admin");
+
+                if (!authorizationResult.Succeeded)
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+                    return;
+                }
+
+                await next();
+            });
+
+            branch.UseSwagger();
+
+            branch.UseSwaggerUI();
+        });
 }
 
 app.MapDefaultEndpoints();

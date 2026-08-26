@@ -701,6 +701,34 @@ eigene Fehlerart mit passender Modal-Meldung. Der neue Integrationstest
 Testbenutzer aus (101. Anfrage liefert 429) und bestätigt zusätzlich, dass
 `/health` unabhängig von der Anzahl der Anfragen erreichbar bleibt.
 
+### Production-Zugriffsschutz (Block 7j)
+
+Drei letzte offene Sicherheitspunkte aus dem Wiki-Sicherheitskonzept:
+
+- **Swagger-UI außerhalb Development**: `UseSwagger()`/`UseSwaggerUI()`
+  laufen jetzt in jeder Umgebung, außerhalb Development hinter einem
+  Middleware-Gate (`app.MapWhen` auf `/swagger`), das die bestehende
+  `"Admin"`-Autorisierungspolicy prüft — kein Token liefert 401, ein Token
+  ohne Admin-Rolle 403 (Details: `docs/adr/0023-swagger-admin-gate-production.md`).
+- **CORS-Production-Whitelist**: neue `ProductionCors`-Policy, deren
+  Origin-Liste aus `Cors:AllowedOrigins` (Konfiguration) kommt; die
+  Development-Policy (alle `localhost`-Origins) bleibt unverändert.
+- **CSP für Development/lokal**: `index.html` erhält beim `npm start`/
+  `npm run build` per neuem Skript `scripts/write-csp-meta.mjs` ein
+  Content-Security-Policy-Meta-Tag mit einem pro Build zufälligen Nonce;
+  Angulars offizieller `CSP_NONCE`-Mechanismus (`ngCspNonce`-Attribut)
+  erlaubt dabei weiterhin die zur Laufzeit injizierten Komponenten-Styles,
+  ohne `'unsafe-inline'` zu benötigen (Details:
+  `docs/adr/0025-csp-meta-tag-development.md`). Die Production-Variante
+  (HTTP-Header vom Nginx) bleibt offen — es existiert noch keine
+  Production-Infrastruktur im Repository.
+
+Nebenbefund: `options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();`
+hätte außerhalb Development jede Anfrage mit 500 beantwortet, da Keycloaks
+`Authority` auch dort `http://` ist (TLS wird laut Wiki nur am Reverse Proxy
+terminiert). Behoben auf `RequireHttpsMetadata = false` (Details:
+`docs/adr/0024-require-https-metadata-produktionsarchitektur.md`).
+
 ### Prüfen
 
 ```powershell

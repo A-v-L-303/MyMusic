@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "prestart": "node scripts/write-runtime-config.mjs",
+    "prestart": "node scripts/write-runtime-config.mjs && node scripts/write-csp-meta.mjs",
     "start": "run-script-os",
     "start:win32": "ng serve --port %PORT%",
     "start:default": "ng serve --port $PORT",
-    "prebuild": "node scripts/write-runtime-config.mjs",
+    "prebuild": "node scripts/write-runtime-config.mjs && node scripts/write-csp-meta.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

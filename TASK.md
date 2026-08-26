@@ -154,16 +154,18 @@ dem MVP-Umfang der Phase 1:
   vollständig).
 - Zustandsbewertung nach Goldmine-Standard (Datenmodell bereits Teil des
   `record`-Schemas, siehe Abschnitt 6).
-- Swagger-UI-Freischaltung für die Admin-Rolle in Production,
-  CORS-Production-Whitelist, CSP (siehe Abschnitt 7; das Keycloak-
-  Custom-Theme der Anmeldeseite aus demselben Abschnitt ist mit Block 7f
-  erledigt, das Rollenkonzept im Angular-Code — `AdminGuard`, Admin-Button,
-  Platzhalter-Route `/admin` — mit Block 7b, der Admin-Bereich selbst
-  (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c
+- CSP für Production (HTTP-Header vom Nginx, siehe Abschnitt 7j) — abhängig
+  vom noch nicht begonnenen Production-/Docker-Compose-Setup (siehe Abschnitt
+  7; das Keycloak-Custom-Theme der Anmeldeseite aus demselben Abschnitt ist
+  mit Block 7f erledigt, das Rollenkonzept im Angular-Code — `AdminGuard`,
+  Admin-Button, Platzhalter-Route `/admin` — mit Block 7b, der Admin-Bereich
+  selbst (Userliste/-löschung über die Keycloak Admin REST API) mit Block 7c
   erledigt, inklusive der am 2026-08-20 nachgeholten Live-Verifikation im
   Browser, siehe Abschnitt 7c; die Registrierung neuer Benutzer ist mit
   Block 7g erledigt, siehe Abschnitt 7g; Rate Limiting ist mit Block 7i
-  erledigt, siehe Abschnitt 7i).
+  erledigt, siehe Abschnitt 7i; Swagger-Admin-Gate außerhalb Development,
+  CORS-Production-Whitelist und CSP für Development/lokal sind mit Block 7j
+  erledigt, siehe Abschnitt 7j).
 
 ## 0. Fundament: Walking Skeleton
 
@@ -2125,10 +2127,13 @@ Abnahmekriterium erfüllt (live verifiziert, siehe Nachtrag oben):
 
 Aufgaben (noch offen):
 
-- Swagger-UI in Production für die Admin-Rolle freischalten (CLAUDE.md §5.3,
-  zurückgestellt aus Block 0e, siehe
-  `docs/adr/0007-swagger-openapi-nur-development.md`).
-- CORS-Production-Whitelist, CSP.
+- Swagger-UI in Production für die Admin-Rolle freischalten: **erledigt**
+  mit Block 7j, siehe Abschnitt 7j.
+- CORS-Production-Whitelist: **erledigt** (Konfigurationsmechanismus) mit
+  Block 7j, siehe Abschnitt 7j.
+- CSP: **teilweise erledigt** mit Block 7j (nur Development/lokal, siehe
+  Abschnitt 7j) — die Production-Variante (HTTP-Header vom Nginx) bleibt
+  offen, abhängig vom noch nicht begonnenen Production-/Docker-Compose-Setup.
 - Sicherheitstests: nicht authentifiziert, fremde Daten, unbekannte IDs.
 
 Abnahmekriterium (Gesamtabschnitt 7):
@@ -2638,6 +2643,124 @@ Abnahmekriterium:
 - Ein Benutzer, der 100 Anfragen pro Minute überschreitet, bekommt HTTP 429;
   andere Benutzer sind davon unabhängig; Aspires Health-Checks und Swagger
   bleiben unlimitiert. **Erfüllt**, automatisiert nachgewiesen (siehe oben).
+
+### 7j. Production-Zugriffsschutz (Swagger, CORS, CSP)
+
+Status: **Backend und Frontend umgesetzt, automatisiert getestet und live
+gegen den laufenden Aspire-AppHost verifiziert** (2026-08-26), noch nicht
+committet/gepusht/gemergt.
+Arbeits-Prompt: `docs/prompts/2026-08-26-block-7j-production-zugriffsschutz.md`
+
+Anlass: letzte drei offenen Punkte aus
+`wiki/sicherheit/sicherheitskonzept.md` (Zeile 26/133-136) nach Block 7i
+(Rate Limiting). Iststand-Recherche vor der Umsetzung ergab: Im Repository
+existiert keinerlei Production-Infrastruktur (kein Docker Compose, kein
+Nginx) — laut Wiki (`projekt/deployment-konzept.md`) ist der
+Hosting-Anbieter für Production noch nicht entschieden. Mit dem
+Projektinhaber vor Planbeginn geklärt: Der CSP-Anteil dieses Blocks umfasst
+ausschließlich die Development/lokal-Variante (Meta-Tag) — die
+Production-Variante (HTTP-Header vom Nginx) bleibt bewusst offen und hängt
+vom noch nicht begonnenen Production-/Docker-Compose-Setup ab.
+
+Umgesetzt (Backend):
+
+- **Swagger-Admin-Gate außerhalb Development**: `UseSwagger()`/
+  `UseSwaggerUI()` laufen jetzt in allen Umgebungen; außerhalb Development
+  sitzt davor ein `app.MapWhen(...)`-Zweig auf `/swagger`, der die
+  bestehende `"Admin"`-Policy per `IAuthorizationService` prüft (kein
+  Token → 401, Token ohne Admin-Rolle → 403, sonst durchgereicht) —
+  Swashbuckle 10.0.1 bietet dafür kein Endpoint-Routing wie die übrigen
+  Admin-Endpunkte. Details und verworfene Alternativen: ADR
+  `docs/adr/0023-swagger-admin-gate-production.md`.
+- **CORS-Production-Whitelist**: neue `ProductionCors`-Policy, Origin-Liste
+  aus `Cors:AllowedOrigins` (Konfiguration/Umgebungsvariable, Muster wie
+  bei Keycloak-Authority/Discogs-Token), Development-Verhalten
+  (`Uri.IsLoopback`) unverändert. Bleibt ohne echten Wert, bis eine
+  Hosting-Domain feststeht.
+- **Nebenbefund und -korrektur**: Beim Schreiben der Integrationstests
+  stellte sich heraus, dass `options.RequireHttpsMetadata =
+  !builder.Environment.IsDevelopment();` außerhalb Development **jede**
+  Anfrage mit 500 beantwortete, weil Keycloaks `Authority` auch dort
+  `http://` ist — kein Testartefakt, sondern ein latenter Fehler, der auch
+  die echte, später gebaute Production-API getroffen hätte (laut Wiki wird
+  TLS nur am Reverse Proxy terminiert, interne Kommunikation bleibt
+  unverschlüsselt). Mit ausdrücklicher Freigabe des Projektinhabers behoben
+  (`RequireHttpsMetadata = false` unabhängig von der Umgebung). Details:
+  ADR `docs/adr/0024-require-https-metadata-produktionsarchitektur.md`.
+- Erweiterte Integrationstests: `SwaggerEndpointTests.
+  GetSwaggerJson_AusserhalbDevelopmentNurMitAdminRolle` (401/403/200 in
+  einem AppHost-Lauf, Muster wie `AdminEndpointsTests`) und
+  `CorsPolicyTests.PreflightRequest_AusserhalbDevelopmentNurVon
+  WhitelisteterOrigin` (whitelistete und nicht gelistete Origin ebenfalls
+  in einem AppHost-Lauf) — die `api`-Ressource wird dafür testweise auf
+  `ASPNETCORE_ENVIRONMENT=Production` gesetzt
+  (`appHost.CreateResourceBuilder(...)` vor `BuildAsync()`).
+- **Nachtrag CI-Timeout**: Der erste Push löste in der CI einen
+  Timeout im Schritt „Integrationstests" aus (15-Minuten-Limit,
+  `.github/workflows/ci.yml`). Analyse ergab: Schon im letzten
+  erfolgreichen Lauf zuvor (Block 7i) brauchte dieser Schritt 12m48s bei
+  17 Tests — nur 2m12s Puffer, ein strukturelles, bereits vor Block 7j
+  bestehendes Problem (jeder der beiden neuen Integrationstests spinnt
+  einen vollständigen eigenen Aspire-AppHost hoch). Mit Freigabe des
+  Projektinhabers behoben: `CorsPolicyTests` auf einen statt zwei
+  AppHost-Läufe konsolidiert (s. o.) und das CI-Timeout von 15 auf 20
+  Minuten angehoben.
+
+Umgesetzt (Frontend, nur Development/lokal):
+
+- **CSP per Meta-Tag**: neues Skript `scripts/write-csp-meta.mjs`
+  (eigenständig neben `scripts/write-runtime-config.mjs`, ADR 0009, gleiche
+  `prestart`/`prebuild`-Hooks), erzeugt pro Build einen zufälligen Nonce
+  und die Direktivenzeile aus `MYMUSIC_API_BASE_URL`/
+  `MYMUSIC_KEYCLOAK_AUTHORITY` (`connect-src` per `new URL(...).origin`).
+  `index.html` behält als eingecheckte Baseline einen Platzhalter-
+  Kommentar sowie `ngCspNonce="__CSP_NONCE__"` (analog zur eingecheckten
+  Platzhalter-`runtime-config.json`).
+- **Theme-Script ausgelagert**: Inline-Script aus Block 0f (FOUC-
+  Vermeidung) liegt jetzt in `public/theme-init.js`
+  (`<script src="theme-init.js">`), da `script-src 'self'` Inline-Skripte
+  ohne Nonce/Hash blockiert hätte.
+- **Nonce für Angular-Inline-Styles**: `<app-root ngCspNonce="...">` nutzt
+  Angulars offiziellen `CSP_NONCE`-Mechanismus, damit `style-src 'self'
+  'nonce-...'` die zur Laufzeit injizierten Komponenten-Styles nicht
+  blockiert (kein `'unsafe-inline'` nötig).
+  Details und verworfene Alternativen (Hash-Pinning, `'unsafe-inline'`):
+  ADR `docs/adr/0025-csp-meta-tag-development.md`.
+
+Automatisiert getestet: vollständige Backend-Testsuite grün — 114
+Domain.Tests, 11 Api.Tests, 5 Infrastructure.Tests, 294 Application.Tests
+und 19 IntegrationTests (davon 2 neu für Block 7j), macht 443 Tests
+insgesamt. 460 Frontend-Tests (unverändert gegenüber dem Stand vor Block
+7j — keine Angular-Komponente betroffen). `dotnet format
+--verify-no-changes` sauber. `npx prettier --check .` zeigt
+repo-/branch-weite Abweichungen (186 Dateien, überwiegend Zeilenenden-
+bedingt) bereits auf dem unveränderten Ausgangsstand — verifiziert per
+Vergleich mit zurückgestellten Änderungen (185 Dateien ohne Block 7j),
+keine durch diesen Block verursachte Regression, aber auch nicht durch
+diesen Block behoben (außerhalb des Scopes).
+
+Live gegen den laufenden Aspire-AppHost verifiziert (Development):
+Swagger-UI weiterhin ohne Anmeldung erreichbar (unverändert); vollständiger
+Login-Flow (`testuser`) inkl. Rücksprung, Dashboard mit echten Daten,
+Theme-Toggle (Light/Dark) und Neuladen ohne sichtbaren Farb-Flash — jeweils
+ohne CSP-Verstöße oder sonstige Fehler in der Browser-Konsole.
+
+Bewusst nicht Teil dieses Blocks:
+
+- CSP für Production (HTTP-Header vom Nginx) — abhängig vom noch nicht
+  begonnenen Production-/Docker-Compose-Setup, siehe ADR 0025.
+- Echte Werte für `Cors:AllowedOrigins` — folgen erst mit einer
+  Hosting-Entscheidung.
+- Sicherheitstests „nicht authentifiziert, fremde Daten, unbekannte IDs"
+  (bleibt eigener, separater Punkt in Abschnitt 7).
+
+Abnahmekriterium:
+
+- Swagger-UI ist außerhalb Development nur mit Admin-Rolle erreichbar; die
+  CORS-Whitelist-Mechanik greift für konfigurierte Origins und blockiert
+  nicht gelistete; die lokale CSP verhindert keine reguläre Funktion der
+  Anwendung. **Erfüllt** für den freigegebenen Umfang (siehe oben);
+  CSP-Production bleibt ausdrücklich offen.
 
 ## 8. Discogs-Integration
 
