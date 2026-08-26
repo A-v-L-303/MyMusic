@@ -56,7 +56,7 @@ jobs:
 
       - name: Integrationstests (Aspire-AppHost, Docker)
         run: dotnet test tests/MyMusic.IntegrationTests/MyMusic.IntegrationTests.csproj --no-build
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
           Parameters__postgres-password: ${{ secrets.CI_POSTGRES_PASSWORD }}
           Parameters__api-database-password: ${{ secrets.CI_API_DATABASE_PASSWORD }}

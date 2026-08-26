@@ -2689,12 +2689,22 @@ Umgesetzt (Backend):
   ADR `docs/adr/0024-require-https-metadata-produktionsarchitektur.md`.
 - Erweiterte Integrationstests: `SwaggerEndpointTests.
   GetSwaggerJson_AusserhalbDevelopmentNurMitAdminRolle` (401/403/200 in
-  einem AppHost-Lauf, Muster wie `AdminEndpointsTests`),
-  `CorsPolicyTests.PreflightRequest_AusserhalbDevelopmentVon
-  WhitelistedOrigin204MitGespiegeltemHeader` und
-  `...VonNichtGelisteterOriginOhneAllowOriginHeader` — die `api`-Ressource
-  wird dafür testweise auf `ASPNETCORE_ENVIRONMENT=Production` gesetzt
+  einem AppHost-Lauf, Muster wie `AdminEndpointsTests`) und
+  `CorsPolicyTests.PreflightRequest_AusserhalbDevelopmentNurVon
+  WhitelisteterOrigin` (whitelistete und nicht gelistete Origin ebenfalls
+  in einem AppHost-Lauf) — die `api`-Ressource wird dafür testweise auf
+  `ASPNETCORE_ENVIRONMENT=Production` gesetzt
   (`appHost.CreateResourceBuilder(...)` vor `BuildAsync()`).
+- **Nachtrag CI-Timeout**: Der erste Push löste in der CI einen
+  Timeout im Schritt „Integrationstests" aus (15-Minuten-Limit,
+  `.github/workflows/ci.yml`). Analyse ergab: Schon im letzten
+  erfolgreichen Lauf zuvor (Block 7i) brauchte dieser Schritt 12m48s bei
+  17 Tests — nur 2m12s Puffer, ein strukturelles, bereits vor Block 7j
+  bestehendes Problem (jeder der beiden neuen Integrationstests spinnt
+  einen vollständigen eigenen Aspire-AppHost hoch). Mit Freigabe des
+  Projektinhabers behoben: `CorsPolicyTests` auf einen statt zwei
+  AppHost-Läufe konsolidiert (s. o.) und das CI-Timeout von 15 auf 20
+  Minuten angehoben.
 
 Umgesetzt (Frontend, nur Development/lokal):
 
@@ -2719,7 +2729,7 @@ Umgesetzt (Frontend, nur Development/lokal):
 
 Automatisiert getestet: vollständige Backend-Testsuite grün — 114
 Domain.Tests, 11 Api.Tests, 5 Infrastructure.Tests, 294 Application.Tests
-und 20 IntegrationTests (davon 3 neu für Block 7j), macht 444 Tests
+und 19 IntegrationTests (davon 2 neu für Block 7j), macht 443 Tests
 insgesamt. 460 Frontend-Tests (unverändert gegenüber dem Stand vor Block
 7j — keine Angular-Komponente betroffen). `dotnet format
 --verify-no-changes` sauber. `npx prettier --check .` zeigt
