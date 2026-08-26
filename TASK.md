@@ -98,6 +98,11 @@ wie die Records-Ansicht, voll editierbar, Klick auf eine Card navigiert zur
 Detailansicht inkl. Tracklist, dazu eine Eingabevalidierung am
 Kopfzeilen-Suchfeld, siehe Abschnitt 10) umgesetzt, automatisiert getestet
 und live gegen den laufenden Aspire-AppHost verifiziert, PR #88, nach
+`main` gemergt. Block 7i (Rate Limiting: Fixed-Window-Limiter der
+eingebauten `Microsoft.AspNetCore.RateLimiting`-Middleware, 100
+Requests/Minute partitioniert über den `sub`-Claim, HTTP 429 mit
+`Retry-After`-Header, begrenzt auf Pfade unter `/api`, siehe Abschnitt 7i)
+umgesetzt, automatisiert getestet (440 Backend-Tests grün), PR #90, nach
 `main` gemergt.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
@@ -107,7 +112,7 @@ per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
 Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84, Block 9 per
-PR #86, Block 10 per PR #88 nach `main` gemergt)
+PR #86, Block 10 per PR #88, Block 7i per PR #90 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -2577,8 +2582,8 @@ relativiert, wird hier als Doku-Abweichung gemeldet.
 
 ### 7i. Rate Limiting
 
-Status: **umgesetzt, automatisiert getestet** (2026-08-26). Noch nicht
-gemergt — auf Branch `block-7i-rate-limiting`.
+Status: **abgeschlossen** (2026-08-26), automatisiert getestet, PR #90,
+nach `main` gemergt.
 Arbeits-Prompt: `docs/prompts/2026-08-26-block-7i-rate-limiting.md`
 
 Anlass: letzter offener Sicherheitspunkt aus
