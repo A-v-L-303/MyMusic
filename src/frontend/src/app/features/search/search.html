@@ -1,8 +1,59 @@
-<section class="p-6">
-  <h1 class="text-lg font-bold text-fg">Search</h1>
-  @if (query(); as q) {
-    <p class="empty">Die Suche nach „{{ q }}" folgt in einem späteren Block.</p>
-  } @else {
-    <p class="empty">Diese Ansicht folgt in einem späteren Block.</p>
-  }
-</section>
+@if (query(); as q) {
+  <section class="mx-auto max-w-[1080px] px-6 pb-16 pt-6">
+    <div class="flex items-center gap-2">
+      <h1 class="text-lg font-bold text-fg">Suche</h1>
+      <span class="badge badge-neutral" title="Anzahl der gefundenen Records">
+        {{ totalCount() }}
+      </span>
+    </div>
+
+    <div class="mt-6">
+      @if (searchResource.isLoading()) {
+        <div class="flex justify-center py-12">
+          <div class="spinner"></div>
+        </div>
+      } @else if (results().length === 0) {
+        <p class="empty">Keine Daten vorhanden.</p>
+      } @else {
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          @for (record of results(); track record.id) {
+            <app-record-card
+              [record]="record"
+              (opened)="onRecordOpened(record)"
+              (editRequested)="openEditForm($event)"
+              (deleteRequested)="onDeleteRequested($event)"
+            />
+          }
+        </div>
+        <div class="mt-4">
+          <app-pagination
+            [page]="page()"
+            [totalPages]="totalPages()"
+            (pageChange)="onPageChange($event)"
+          />
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <section class="mx-auto max-w-[1080px] px-6 pb-16 pt-6">
+    <p class="empty">Bitte einen Suchbegriff eingeben.</p>
+  </section>
+}
+
+@if (formOpen()) {
+  <app-record-form
+    [record]="editingRecord()"
+    (cancelled)="onFormCancelled()"
+    (saved)="onFormSaved()"
+  />
+}
+
+@if (pendingDelete()) {
+  <app-confirm-modal
+    title="Record löschen"
+    [message]="pendingDeleteMessage()"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()"
+  />
+}
