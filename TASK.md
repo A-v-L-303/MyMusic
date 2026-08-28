@@ -2887,6 +2887,14 @@ deshalb vermieden oder die beiden Dateien danach aus dem Git-Stand wieder
 hergestellt werden (wie hier geschehen, `git checkout --
 public/runtime-config.json src/index.html`).
 
+Nachtrag (2026-08-28, nach PR #94): Die zunächst gewählten Maximallängen
+(E-Mail 255 Zeichen, Passwort 100 Zeichen — technisch naheliegende
+Standardwerte, siehe Backend-Umsetzung oben) hat der Projektinhaber als
+unrealistisch verworfen und auf E-Mail höchstens 120 Zeichen, Passwort
+höchstens 32 Zeichen korrigiert (Backend-Validatoren, Frontend-Konstanten
+in `user-profile.ts` und zugehörige Tests angepasst, siehe
+`wiki/user-stories/user-stories-benutzerprofil.md`).
+
 ## 8. Discogs-Integration
 
 Status: **Vollständig abgeschlossen.** Backend-Proxy (Block 8a) umgesetzt,

@@ -51,7 +51,7 @@ public class UpdateCurrentUserEmailCommandValidatorTests
         // arrange
         var command = new UpdateCurrentUserEmailCommand
         {
-            Email = $"{new string('a', 250)}@example.com",
+            Email = $"{new string('a', 115)}@example.com",
             UserId = Guid.NewGuid()
         };
 

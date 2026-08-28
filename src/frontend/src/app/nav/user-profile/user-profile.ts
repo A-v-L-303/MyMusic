@@ -28,11 +28,11 @@ interface PasswordFormModel {
   newPasswordConfirmation: string;
 }
 
-const EMAIL_MAX_LENGTH = 255;
+const EMAIL_MAX_LENGTH = 120;
 
 const PASSWORD_MIN_LENGTH = 8;
 
-const PASSWORD_MAX_LENGTH = 100;
+const PASSWORD_MAX_LENGTH = 32;
 
 const PLACEHOLDER_HINT = ' ';
 

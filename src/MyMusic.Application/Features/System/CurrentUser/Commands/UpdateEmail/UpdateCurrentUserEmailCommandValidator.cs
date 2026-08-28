@@ -7,7 +7,7 @@ public sealed class UpdateCurrentUserEmailCommandValidator : AbstractValidator<U
         RuleFor(command => command.Email)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Die E-Mail-Adresse ist erforderlich.")
-            .MaximumLength(255).WithMessage("Die E-Mail-Adresse darf höchstens 255 Zeichen lang sein.")
+            .MaximumLength(120).WithMessage("Die E-Mail-Adresse darf höchstens 120 Zeichen lang sein.")
             .EmailAddress().WithMessage("Die E-Mail-Adresse hat kein gültiges Format.");
     }
 }

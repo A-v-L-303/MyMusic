@@ -57,7 +57,7 @@ public class ChangeCurrentUserPasswordCommandValidatorTests
         // arrange
         var command = new ChangeCurrentUserPasswordCommand
         {
-            NewPassword = new string('a', 101),
+            NewPassword = new string('a', 33),
             UserId = Guid.NewGuid()
         };
 
