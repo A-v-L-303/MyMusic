@@ -1,6 +1,6 @@
 # Offene Aufgaben
 
-Stand: 2026-08-26 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
+Stand: 2026-08-28 (nach Abschluss von Block 0a, 0b, 0d, 0e, dem Genre-Backend aus
 Block 2, dem Country-Backend aus Block 3, dem Label-Backend aus Block 4 und dem
 Artist-Backend aus Block 5; Planung für Block 6 (Record/Tracks) abgeschlossen,
 siehe Wiki `user-stories/user-stories-record.md`; Block 6a (Record-Backend),
@@ -116,7 +116,13 @@ mit 500 beantwortet (ADR 0024), und das CI-Timeout für Integrationstests
 war mit 15 Minuten bereits vor diesem Block strukturell knapp (12m48s bei
 17 Tests im letzten Lauf zuvor) und wurde auf 20 Minuten angehoben. CSP für
 Production (HTTP-Header vom Nginx) bleibt offen, abhängig vom noch nicht
-begonnenen Production-/Docker-Compose-Setup.
+begonnenen Production-/Docker-Compose-Setup. Block 7k (Benutzerprofil:
+E-Mail und Passwort selbst ändern über ein neues Modal, Klick auf den
+Username in der Kopfzeile, siehe Abschnitt 7k) umgesetzt, automatisiert
+getestet und live gegen den laufenden Aspire-AppHost verifiziert, PR #94,
+nach `main` gemergt — das Feature war seit Block 0g im Wiki beschrieben,
+aber nie umgesetzt und tauchte auch nirgends als offener Punkt auf; neue
+Wiki-Seite `user-stories-benutzerprofil.md` holt das nach.
 Branch: `main` (Block 6b per PR #30, Block 6c per
 PR #32, Block 6d per PR #34, Block 0c per PR #36, Block 7a per PR #41,
 Block 0f per PR #43, der Favicon-Nachtrag per PR #44, Block 0g per PR #45,
@@ -125,8 +131,8 @@ per PR #52, Block 6e per PR #54, Block 6f per PR #55, Block 6g per PR #57,
 Block 6h per PR #59, Block 6i per PR #61, Block 6j per PR #63, Block 7f per
 PR #69, Block 7b per PR #71, Block 7c per PR #74, Block 7g per PR #77,
 Block 7h per PR #80, Block 8a per PR #82, Block 8b per PR #84, Block 9 per
-PR #86, Block 10 per PR #88, Block 7i per PR #90, Block 7j per PR #92 nach
-`main` gemergt)
+PR #86, Block 10 per PR #88, Block 7i per PR #90, Block 7j per PR #92,
+Block 7k per PR #94 nach `main` gemergt)
 
 Diese Datei ist die operative Arbeitsliste für die nächsten Umsetzungsschritte.
 Sie ersetzt nicht die fachliche Planung im Wiki
@@ -2777,7 +2783,8 @@ Abnahmekriterium:
 
 ### 7k. Benutzerprofil
 
-Status: **automatisiert getestet und live verifiziert, gemergt steht noch aus** (Stand 2026-08-28)
+Status: **abgeschlossen** (2026-08-28), automatisiert getestet und live
+verifiziert, PR #94, nach `main` gemergt.
 Arbeits-Prompt: `docs/prompts/2026-08-28-block-7k-benutzerprofil.md`
 
 Anlass: Das Benutzerprofil-Modal ist seit dem 2026-08-13 in
