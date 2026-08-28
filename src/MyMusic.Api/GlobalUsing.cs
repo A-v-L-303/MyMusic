@@ -68,6 +68,8 @@ global using MyMusic.Application.Features.Stammdaten.Label.Queries.GetAll;
 global using MyMusic.Application.Features.Stammdaten.Label.Queries.GetById;
 global using MyMusic.Application.Features.Stammdaten.Label.Queries.GetPaged;
 global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos;
+global using MyMusic.Application.Features.System.CurrentUser.Commands.ChangePassword;
+global using MyMusic.Application.Features.System.CurrentUser.Commands.UpdateEmail;
 global using MyMusic.Application.Features.System.CurrentUser.Queries.GetCurrentUser;
 global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos;
 global using MyMusic.Application.Features.Verwaltung.Admin.Commands.Delete;

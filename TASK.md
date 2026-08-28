@@ -2775,6 +2775,126 @@ Abnahmekriterium:
   Anwendung. **Erfüllt** für den freigegebenen Umfang (siehe oben);
   CSP-Production bleibt ausdrücklich offen.
 
+### 7k. Benutzerprofil
+
+Status: **automatisiert getestet und live verifiziert, gemergt steht noch aus** (Stand 2026-08-28)
+Arbeits-Prompt: `docs/prompts/2026-08-28-block-7k-benutzerprofil.md`
+
+Anlass: Das Benutzerprofil-Modal ist seit dem 2026-08-13 in
+`wiki/architektur/navigation-konzept.md` beschrieben (Klick auf Username
+öffnet Modal mit Benutzername schreibgeschützt, E-Mail änderbar, Passwort
+ändern), wurde bei Block 0g aber explizit aus dem Scope genommen und danach
+nie wieder aufgegriffen — es gab weder eine User-Story-Seite noch einen
+Eintrag im offenen MVP-Umfang. Die Funktion war dadurch vollständig aus der
+Planung verschwunden, nicht bewusst zurückgestellt. Neue Wiki-Seite
+`wiki/user-stories/user-stories-benutzerprofil.md` (US-BP1–US-BP3) holt das
+nach.
+
+Mit dem Projektinhaber geklärt: E-Mail- und Passwortänderung verlangen keine
+erneute Bestätigung des aktuellen Passworts — die aktive Sitzung genügt
+(technisch identisch zum bestehenden Admin-Reset über den
+Keycloak-Service-Account, hier auf den eigenen Account beschränkt, siehe ADR
+0026).
+
+Umgesetzt (Backend):
+
+- `IKeycloakAdminClient`/`KeycloakAdminClient` um `UpdateEmailAsync` und
+  `ResetPasswordAsync` erweitert — beide über den bestehenden
+  Service-Account `mymusic-admin-service` (keine Keycloak-Realm-Änderung
+  nötig, `manage-users` deckt beides bereits ab).
+- Neue Commands `UpdateCurrentUserEmailCommand`/`ChangeCurrentUserPasswordCommand`
+  in `Features/System/CurrentUser/Commands/` (nicht unter `Verwaltung/Admin`
+  — keine Rollenprüfung, nur der eigene Account über
+  `ICurrentUserService.UserId`, nie aus dem Request-Body).
+- Neue Endpunkte `PUT /api/me/email` und `PUT /api/me/password`
+  (`.RequireAuthorization()`, keine `"Admin"`-Policy).
+- E-Mail-Konflikt (bereits vergeben, `duplicateEmailsAllowed: false`) wird
+  als HTTP 409 über die bestehende, generische `ConflictException`
+  übersetzt — keine neue Exception-Klasse. Bewusst keine Behandlung für
+  „Keycloak nicht erreichbar" ergänzt, da das Frontend HTTP 502 fest auf die
+  Discogs-Fehlermeldung mappt (siehe ADR 0026 und
+  `error-modal.service.ts`) — andere Fehler fallen unbehandelt auf den
+  bestehenden generischen 500-Fall zurück.
+
+Umgesetzt (Frontend):
+
+- Neuer Ordner `src/app/nav/user-profile/` (co-located mit `Nav`, keine
+  eigene Route, daher bewusst nicht unter `features/`): `UserProfileService`
+  (Muster `admin.service.ts`) und die `UserProfile`-Komponente — ein Modal
+  mit zwei unabhängigen Signal-Forms (E-Mail; neues Passwort +
+  Wiederholung mit Cross-Field-Validierung über `validate()`).
+  Fehlerbehandlung 1:1 nach dem `genre-form.ts`-Muster: 400 inline am Feld,
+  409/Rest über `ErrorModalService`.
+- `NavComponent`: Username ist jetzt ein klickbarer Button (öffnet das
+  Modal), `OidcUserClaims` um `email` erweitert. Anzeige der aktuellen
+  E-Mail über einen lokalen Override-Signal (`emailOverride`), das die
+  `UserProfile`-Komponente nach erfolgreicher Änderung direkt mit dem neuen
+  Wert befüllt — siehe Live-Befund unten, warum nicht auf
+  `OidcSecurityService.forceRefreshSession()` verlassen wird.
+
+Tests: 12 neue Backend-Unit-Tests (Handler + Validator, Application.Tests),
+ein neuer Integrationstest `MeProfileEndpointsTests` (401 ohne Token,
+E-Mail-Konflikt, erfolgreiche E-Mail-Änderung verifiziert per Login mit der
+neuen E-Mail, erfolgreiche Passwortänderung verifiziert per Login mit dem
+neuen Passwort) — gegen den echten Aspire-AppHost (Postgres + Keycloak)
+gelaufen, grün. 15 neue Frontend-Tests (Vitest), alle 475 Frontend-Tests
+grün, `npm run build` erfolgreich.
+
+Neuer ADR 0026 (`docs/adr/0026-benutzerprofil-selfservice-ueber-service-account.md`):
+Entscheidung für den bestehenden Service-Account-Weg statt Keycloaks eigener
+Account-REST-API.
+
+Bekannte, bewusst nicht in diesem Block behobene Inkonsistenz: Mangels
+`passwordPolicy` im Realm erzwingt weder Keycloak selbst noch die
+Registrierung (Block 7g) eine Mindestlänge, dieser Block führt aber eine
+serverseitige Mindestlänge von 8 Zeichen für die Selbst-Änderung ein. Ein
+einheitlicher Keycloak-`passwordPolicy`-Eintrag (wirkt auf Registrierung,
+Self-Service und Admin-Reset gleichermaßen) wäre der sauberere,
+langfristige Fix — eigener, separat freizugebender Punkt.
+
+Live gegen den laufenden Aspire-AppHost verifiziert (zwei über die
+Selbstregistrierung angelegte Wegwerf-Testbenutzer, nach der Prüfung über
+den Admin-Bereich wieder gelöscht): Modal zeigt Benutzername und aktuelle
+E-Mail korrekt vorbefüllt; E-Mail-Konflikt zeigt die korrekte
+Konfliktmeldung, ausdrücklich kein Discogs-Text; Passwort-Validierung
+(zu kurz, Wiederholung stimmt nicht überein) inline ohne Server-Aufruf;
+Passwortänderung ohne erzwungenen Logout, danach erfolgreicher Neu-Login
+mit dem neuen Passwort; `PUT /api/me/email`/`PUT /api/me/password` ohne
+Token liefern 401.
+
+Live-Befund und Fix: Nach erfolgreicher E-Mail-Änderung zeigte ein erneutes
+Öffnen des Modals weiterhin die alte E-Mail. Der neue Wert war
+serverseitig korrekt gespeichert (direkt über die Keycloak Admin REST API
+gegengeprüft) — das Problem lag im Frontend. Ob
+`OidcSecurityService.forceRefreshSession()` die Claims zuverlässig
+nachzieht, ließ sich nicht abschließend isoliert klären (siehe dazu bereits
+der offene Punkt im Plan). Statt sich darauf zu verlassen, hält
+`NavComponent` jetzt ein lokales Override-Signal, das direkt aus dem
+`emailChanged`-Event der `UserProfile`-Komponente befüllt wird — dadurch
+unabhängig vom tatsächlichen Token-Refresh-Verhalten, live auch für
+mehrfache Änderungen innerhalb derselben Sitzung bestätigt.
+
+Nebenbefund (kein Code-Fix, nur für künftige Live-Prüfungen relevant):
+`npm run build` schreibt über die `prebuild`-Skripte
+(`write-runtime-config.mjs`, `write-csp-meta.mjs`) dieselben lokalen
+Dev-Artefakte (`public/runtime-config.json`, die CSP in `src/index.html`)
+neu, die ein parallel laufender `ng serve` (hier über den Aspire-AppHost)
+beim eigenen Start bereits mit echten Werten befüllt hat — ein `npm run
+build` während einer laufenden Live-Prüfung überschreibt sie mit den
+leeren Platzhaltern und bricht dadurch API-/Keycloak-Aufrufe (CSP
+`connect-src`). Während einer Live-Prüfung sollte `npm run build`
+deshalb vermieden oder die beiden Dateien danach aus dem Git-Stand wieder
+hergestellt werden (wie hier geschehen, `git checkout --
+public/runtime-config.json src/index.html`).
+
+Nachtrag (2026-08-28, nach PR #94): Die zunächst gewählten Maximallängen
+(E-Mail 255 Zeichen, Passwort 100 Zeichen — technisch naheliegende
+Standardwerte, siehe Backend-Umsetzung oben) hat der Projektinhaber als
+unrealistisch verworfen und auf E-Mail höchstens 120 Zeichen, Passwort
+höchstens 32 Zeichen korrigiert (Backend-Validatoren, Frontend-Konstanten
+in `user-profile.ts` und zugehörige Tests angepasst, siehe
+`wiki/user-stories/user-stories-benutzerprofil.md`).
+
 ## 8. Discogs-Integration
 
 Status: **Vollständig abgeschlossen.** Backend-Proxy (Block 8a) umgesetzt,

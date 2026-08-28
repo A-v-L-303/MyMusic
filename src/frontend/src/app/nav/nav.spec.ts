@@ -1,5 +1,8 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { of } from 'rxjs';
@@ -8,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserRolesService } from '../core/auth/user-roles.service';
 import { ThemeService } from '../core/theme/theme.service';
 import { Nav } from './nav';
+import { UserProfile } from './user-profile/user-profile';
 
 @Component({ selector: 'app-dummy', template: '' })
 class Dummy {}
@@ -15,7 +19,7 @@ class Dummy {}
 describe('Nav', () => {
   let authenticatedSignal: ReturnType<typeof signal<{ isAuthenticated: boolean }>>;
   let userDataSignal: ReturnType<
-    typeof signal<{ userData: { preferred_username?: string } | undefined }>
+    typeof signal<{ userData: { preferred_username?: string; email?: string } | undefined }>
   >;
   let authorizeMock: ReturnType<typeof vi.fn>;
   let logoffMock: ReturnType<typeof vi.fn>;
@@ -32,6 +36,8 @@ describe('Nav', () => {
     await TestBed.configureTestingModule({
       imports: [Nav],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         provideRouter([
           { path: 'dashboard', component: Dummy },
           { path: 'records', component: Dummy },
@@ -362,5 +368,64 @@ describe('Nav', () => {
     expect(button?.textContent).toContain('Logout');
     expect(button?.title).toBe('Abmelden');
     expect(logoffMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('öffnet das Benutzerprofil-Modal bei Klick auf den Username', () => {
+    // arrange
+    authenticatedSignal.set({ isAuthenticated: true });
+    userDataSignal.set({ userData: { preferred_username: 'nav-test-user' } });
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const usernameButton = compiled.querySelector<HTMLButtonElement>(
+      'button[title="Benutzerprofil öffnen"]',
+    );
+
+    // act
+    usernameButton?.click();
+    fixture.detectChanges();
+
+    // assert
+    expect(compiled.querySelector('app-user-profile')).toBeTruthy();
+  });
+
+  it('schließt das Benutzerprofil-Modal beim closed-Event', () => {
+    // arrange
+    authenticatedSignal.set({ isAuthenticated: true });
+    userDataSignal.set({ userData: { preferred_username: 'nav-test-user' } });
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('button[title="Benutzerprofil öffnen"]')?.click();
+    fixture.detectChanges();
+    const closeButton = compiled.querySelector<HTMLButtonElement>('.modal-foot .btn-secondary');
+
+    // act
+    closeButton?.click();
+    fixture.detectChanges();
+
+    // assert
+    expect(compiled.querySelector('app-user-profile')).toBeFalsy();
+  });
+
+  it('übernimmt eine per emailChanged gemeldete neue E-Mail sofort in die Anzeige', () => {
+    // arrange
+    authenticatedSignal.set({ isAuthenticated: true });
+    userDataSignal.set({ userData: { preferred_username: 'nav-test-user', email: 'alt@example.com' } });
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('button[title="Benutzerprofil öffnen"]')?.click();
+    fixture.detectChanges();
+    const userProfile = fixture.debugElement.query(By.directive(UserProfile))
+      .componentInstance as UserProfile;
+
+    // act: das Backend hat die E-Mail geändert, das OIDC-Claim selbst bleibt in dieser
+    // Sitzung unverändert (Refresh-Token-Grants liefern keine aktualisierten Claims)
+    userProfile.emailChanged.emit('neu@example.com');
+    fixture.detectChanges();
+
+    // assert
+    expect(userProfile.email()).toBe('neu@example.com');
   });
 });

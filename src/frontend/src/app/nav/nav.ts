@@ -16,9 +16,11 @@ import { filter, map } from 'rxjs';
 
 import { UserRolesService } from '../core/auth/user-roles.service';
 import { ThemeToggle } from '../core/theme/theme-toggle/theme-toggle';
+import { UserProfile } from './user-profile/user-profile';
 
 interface OidcUserClaims {
   preferred_username?: string;
+  email?: string;
 }
 
 const SEARCH_QUERY_MIN_LENGTH = 2;
@@ -32,6 +34,7 @@ const SEARCH_QUERY_PATTERN = /^[\p{L}\p{N} \-&'./()]+$/u;
     RouterLinkActive,
     FormField,
     ThemeToggle,
+    UserProfile,
     LucideLayoutDashboard,
     LucideDisc3,
     LucideUsers,
@@ -54,6 +57,13 @@ export class Nav {
     const claims = this.oidcSecurityService.userData().userData as OidcUserClaims | undefined;
     return claims?.preferred_username;
   });
+  private readonly emailOverride = signal<string | undefined>(undefined);
+  protected readonly email = computed(() => {
+    const claims = this.oidcSecurityService.userData().userData as OidcUserClaims | undefined;
+    return this.emailOverride() ?? claims?.email;
+  });
+
+  protected readonly profileModalOpen = signal(false);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -99,6 +109,18 @@ export class Nav {
 
   protected logout(): void {
     this.oidcSecurityService.logoff().subscribe();
+  }
+
+  protected openProfileModal(): void {
+    this.profileModalOpen.set(true);
+  }
+
+  protected closeProfileModal(): void {
+    this.profileModalOpen.set(false);
+  }
+
+  protected onEmailChanged(newEmail: string): void {
+    this.emailOverride.set(newEmail);
   }
 
   protected toggleOptionMenu(): void {

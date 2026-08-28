@@ -84,7 +84,14 @@
       }
       @if (authenticated().isAuthenticated) {
         @if (username(); as name) {
-          <span class="text-sm text-fg-muted">{{ name }}</span>
+          <button
+            type="button"
+            class="text-sm text-fg-muted"
+            title="Benutzerprofil öffnen"
+            (click)="openProfileModal()"
+          >
+            {{ name }}
+          </button>
         }
         <button type="button" class="btn btn-secondary" title="Abmelden" (click)="logout()">
           Logout
@@ -99,4 +106,12 @@
       }
     </div>
   </div>
+  @if (profileModalOpen()) {
+    <app-user-profile
+      [username]="username()"
+      [email]="email()"
+      (closed)="closeProfileModal()"
+      (emailChanged)="onEmailChanged($event)"
+    />
+  }
 </header>

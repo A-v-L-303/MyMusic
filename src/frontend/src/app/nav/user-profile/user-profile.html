@@ -1,0 +1,90 @@
+<app-modal (closed)="onClose()">
+  <div class="modal-head">
+    <h2 class="text-base font-semibold text-fg">Benutzerprofil</h2>
+  </div>
+  <div class="modal-body space-y-6">
+    <div class="field">
+      <span class="label">Benutzername</span>
+      <p class="text-sm text-fg">{{ username() }}</p>
+    </div>
+
+    <form (submit)="$event.preventDefault(); onSubmitEmail()">
+      <div class="field">
+        <label class="label" for="profile-email">E-Mail<span class="req"> *</span></label>
+        <input
+          id="profile-email"
+          type="email"
+          class="input"
+          [class.is-error]="emailForm.email().invalid() && emailForm.email().touched()"
+          [formField]="emailForm.email"
+        />
+        <span class="hint" [class.is-error]="emailHintIsError()" [class.invisible]="!emailHintText()">
+          {{ emailHintText() || placeholderHint }}
+        </span>
+      </div>
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          title="E-Mail speichern"
+          [disabled]="emailForm().submitting()"
+        >
+          E-Mail speichern
+        </button>
+      </div>
+    </form>
+
+    <form (submit)="$event.preventDefault(); onSubmitPassword()">
+      <div class="field">
+        <label class="label" for="profile-new-password">Neues Passwort<span class="req"> *</span></label>
+        <input
+          id="profile-new-password"
+          type="password"
+          class="input"
+          [class.is-error]="passwordForm.newPassword().invalid() && passwordForm.newPassword().touched()"
+          [formField]="passwordForm.newPassword"
+        />
+        <span class="hint is-error" [class.invisible]="!newPasswordHintText()">
+          {{ newPasswordHintText() || placeholderHint }}
+        </span>
+      </div>
+      <div class="field">
+        <label class="label" for="profile-new-password-confirmation">
+          Neues Passwort wiederholen<span class="req"> *</span>
+        </label>
+        <input
+          id="profile-new-password-confirmation"
+          type="password"
+          class="input"
+          [class.is-error]="
+            passwordForm.newPasswordConfirmation().invalid() &&
+            passwordForm.newPasswordConfirmation().touched()
+          "
+          [formField]="passwordForm.newPasswordConfirmation"
+        />
+        <span
+          class="hint"
+          [class.is-error]="newPasswordConfirmationHintIsError()"
+          [class.invisible]="!newPasswordConfirmationHintText()"
+        >
+          {{ newPasswordConfirmationHintText() || placeholderHint }}
+        </span>
+      </div>
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          title="Passwort ändern"
+          [disabled]="passwordForm().submitting()"
+        >
+          Passwort ändern
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="modal-foot">
+    <button type="button" class="btn btn-secondary" title="Schließen" (click)="onClose()">
+      Schließen
+    </button>
+  </div>
+</app-modal>
