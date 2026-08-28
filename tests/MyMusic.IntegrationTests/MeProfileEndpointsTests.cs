@@ -78,7 +78,7 @@ public class MeProfileEndpointsTests
             Assert.Equal(HttpStatusCode.BadRequest, invalidPasswordResponse.StatusCode);
 
             // act: Passwort von userA gueltig aendern -> 204
-            var newPassword = $"neuesPasswort-{Guid.NewGuid():N}";
+            var newPassword = $"neuesPasswort-{Guid.NewGuid():N}"[..32];
 
             var changePasswordResponse = await ChangePasswordAsync(apiClient, tokenA, newPassword, cancellationToken);
 
