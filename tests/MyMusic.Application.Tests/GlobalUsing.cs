@@ -1,4 +1,5 @@
 global using System.Linq.Expressions;
+global using System.Net;
 global using FluentValidation;
 global using FluentValidation.Results;
 global using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +59,8 @@ global using MyMusic.Application.Features.Sammlung.Search.ResponseDtos;
 global using MyMusic.Application.Features.Sammlung.Search.ResponseDtos.Builder;
 global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos;
 global using MyMusic.Application.Features.Stammdaten.Label.ResponseDtos.Builder;
+global using MyMusic.Application.Features.System.CurrentUser.Commands.ChangePassword;
+global using MyMusic.Application.Features.System.CurrentUser.Commands.UpdateEmail;
 global using MyMusic.Application.Features.System.CurrentUser.Queries.GetCurrentUser;
 global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos;
 global using MyMusic.Application.Features.System.CurrentUser.ResponseDtos.Builder;

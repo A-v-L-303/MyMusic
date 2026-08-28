@@ -8,6 +8,10 @@ public static class MeEndpoints
 
         group.MapGet(string.Empty, GetCurrentUserAsync);
 
+        group.MapPut("/email", UpdateCurrentUserEmailAsync);
+
+        group.MapPut("/password", ChangeCurrentUserPasswordAsync);
+
         return endpoints;
     }
 
@@ -19,5 +23,37 @@ public static class MeEndpoints
         CancellationToken cancellationToken)
     {
         return await mediator.SendAsync(new GetCurrentUserQuery(), cancellationToken);
+    }
+
+    /// <summary>
+    /// Ändert die E-Mail-Adresse des aktuell angemeldeten Benutzers.
+    /// </summary>
+    private static async Task<IResult> UpdateCurrentUserEmailAsync(
+        UpdateCurrentUserEmailCommand command,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        command.UserId = currentUserService.UserId;
+
+        await mediator.SendAsync(command, cancellationToken);
+
+        return Results.NoContent();
+    }
+
+    /// <summary>
+    /// Ändert das Passwort des aktuell angemeldeten Benutzers.
+    /// </summary>
+    private static async Task<IResult> ChangeCurrentUserPasswordAsync(
+        ChangeCurrentUserPasswordCommand command,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        command.UserId = currentUserService.UserId;
+
+        await mediator.SendAsync(command, cancellationToken);
+
+        return Results.NoContent();
     }
 }

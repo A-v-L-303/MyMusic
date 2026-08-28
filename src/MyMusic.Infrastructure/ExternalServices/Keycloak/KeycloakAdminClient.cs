@@ -42,6 +42,60 @@ public sealed class KeycloakAdminClient(HttpClient httpClient, KeycloakServiceAc
         deleteResponse.EnsureSuccessStatusCode();
     }
 
+    public async Task UpdateEmailAsync(Guid userId, string newEmail, CancellationToken cancellationToken)
+    {
+        var accessToken = await RequestAccessTokenAsync(cancellationToken);
+
+        using var getRequest = new HttpRequestMessage(HttpMethod.Get, $"/admin/realms/mymusic/users/{userId}");
+
+        getRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var getResponse = await httpClient.SendAsync(getRequest, cancellationToken);
+
+        getResponse.EnsureSuccessStatusCode();
+
+        var userRepresentation = await getResponse.Content.ReadFromJsonAsync<JsonNode>(cancellationToken)
+            ?? throw new InvalidOperationException("Keycloak hat keine Benutzerdaten zurückgegeben.");
+
+        userRepresentation["email"] = newEmail;
+
+        using var putRequest = new HttpRequestMessage(HttpMethod.Put, $"/admin/realms/mymusic/users/{userId}")
+        {
+            Content = new StringContent(userRepresentation.ToJsonString(), Encoding.UTF8, "application/json")
+        };
+
+        putRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var putResponse = await httpClient.SendAsync(putRequest, cancellationToken);
+
+        putResponse.EnsureSuccessStatusCode();
+    }
+
+    public async Task ResetPasswordAsync(Guid userId, string newPassword, CancellationToken cancellationToken)
+    {
+        var accessToken = await RequestAccessTokenAsync(cancellationToken);
+
+        var credentialRepresentation = new JsonObject
+        {
+            ["type"] = "password",
+            ["value"] = newPassword,
+            ["temporary"] = false
+        };
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            $"/admin/realms/mymusic/users/{userId}/reset-password")
+        {
+            Content = new StringContent(credentialRepresentation.ToJsonString(), Encoding.UTF8, "application/json")
+        };
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+    }
+
     private async Task<List<KeycloakUserRepresentation>> FetchUsersAsync(
         string accessToken,
         string requestUri,
