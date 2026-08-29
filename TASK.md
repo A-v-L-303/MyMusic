@@ -589,6 +589,9 @@ Abnahmekriterium erfüllt:
   korrekt und markiert den aktiven Tab; Suche mit Eingabe+Enter navigiert zu
   `/search?q=...`; direkter Aufruf einer unbekannten URL landet auf
   `/dashboard`.
+  (Korrigiert am 2026-08-29: Die Suche löst seitdem live beim Tippen aus,
+  eine Enter-Bestätigung ist nicht mehr nötig, funktioniert aber weiterhin
+  zusätzlich — siehe docs/prompts/2026-08-29-fix-globale-suche-live-eingabe.md.)
 
 ## 1. Planung: User Stories und Akzeptanzkriterien
 
