@@ -1,4 +1,4 @@
-# Dokumentation: TASK.md nach Suche-Live-Eingabe-Fix nachgezogen
+# TASK.md nach Suche-Live-Eingabe-Fix korrigieren
 
 ## Kontext
 
