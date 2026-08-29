@@ -54,6 +54,13 @@ jobs:
       - name: HTTPS-Entwicklungszertifikat erzeugen
         run: dotnet dev-certs https
 
+      - name: Docker-Images fuer Integrationstests vorab laden
+        run: |
+          docker pull docker.io/library/postgres:18.3 &
+          docker pull docker.io/datalust/seq:2025.2 &
+          docker pull quay.io/keycloak/keycloak:26.5 &
+          wait
+
       - name: Integrationstests (Aspire-AppHost, Docker)
         run: dotnet test tests/MyMusic.IntegrationTests/MyMusic.IntegrationTests.csproj --no-build
         timeout-minutes: 20
