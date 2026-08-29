@@ -3,52 +3,56 @@
 } @else {
   <div>
     <div class="text-xs font-medium uppercase tracking-wide text-fg-muted">Tracklist</div>
-    @for (group of groups(); track group.side) {
-      <div class="mt-2">
-        @if (showSideHeading()) {
-          <div class="mb-1 text-xs font-medium text-fg-muted">Seite {{ group.side }}</div>
-        }
-        <table class="w-full">
-          <tbody>
-            @for (track of group.tracks; track track.id) {
-              <tr class="border-b border-line text-sm text-fg">
-                <td class="w-8 py-1.5 pr-2 tnum text-fg-muted">{{ track.trackNumber }}</td>
-                <td class="py-1.5">
-                  <div class="flex items-center gap-2">
-                    <span>{{ track.artistName }} · {{ track.trackName }}</span>
-                    <span class="badge badge-neutral" title="Genre des Tracks">
-                      {{ track.genreName }}
-                    </span>
-                  </div>
-                  @if (track.information) {
-                    <div class="text-xs text-fg-subtle">{{ track.information }}</div>
-                  }
-                </td>
-                <td class="w-16 py-1.5 text-right">
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon btn-sm"
-                    (click)="onEditClicked(track)"
-                    [attr.aria-label]="'Track ' + track.trackName + ' bearbeiten'"
-                    [title]="'Track ' + track.trackName + ' bearbeiten'"
-                  >
-                    <svg lucidePencil [size]="14" aria-hidden="true"></svg>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-icon btn-sm"
-                    (click)="onDeleteClicked(track)"
-                    [attr.aria-label]="'Track ' + track.trackName + ' löschen'"
-                    [title]="'Track ' + track.trackName + ' löschen'"
-                  >
-                    <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+    <div class="mt-2 max-h-80 overflow-y-auto">
+      @for (group of groups(); track group.side) {
+        <div class="mt-2 first:mt-0">
+          @if (showSideHeading()) {
+            <div class="mb-1 text-xs font-medium text-fg-muted">Seite {{ group.side }}</div>
+          }
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <tbody>
+                @for (track of group.tracks; track track.id) {
+                  <tr class="border-b border-line text-sm text-fg">
+                    <td class="w-8 py-1.5 pr-2 tnum text-fg-muted">{{ track.trackNumber }}</td>
+                    <td class="py-1.5">
+                      <div class="flex items-center gap-2">
+                        <span>{{ track.artistName }} · {{ track.trackName }}</span>
+                        <span class="badge badge-neutral" title="Genre des Tracks">
+                          {{ track.genreName }}
+                        </span>
+                      </div>
+                      @if (track.information) {
+                        <div class="text-xs text-fg-subtle">{{ track.information }}</div>
+                      }
+                    </td>
+                    <td class="w-16 py-1.5 text-right">
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-icon btn-sm"
+                        (click)="onEditClicked(track)"
+                        [attr.aria-label]="'Track ' + track.trackName + ' bearbeiten'"
+                        [title]="'Track ' + track.trackName + ' bearbeiten'"
+                      >
+                        <svg lucidePencil [size]="14" aria-hidden="true"></svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-icon btn-sm"
+                        (click)="onDeleteClicked(track)"
+                        [attr.aria-label]="'Track ' + track.trackName + ' löschen'"
+                        [title]="'Track ' + track.trackName + ' löschen'"
+                      >
+                        <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
   </div>
 }
