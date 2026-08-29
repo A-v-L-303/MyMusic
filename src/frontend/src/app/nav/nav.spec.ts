@@ -16,6 +16,10 @@ import { UserProfile } from './user-profile/user-profile';
 @Component({ selector: 'app-dummy', template: '' })
 class Dummy {}
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 describe('Nav', () => {
   let authenticatedSignal: ReturnType<typeof signal<{ isAuthenticated: boolean }>>;
   let userDataSignal: ReturnType<
@@ -263,6 +267,88 @@ describe('Nav', () => {
     expect(compiled.querySelector('form.search .hint.is-error')?.textContent).toContain(
       'Buchstaben, Zahlen',
     );
+  });
+
+  it('lädt Suchergebnisse live nach Eingabe ohne Enter', async () => {
+    // arrange
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('form.search input');
+
+    // act
+    if (input) {
+      input.value = 'jazz';
+      input.dispatchEvent(new Event('input'));
+    }
+    await wait(350);
+
+    // assert
+    expect(navigateSpy).toHaveBeenCalledWith(['/search'], {
+      queryParams: { q: 'jazz' },
+      replaceUrl: true,
+    });
+  });
+
+  it('blendet Suchergebnisse aus, wenn das Suchfeld auf der Such-Seite geleert wird', async () => {
+    // arrange
+    await router.navigateByUrl('/search?q=jazz');
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('form.search input');
+
+    // act
+    if (input) {
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+    }
+    await wait(350);
+
+    // assert
+    expect(navigateSpy).toHaveBeenCalledWith(['/search'], {
+      queryParams: { q: null },
+      replaceUrl: true,
+    });
+  });
+
+  it('navigiert nicht weg, wenn das Suchfeld auf einer anderen Seite geleert wird', async () => {
+    // arrange
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Nav);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('form.search input');
+
+    // act
+    if (input) {
+      input.value = 'jazz';
+      input.dispatchEvent(new Event('input'));
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+    }
+    await wait(350);
+
+    // assert
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('übernimmt den Suchbegriff aus der Route beim Laden von /search', async () => {
+    // arrange
+    await router.navigateByUrl('/search?q=jazz');
+    const fixture = TestBed.createComponent(Nav);
+
+    // act
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector<HTMLInputElement>('form.search input');
+    expect(input?.value).toBe('jazz');
   });
 
   it('zeigt keinen Admin-Button, wenn die Rolle Admin fehlt', () => {
