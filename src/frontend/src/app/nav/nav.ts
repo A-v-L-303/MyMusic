@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormField, form, minLength, pattern } from '@angular/forms/signals';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import {
@@ -12,7 +12,7 @@ import {
   LucideUsers,
 } from '@lucide/angular';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { filter, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, skip, startWith } from 'rxjs';
 
 import { UserRolesService } from '../core/auth/user-roles.service';
 import { ThemeToggle } from '../core/theme/theme-toggle/theme-toggle';
@@ -92,6 +92,25 @@ export class Nav {
 
   protected readonly attemptedSubmit = signal(false);
 
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        startWith(null),
+        map(() => this.router.parseUrl(this.router.url).queryParamMap.get('q')),
+        takeUntilDestroyed(),
+      )
+      .subscribe((query) => {
+        if (query !== null && query !== this.searchModel().query) {
+          this.searchModel.set({ query });
+        }
+      });
+
+    toObservable(computed(() => this.searchModel().query))
+      .pipe(skip(1), debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((query) => this.handleLiveSearch(query));
+  }
+
   protected login(): void {
     this.oidcSecurityService.authorize();
   }
@@ -133,14 +152,36 @@ export class Nav {
 
   protected submitSearch(): void {
     this.attemptedSubmit.set(true);
-    const query = this.searchModel().query.trim();
+    const query = this.validQueryOrNull(this.searchModel().query);
     if (!query) {
       return;
     }
-    if (this.searchForm.query().invalid()) {
+    this.router.navigate(['/search'], { queryParams: { q: query } });
+  }
+
+  private handleLiveSearch(rawQuery: string): void {
+    const trimmed = rawQuery.trim();
+    if (!trimmed) {
+      if (this.currentUrl().startsWith('/search')) {
+        this.router.navigate(['/search'], { queryParams: { q: null }, replaceUrl: true });
+      }
       return;
     }
-    this.router.navigate(['/search'], { queryParams: { q: query } });
+
+    this.attemptedSubmit.set(true);
+    const query = this.validQueryOrNull(rawQuery);
+    if (!query) {
+      return;
+    }
+    this.router.navigate(['/search'], { queryParams: { q: query }, replaceUrl: true });
+  }
+
+  private validQueryOrNull(rawQuery: string): string | null {
+    const query = rawQuery.trim();
+    if (!query || this.searchForm.query().invalid()) {
+      return null;
+    }
+    return query;
   }
 
   @HostListener('document:click', ['$event'])
