@@ -8,7 +8,7 @@
     </div>
 
     <div class="mt-6">
-      @if (searchResource.isLoading()) {
+      @if (isInitialLoading()) {
         <div class="flex justify-center py-12">
           <div class="spinner"></div>
         </div>
@@ -25,13 +25,7 @@
             />
           }
         </div>
-        <div class="mt-4">
-          <app-pagination
-            [page]="page()"
-            [totalPages]="totalPages()"
-            (pageChange)="onPageChange($event)"
-          />
-        </div>
+        <app-load-more [hasMore]="hasMore()" [loading]="isLoadingMore()" (loadMore)="onLoadMore()" />
       }
     </div>
   </section>

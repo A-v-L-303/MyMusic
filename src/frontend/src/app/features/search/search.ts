@@ -1,12 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, of } from 'rxjs';
 
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 import { ErrorModalService } from '../../shared/error-modal/error-modal.service';
-import { Pagination } from '../../shared/pagination/pagination';
+import { LoadMore } from '../../shared/load-more/load-more';
 import { RecordCard } from '../records/record-card/record-card';
 import { Record, RecordListResponse } from '../records/record';
 import { RecordForm } from '../records/record-form/record-form';
@@ -25,7 +25,7 @@ const EMPTY_RESULT: RecordListResponse = {
 
 @Component({
   selector: 'app-search',
-  imports: [RecordCard, Pagination, RecordForm, ConfirmModal],
+  imports: [RecordCard, LoadMore, RecordForm, ConfirmModal],
   templateUrl: './search.html',
 })
 export class Search {
@@ -50,14 +50,32 @@ export class Search {
         : of(EMPTY_RESULT),
   });
 
-  protected readonly results = computed(() =>
-    this.searchResource.hasValue() ? this.searchResource.value().items : [],
+  private readonly lastResponse = linkedSignal<RecordListResponse | undefined, RecordListResponse | undefined>({
+    source: () => (this.searchResource.hasValue() ? this.searchResource.value() : undefined),
+    computation: (current, previous) => current ?? previous?.value,
+  });
+
+  protected readonly results = linkedSignal<RecordListResponse | undefined, Record[]>({
+    source: () => this.lastResponse(),
+    computation: (response, previous) => {
+      if (!response) {
+        return previous?.value ?? [];
+      }
+
+      return response.page > 1 ? [...(previous?.value ?? []), ...response.items] : response.items;
+    },
+  });
+  protected readonly totalCount = computed(() => this.lastResponse()?.totalCount ?? 0);
+  protected readonly nextPage = computed(() => (this.lastResponse()?.page ?? 0) + 1);
+  protected readonly hasMore = computed(() => {
+    const value = this.lastResponse();
+    return value ? value.page < value.totalPages : false;
+  });
+  protected readonly isInitialLoading = computed(
+    () => this.searchResource.isLoading() && this.page() === 1,
   );
-  protected readonly totalPages = computed(() =>
-    this.searchResource.hasValue() ? this.searchResource.value().totalPages : 1,
-  );
-  protected readonly totalCount = computed(() =>
-    this.searchResource.hasValue() ? this.searchResource.value().totalCount : 0,
+  protected readonly isLoadingMore = computed(
+    () => this.searchResource.isLoading() && this.page() > 1,
   );
 
   protected readonly formOpen = signal(false);
@@ -86,8 +104,18 @@ export class Search {
     });
   }
 
-  protected onPageChange(page: number): void {
-    this.page.set(page);
+  protected onLoadMore(): void {
+    if (this.searchResource.isLoading()) {
+      return;
+    }
+
+    const target = this.nextPage();
+
+    if (this.page() === target) {
+      this.searchResource.reload();
+    } else {
+      this.page.set(target);
+    }
   }
 
   protected onRecordOpened(record: Record): void {
@@ -105,7 +133,7 @@ export class Search {
 
   protected onFormSaved(): void {
     this.formOpen.set(false);
-    this.searchResource.reload();
+    this.resetToFirstPage();
   }
 
   protected onDeleteRequested(record: Record): void {
@@ -126,12 +154,20 @@ export class Search {
     this.recordService.delete(record.id).subscribe({
       next: () => {
         this.pendingDelete.set(null);
-        this.searchResource.reload();
+        this.resetToFirstPage();
       },
       error: (error: HttpErrorResponse) => {
         this.pendingDelete.set(null);
         this.errorModalService.showFromHttpError(error, 'Record');
       },
     });
+  }
+
+  private resetToFirstPage(): void {
+    if (this.page() === 1) {
+      this.searchResource.reload();
+    } else {
+      this.page.set(1);
+    }
   }
 }

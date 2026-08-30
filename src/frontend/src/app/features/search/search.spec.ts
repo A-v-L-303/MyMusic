@@ -13,6 +13,18 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+class StubIntersectionObserver implements IntersectionObserver {
+  readonly root: Element | Document | null = null;
+  readonly rootMargin = '';
+  readonly scrollMargin = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn((): IntersectionObserverEntry[] => []);
+}
+
 describe('Search', () => {
   let httpTesting: HttpTestingController;
   let router: Router;
@@ -49,6 +61,8 @@ describe('Search', () => {
   };
 
   function configureTestBed(query: string | null): void {
+    vi.stubGlobal('IntersectionObserver', StubIntersectionObserver);
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -68,10 +82,17 @@ describe('Search', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    vi.unstubAllGlobals();
   });
 
   function compiled(fixture: { nativeElement: unknown }): HTMLElement {
     return fixture.nativeElement as HTMLElement;
+  }
+
+  function findButton(root: HTMLElement, text: string): HTMLButtonElement {
+    return Array.from(root.querySelectorAll('button')).find((button) =>
+      button.textContent?.trim().includes(text),
+    ) as HTMLButtonElement;
   }
 
   function expectSearchRequest(query = 'abbey') {
@@ -166,27 +187,90 @@ describe('Search', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/records', 1]);
   });
 
-  it('lädt bei Seitenwechsel die gewählte Seite', async () => {
+  it('lädt beim Klick auf "Mehr laden" die nächste Seite nach und hängt die Treffer an', async () => {
     // arrange
+    const letItBe: Record = { ...abbeyRoad, id: 2, albumName: 'Let It Be' };
     configureTestBed('abbey');
     const fixture = TestBed.createComponent(Search);
     fixture.detectChanges();
     expectSearchRequest().flush({ ...onePage, totalCount: 21, totalPages: 2 });
     await fixture.whenStable();
     fixture.detectChanges();
-    const pageButtons = compiled(fixture).querySelectorAll('button.btn-sm:not(.btn-icon)');
 
     // act
-    (pageButtons[1] as HTMLButtonElement).click();
+    findButton(compiled(fixture), 'Mehr laden').click();
     fixture.detectChanges();
     const request = httpTesting.expectOne(
       (req) => req.url === 'https://api.test/api/search' && req.params.get('page') === '2',
     );
+    request.flush({ ...onePage, page: 2, items: [letItBe] });
+    await fixture.whenStable();
+    fixture.detectChanges();
 
     // assert
     expect(request.request.params.get('q')).toBe('abbey');
-    request.flush({ ...onePage, page: 2 });
+    expect(compiled(fixture).textContent).toContain('Abbey Road');
+    expect(compiled(fixture).textContent).toContain('Let It Be');
+  });
+
+  it('zeigt keinen "Mehr laden"-Button, wenn nur eine Seite vorhanden ist', async () => {
+    // arrange
+    configureTestBed('abbey');
+    const fixture = TestBed.createComponent(Search);
+
+    // act
+    fixture.detectChanges();
+    expectSearchRequest().flush(onePage);
     await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(findButton(compiled(fixture), 'Mehr laden')).toBeUndefined();
+  });
+
+  it('setzt die Ergebnisliste nach dem Löschen von Seite 2 aus auf Seite 1 zurück', async () => {
+    // arrange
+    const letItBe: Record = { ...abbeyRoad, id: 2, albumName: 'Let It Be' };
+    configureTestBed('abbey');
+    const fixture = TestBed.createComponent(Search);
+    fixture.detectChanges();
+    expectSearchRequest().flush({ ...onePage, totalCount: 21, totalPages: 2 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    findButton(compiled(fixture), 'Mehr laden').click();
+    fixture.detectChanges();
+    httpTesting
+      .expectOne(
+        (req) => req.url === 'https://api.test/api/search' && req.params.get('page') === '2',
+      )
+      .flush({ ...onePage, page: 2, items: [letItBe] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Record Abbey Road löschen"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Löschen').click();
+    const deleteRequest = httpTesting.expectOne(
+      (req) => req.method === 'DELETE' && req.url === 'https://api.test/api/records/1',
+    );
+    deleteRequest.flush(null);
+    await wait(0);
+    fixture.detectChanges();
+    const reloadRequest = httpTesting.expectOne(
+      (req) => req.url === 'https://api.test/api/search' && req.params.get('page') === '1',
+    );
+    reloadRequest.flush(onePage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert: Seite-2-Treffer sind nach dem Reset verschwunden, nur noch Seite 1 sichtbar
+    expect(compiled(fixture).textContent).toContain('Abbey Road');
+    expect(compiled(fixture).textContent).not.toContain('Let It Be');
   });
 
   it('bearbeitet einen Treffer aus der Suchergebnisliste und lädt danach neu', async () => {
