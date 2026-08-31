@@ -2002,6 +2002,42 @@ reiner Frontend-Fix, kein Backend-Change:
   Live-Prüfung im Browser steht aus (kein laufender Aspire-AppHost
   während der Umsetzung).
 
+Nachbesserung aus einem Korrekturauftrag (2026-08-31), umgesetzt,
+automatisiert getestet und live gegen den laufenden Aspire-AppHost
+verifiziert, PR #104 (`add-record-collection-number`), nach `main`
+gemergt, siehe `docs/prompts/2026-08-31-record-collection-number.md` und
+ADR `docs/adr/0030-record-collection-number-vergabe.md`:
+
+- **Neues Feld `CollectionNumber`**: Fortlaufende, serverseitig vergebene
+  Nummer je Benutzer, beginnend bei 1 (`Max` der vorhandenen Nummern des
+  Benutzers `+ 1`), damit physische Tonträger real durchsuchbar gemacht
+  werden können (z. B. per Aufkleber). Nicht `RecordId` wie ursprünglich
+  im Korrekturauftrag benannt — Namenskollision mit der
+  Primärschlüssel-Spalte `id` und der FK-Konvention `record_id`.
+- **Löschverhalten**: Eine Lücke in der Mitte bleibt nach dem Löschen
+  dauerhaft bestehen; wird die zuletzt vergebene, höchste Nummer gelöscht,
+  wird sie beim nächsten Anlegen regulär wiederverwendet.
+- **Anzeige**: Badge auf Card und Detailansicht.
+- **Neue Standard-Sortierung**: Sammlungsnummer aufsteigend löst bei
+  `GET /api/records` die bisherige Standard-Sortierung „Albumname
+  aufsteigend" ab; alle bisherigen Sortieroptionen (Name, Erscheinungsjahr,
+  Format) bleiben zusätzlich wählbar. Keine Filterung nach der
+  Sammlungsnummer.
+- Migration mit Backfill bestehender Records, neuer Unique-Constraint
+  `(user_id, collection_number)`.
+- Während der Umsetzung ein realer Fehler gefunden und behoben: Ein
+  eigener, unabhängiger Default `sortBy ?? "name"` auf API-Ebene
+  (`RecordEndpoints.cs`) hätte den neuen Handler-Default überschrieben —
+  nur durch den Integrationstest gegen die echte API aufgefallen, nicht
+  durch Unit-Tests.
+- Live gegen den laufenden Aspire-AppHost verifiziert (Testaccount,
+  danach aufgeräumt): Standard-Sortierung, Lücke in der Mitte bleibt nach
+  Löschen bestehen, höchste Nummer wird nach deren Löschen korrekt
+  wiederverwendet, nach vollständigem Leeren der Sammlung startet die
+  Nummerierung wieder bei 1.
+- Wiki korrigiert: `record.md`, `tabellenschema.md`, `er-modell.md`,
+  `api-endpunkte.md`, `user-stories-record.md` (US-R1, US-R3).
+
 ## UX-Nachtrag: Tooltips für Badges und Buttons (2026-08-15)
 
 Arbeits-Prompt:
