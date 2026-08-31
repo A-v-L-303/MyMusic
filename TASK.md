@@ -3076,6 +3076,41 @@ Nachbesserungen aus einem gemeldeten Bugfix (2026-08-31), siehe
   Thumbnails, Übernahme eines echten Treffers („Nevermind", Nirvana, DGC,
   1991) inkl. korrekt gespeichertem Cover auf der RecordCard.
 
+Nachbesserung aus einem Korrekturauftrag (2026-08-31), PR #102
+(`fix-discogs-referenzen-ohne-rueckfrage`), siehe
+`docs/prompts/2026-08-31-fix-discogs-referenzen-ohne-rueckfrage.md` und
+ADR `docs/adr/0029-discogs-referenzen-ohne-rueckfrage-und-laenderzuordnung.md`:
+
+- **Keine Rückfrage mehr bei neuen Artist-/Genre-Referenzen aus Discogs**:
+  Record-Artist, Track-Artist und Genre werden bei fehlendem Treffer jetzt
+  ohne Bestätigung automatisch angelegt (neue Methode
+  `resolveOrCreateArtistId`, angepasste `resolveGenreId`). Die manuelle
+  Artist-Eingabe im RecordForm (Freitext, unabhängig von Discogs) fragt
+  weiterhin wie bisher nach — dafür bleibt die bisherige `resolveArtistId`
+  unverändert bestehen.
+- **Land für neues Label aus Discogs-Daten**: Discogs' Release-Feld
+  `country` wird jetzt durch die gesamte Pipeline durchgereicht
+  (`DiscogsReleaseRepresentation` → `DiscogsRelease` →
+  `DiscogsReleaseResponse`). Neue Frontend-Zuordnungstabelle
+  `discogs-country-mapping.ts` (abgeleitet aus den 238 Code/Name-Paaren in
+  `country-referenzdaten.md`) übersetzt den englischen Discogs-Ländertext
+  in einen vorhandenen `Country`-Datensatz. Gelingt die Zuordnung, wird das
+  Label ebenfalls ohne Rückfrage angelegt; sonst öffnet sich unverändert
+  das bisherige `LabelForm`-Modal zur manuellen Länderwahl.
+- **Discogs-Suchfeld erhält Autofokus** beim Öffnen (`afterNextRender` auf
+  ein neues `viewChild`).
+- Tests angepasst/ergänzt: Backend (`DiscogsClientTests`,
+  `DiscogsResponseBuilderTests`, `GetDiscogsReleaseQueryHandlerTests`, alle
+  20 Integrationstests weiterhin grün), Frontend (neue
+  `discogs-country-mapping.spec.ts`, `record-form.spec.ts` und
+  `discogs-search.spec.ts` angepasst/ergänzt, alle 505 Tests grün,
+  Production-Build erfolgreich).
+- Wiki korrigiert: `user-stories-discogs.md` (US-DI3) und `discogs-api.md`
+  (neuer Abschnitt „Länderzuordnung für neues Label").
+- **Offen**: Die manuelle Live-Verifikation gegen den laufenden
+  Aspire-AppHost mit einem echten Discogs-Release wurde für diese
+  Nachbesserung noch nicht durchgeführt — nur automatisiert verifiziert.
+
 Abnahmekriterium:
 
 - Ein Record kann mit Discogs-Vorausfüllung angelegt werden; bei
