@@ -24,8 +24,18 @@ namespace MyMusic.Infrastructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "record_condition", new[] { "Mint", "NM", "VG+", "VG", "G+", "G", "P" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "record_format", new[] { "Album", "MaxiSingle", "Single", "EP", "Compilation", "CD-Album", "CD-MaxiSingle", "CD-Single", "CD-EP", "CD-Compilation" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(
+                modelBuilder,
+                "record_condition",
+                new[] { "Mint", "NM", "VG+", "VG", "G+", "G", "P" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(
+                modelBuilder,
+                "record_format",
+                new[]
+                {
+                    "Album", "MaxiSingle", "Single", "EP", "Compilation", "CD-Album", "CD-MaxiSingle", "CD-Single",
+                    "CD-EP", "CD-Compilation"
+                });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("MyMusic.Domain.DomainModels.Sammlung.Record.Record", b =>
