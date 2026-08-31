@@ -6,7 +6,7 @@ import { Autocomplete, AutocompleteOption } from '../../../shared/autocomplete/a
 import { Country } from '../../../shared/country/country';
 import { RECORD_FORMAT_LABELS, RecordFormat } from '../record';
 
-export type RecordSortBy = 'name' | 'releaseYear' | 'format';
+export type RecordSortBy = 'collectionNumber' | 'name' | 'releaseYear' | 'format';
 export type RecordSortDirection = 'asc' | 'desc';
 
 export interface RecordFilterValue {
@@ -55,7 +55,7 @@ export class RecordFilter {
     yearTo: '',
     countryId: '',
     format: '',
-    sortBy: 'name',
+    sortBy: 'collectionNumber',
   });
   protected readonly filterForm = form(this.filterModel, (path) => {
     debounce(path.name, 300);

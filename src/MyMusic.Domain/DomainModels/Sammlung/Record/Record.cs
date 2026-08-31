@@ -20,6 +20,8 @@ public sealed class Record
 
     public int Id { get; private init; }
 
+    public int CollectionNumber { get; private init; }
+
     public int LabelId { get; private init; }
 
     public int? ArtistId { get; private init; }
@@ -40,6 +42,7 @@ public sealed class Record
 
     internal Record(
         int id,
+        int collectionNumber,
         int labelId,
         int? artistId,
         byte[]? albumCover,
@@ -50,6 +53,10 @@ public sealed class Record
         string? information,
         Guid userId)
     {
+        if (collectionNumber <= 0)
+            throw new ArgumentException(
+                "Die Sammlungsnummer muss größer als 0 sein.", nameof(collectionNumber));
+
         if (labelId <= 0)
             throw new ArgumentException("Das Label ist erforderlich.", nameof(labelId));
 
@@ -85,6 +92,8 @@ public sealed class Record
 
         Id = id;
 
+        CollectionNumber = collectionNumber;
+
         LabelId = labelId;
 
         ArtistId = artistId;
@@ -105,6 +114,7 @@ public sealed class Record
     }
 
     public static Record Create(
+        int collectionNumber,
         int labelId,
         int? artistId,
         RecordFormat format,
@@ -114,7 +124,18 @@ public sealed class Record
         string? information,
         Guid userId)
     {
-        return new Record(0, labelId, artistId, null, format, albumName, releaseYear, condition, information, userId);
+        return new Record(
+            0,
+            collectionNumber,
+            labelId,
+            artistId,
+            null,
+            format,
+            albumName,
+            releaseYear,
+            condition,
+            information,
+            userId);
     }
 
     public Record Update(
@@ -128,6 +149,7 @@ public sealed class Record
     {
         return new Record(
             Id,
+            CollectionNumber,
             labelId,
             artistId,
             AlbumCover,
@@ -156,6 +178,7 @@ public sealed class Record
 
         return new Record(
             Id,
+            CollectionNumber,
             LabelId,
             ArtistId,
             albumCover,

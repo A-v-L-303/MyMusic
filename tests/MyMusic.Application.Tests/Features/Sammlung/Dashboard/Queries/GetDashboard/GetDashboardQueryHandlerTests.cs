@@ -115,10 +115,10 @@ public class GetDashboardQueryHandlerTests
         var fremderUserId = Guid.NewGuid();
 
         var eigenerRecord = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Album", 1990, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, "Album", 1990, RecordCondition.Vg, null, userId);
 
         var fremderRecord = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Album", 1990, RecordCondition.Vg, null, fremderUserId);
+            1, 1, null, RecordFormat.Album, "Album", 1990, RecordCondition.Vg, null, fremderUserId);
 
         Assert.True(recordFilter!.Compile()(eigenerRecord));
         Assert.False(recordFilter.Compile()(fremderRecord));

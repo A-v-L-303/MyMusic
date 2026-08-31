@@ -2,6 +2,7 @@ namespace MyMusic.IntegrationTests.TestSupport;
 
 public sealed record RecordResponseDto(
     int Id,
+    int CollectionNumber,
     int LabelId,
     string LabelName,
     int? ArtistId,

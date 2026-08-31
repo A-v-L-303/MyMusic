@@ -9,7 +9,7 @@ public class UpdateRecordCommandHandlerTests
         var userId = Guid.NewGuid();
 
         var existingRecord = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         var command = new UpdateRecordCommand
         {
@@ -117,7 +117,7 @@ public class UpdateRecordCommandHandlerTests
     {
         // arrange
         var fremderRecord = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         var command = new UpdateRecordCommand
         {

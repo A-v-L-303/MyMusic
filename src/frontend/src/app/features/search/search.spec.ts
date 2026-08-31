@@ -31,6 +31,7 @@ describe('Search', () => {
 
   const abbeyRoad: Record = {
     id: 1,
+    collectionNumber: 1,
     labelId: 1,
     labelName: 'Apple Records',
     artistId: 10,

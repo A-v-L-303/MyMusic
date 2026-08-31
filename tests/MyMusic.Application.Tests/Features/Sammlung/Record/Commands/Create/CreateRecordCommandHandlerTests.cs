@@ -22,6 +22,12 @@ public class CreateRecordCommandHandlerTests
 
         var repository = Substitute.For<IRepository<RecordEntity>>();
 
+        repository.GetProjectedAsync(
+                Arg.Any<Expression<Func<RecordEntity, bool>>>(),
+                Arg.Any<Expression<Func<RecordEntity, int>>>(),
+                Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<int>)[]);
+
         var labelRepository = Substitute.For<IRepository<LabelEntity>>();
 
         labelRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
@@ -39,6 +45,7 @@ public class CreateRecordCommandHandlerTests
         var response = await handler.HandleAsync(command, CancellationToken.None);
 
         // assert
+        Assert.Equal(1, response.CollectionNumber);
         Assert.Equal("Abbey Road", response.AlbumName);
         Assert.Equal("Apple Records", response.LabelName);
         Assert.Equal("The Beatles", response.ArtistName);
@@ -71,6 +78,12 @@ public class CreateRecordCommandHandlerTests
 
         var repository = Substitute.For<IRepository<RecordEntity>>();
 
+        repository.GetProjectedAsync(
+                Arg.Any<Expression<Func<RecordEntity, bool>>>(),
+                Arg.Any<Expression<Func<RecordEntity, int>>>(),
+                Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<int>)[]);
+
         var labelRepository = Substitute.For<IRepository<LabelEntity>>();
 
         labelRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
@@ -89,5 +102,48 @@ public class CreateRecordCommandHandlerTests
         Assert.Null(response.ArtistName);
 
         await artistRepository.DidNotReceive().GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task HandleAsync_BestehendeRecordsMitLuecke_VergibtMaxPlusEins()
+    {
+        // arrange
+        var userId = Guid.NewGuid();
+
+        var command = new CreateRecordCommand
+        {
+            LabelId = 1,
+            ArtistId = null,
+            Format = RecordFormat.Album,
+            AlbumName = "Let It Be",
+            ReleaseYear = 1970,
+            Condition = RecordCondition.Vg,
+            UserId = userId
+        };
+
+        var repository = Substitute.For<IRepository<RecordEntity>>();
+
+        repository.GetProjectedAsync(
+                Arg.Any<Expression<Func<RecordEntity, bool>>>(),
+                Arg.Any<Expression<Func<RecordEntity, int>>>(),
+                Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<int>)[1, 2, 4]);
+
+        var labelRepository = Substitute.For<IRepository<LabelEntity>>();
+
+        labelRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(LabelEntity.Create("Apple Records", 1, null, userId));
+
+        var artistRepository = Substitute.For<IRepository<ArtistEntity>>();
+
+        var handler = new CreateRecordCommandHandler(
+            repository, labelRepository, artistRepository, new RecordResponseBuilder());
+
+        // act
+        var response = await handler.HandleAsync(command, CancellationToken.None);
+
+        // assert
+        // Max(1, 2, 4) + 1 = 5, nicht 3 — eine durch Löschen entstandene Lücke wird nicht wieder aufgefüllt.
+        Assert.Equal(5, response.CollectionNumber);
     }
 }

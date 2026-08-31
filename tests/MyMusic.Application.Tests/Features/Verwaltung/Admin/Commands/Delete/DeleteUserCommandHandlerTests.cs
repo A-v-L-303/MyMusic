@@ -47,7 +47,7 @@ public class DeleteUserCommandHandlerTests
         var targetUserId = Guid.NewGuid();
 
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Album", 2000, RecordCondition.Nm, null, targetUserId);
+            1, 1, null, RecordFormat.Album, "Album", 2000, RecordCondition.Nm, null, targetUserId);
 
         var label = LabelEntity.Create("Label", 1, null, targetUserId);
 

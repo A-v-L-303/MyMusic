@@ -7,6 +7,7 @@ import { RecordCard } from './record-card';
 function buildRecord(overrides: Partial<Record> = {}): Record {
   return {
     id: 1,
+    collectionNumber: 12,
     labelId: 1,
     labelName: 'Apple Records',
     artistId: 10,
@@ -42,6 +43,17 @@ describe('RecordCard', () => {
     expect(element.querySelector('.record-artist')?.textContent).toContain('The Beatles');
     expect(element.querySelector('.record-sub')?.textContent).toContain('1969');
     expect(element.querySelector('.record-sub')?.textContent).toContain('Apple Records');
+  });
+
+  it('zeigt die Sammlungsnummer als Badge', () => {
+    // arrange
+    const fixture = createFixture(buildRecord({ collectionNumber: 12 }));
+
+    // act
+    const element = fixture.nativeElement as HTMLElement;
+
+    // assert
+    expect(element.querySelector('.record-meta > .badge')?.textContent?.trim()).toBe('#12');
   });
 
   it('zeigt keinen Künstlerbereich, wenn kein Hauptkünstler vorhanden ist', () => {

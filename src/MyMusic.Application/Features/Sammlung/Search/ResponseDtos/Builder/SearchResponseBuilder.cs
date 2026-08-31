@@ -6,6 +6,7 @@ public sealed class SearchResponseBuilder
     {
         return new SearchResultResponse(
             record.Id,
+            record.CollectionNumber,
             record.LabelId,
             labelName,
             record.ArtistId,

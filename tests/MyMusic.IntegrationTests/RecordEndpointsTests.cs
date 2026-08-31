@@ -139,6 +139,7 @@ public class RecordEndpointsTests
 
             var abbeyRoad = await ReadRecordAsync(createAbbeyRoadResponse, cancellationToken);
 
+            Assert.Equal(1, abbeyRoad.CollectionNumber);
             Assert.Equal(abbeyRoadName, abbeyRoad.AlbumName);
             Assert.Equal(ownerLabel1, abbeyRoad.LabelId);
             Assert.Equal($"Apple Records-{suffix}", abbeyRoad.LabelName);
@@ -157,6 +158,7 @@ public class RecordEndpointsTests
 
             var letItBe = await ReadRecordAsync(createLetItBeResponse, cancellationToken);
 
+            Assert.Equal(2, letItBe.CollectionNumber);
             Assert.Null(letItBe.ArtistId);
             Assert.Null(letItBe.ArtistName);
             Assert.Equal("Vg", letItBe.Condition);
@@ -169,6 +171,10 @@ public class RecordEndpointsTests
             // assert
             Assert.Equal(HttpStatusCode.Created, duplicateResponse.StatusCode);
 
+            var duplicateAbbeyRoad = await ReadRecordAsync(duplicateResponse, cancellationToken);
+
+            Assert.Equal(3, duplicateAbbeyRoad.CollectionNumber);
+
             // act: Liste mit Namensfilter (Suffix), beschränkt auf die eigene Sammlung
             var listBySuffixResponse = await GetRecordsAsync(
                 apiClient, ownerToken, suffix, cancellationToken: cancellationToken);
@@ -179,6 +185,11 @@ public class RecordEndpointsTests
             // assert
             Assert.NotNull(listBySuffix);
             Assert.Equal(3, listBySuffix.TotalCount);
+
+            // assert: ohne sortBy ist die Standard-Sortierung die Sammlungsnummer aufsteigend
+            Assert.Equal(1, listBySuffix.Items[0].CollectionNumber);
+            Assert.Equal(2, listBySuffix.Items[1].CollectionNumber);
+            Assert.Equal(3, listBySuffix.Items[2].CollectionNumber);
 
             // act: Liste nach labelId gefiltert -> nur Abbey-Road-Einträge (Original + Duplikat)
             var listByLabelResponse = await GetRecordsAsync(
@@ -391,6 +402,19 @@ public class RecordEndpointsTests
 
             // assert
             Assert.Equal(HttpStatusCode.NotFound, getDeletedResponse.StatusCode);
+
+            // act: neuen Record anlegen, nachdem Sammlungsnummer 2 durch das Löschen freigeworden ist ->
+            // die Lücke bleibt bestehen, die neue Nummer ist Max(1, 3) + 1 = 4, nicht die freigewordene 2
+            var createAfterDeleteResponse = await PostRecordAsync(
+                apiClient, ownerToken, ownerLabel1, ownerArtist, "Album", $"Revolver-{suffix}", 1966, null, null,
+                cancellationToken);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Created, createAfterDeleteResponse.StatusCode);
+
+            var revolver = await ReadRecordAsync(createAfterDeleteResponse, cancellationToken);
+
+            Assert.Equal(4, revolver.CollectionNumber);
 
             // act: fremden Record löschen -> 404
             var deleteForeignResponse = await DeleteRecordAsync(apiClient, otherToken, abbeyRoad.Id, cancellationToken);

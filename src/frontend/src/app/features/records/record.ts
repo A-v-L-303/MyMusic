@@ -27,6 +27,7 @@ export interface RecordTrack {
 
 export interface Record {
   id: number;
+  collectionNumber: number;
   labelId: number;
   labelName: string;
   artistId: number | null;

@@ -7,6 +7,7 @@ public sealed class RecordResponseBuilder
     {
         return new RecordResponse(
             record.Id,
+            record.CollectionNumber,
             record.LabelId,
             labelName,
             record.ArtistId,
