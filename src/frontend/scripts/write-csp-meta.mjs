@@ -26,7 +26,7 @@ const directives =
     "script-src 'self'",
     `style-src 'self' 'nonce-${nonce}'`,
     `connect-src ${connectSrcOrigins}`,
-    "img-src 'self' data:",
+    "img-src 'self' data: blob:",
   ].join('; ') + ';';
 
 const metaTag = `<meta http-equiv="Content-Security-Policy" content="${directives}" />`;

@@ -3032,6 +3032,50 @@ Nachbesserungen aus der manuellen Live-Verifikation (2026-08-22):
   `api.discogs.com/releases/91831` verifiziert, nicht nur angenommen.
   Regressionstest mit genau dieser realen Tracklist ergänzt.
 
+Nachbesserungen aus einem gemeldeten Bugfix (2026-08-31), siehe
+`docs/prompts/2026-08-31-fix-discogs-cover-bug.md`:
+
+- **Vorschaubilder in der Trefferliste fehlten**: `discogs-search.html`
+  band `result.thumbnailUrl` direkt als externe Discogs-CDN-URL in ein
+  `<img src>` ein — vom selben Hotlink-Schutz betroffen, der schon beim
+  Release-Cover zum Fix in ADR 0020 geführt hatte, nur nie auf diesen Pfad
+  angewendet. Fix: `DiscogsClient.SearchAsync` lädt jetzt auch die
+  Thumbnails serverseitig herunter und bettet sie parallel
+  (`Task.WhenAll`) als Data-URL ein, analog zum Cover; schlägt der
+  Download für einen einzelnen Treffer fehl, bleibt nur dessen
+  `thumbnailUrl` `null` (Platzhalter-Icon), die Suche schlägt nicht
+  insgesamt fehl.
+- **Cover beim Anlegen aus Discogs fehlte**: Ursache war nicht der
+  serverseitige Download (der funktionierte), sondern die im selben Zug
+  eingeführte Content Security Policy aus Block 7j (2026-08-26, ADR 0025)
+  — deren `connect-src` erlaubt kein `data:`, ein `fetch()` auf die vom
+  Backend gelieferte Cover-Data-URL (`record-form.ts`,
+  `applyDiscogsCover`) wurde dadurch clientseitig blockiert
+  (`TypeError: Failed to fetch`), ohne dass Backend oder Nutzer einen
+  Hinweis bekamen. Fix: Data-URL wird jetzt ohne `fetch()` direkt in ein
+  `File`-Objekt dekodiert (neue Funktion `dataUrlToFile()`), siehe
+  ADR 0028. `connect-src` bleibt unverändert (keine Aufweichung der
+  CSP-Mindestvorgabe).
+- **Nebenbefund beim Live-Test**: Die Cover-Vorschau im RecordForm
+  (`URL.createObjectURL()`, `blob:`-URL) war seit Block 7j unabhängig vom
+  Discogs-Pfad generell blockiert — `img-src` erlaubte `blob:` nicht.
+  Betraf auch den ganz gewöhnlichen manuellen Cover-Upload (Block 6i); die
+  eigentliche Speicherung war nicht betroffen, nur die Live-Vorschau vor
+  dem Speichern. Fix: `img-src` um `blob:` ergänzt (`write-csp-meta.mjs`,
+  `index.html`-Baseline, `wiki/sicherheit/sicherheitskonzept.md`), siehe
+  ADR 0025 (Nachtrag 2026-08-31).
+- Stiller Catch-Block beim serverseitigen Bild-Download
+  (`DownloadImageAsDataUrlAsync`, vormals `DownloadCoverImageAsDataUrlAsync`)
+  loggt einen fehlgeschlagenen Download jetzt strukturiert per Serilog
+  (`ILogger<DiscogsClient>`, `LogWarning`) statt ihn zu verschlucken.
+- Neue Unit-Tests für `DiscogsClient` (`MyMusic.Infrastructure.Tests`,
+  erstes `HttpMessageHandler`-Test-Double im Projekt) sowie angepasste
+  Frontend-Tests (`record-form.spec.ts`: Cover-Übernahme testet jetzt
+  direkt gegen eine Data-URL statt `fetch` zu mocken). Live gegen den
+  laufenden Aspire-AppHost verifiziert: Discogs-Suche mit sichtbaren
+  Thumbnails, Übernahme eines echten Treffers („Nevermind", Nirvana, DGC,
+  1991) inkl. korrekt gespeichertem Cover auf der RecordCard.
+
 Abnahmekriterium:
 
 - Ein Record kann mit Discogs-Vorausfüllung angelegt werden; bei
@@ -3039,7 +3083,8 @@ Abnahmekriterium:
   **Vollständig erfüllt** — automatisierte Tests grün und zusätzlich in
   mehreren Runden live gegen die echte Discogs-API verifiziert (u. a.
   anhand des Various-Artists-Release 91831 „Atmos – Headcleaner"), zuletzt
-  ohne weitere Befunde.
+  ohne weitere Befunde. Cover-Übernahme und Trefferlisten-Vorschaubilder
+  nach dem Bugfix vom 2026-08-31 erneut live bestätigt.
 
 ## 9. Dashboard
 

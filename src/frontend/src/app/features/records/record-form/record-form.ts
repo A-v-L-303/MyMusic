@@ -38,6 +38,7 @@ import { Label } from '../../labels/label';
 import { LabelForm } from '../../labels/label-form/label-form';
 import { LabelService } from '../../labels/label.service';
 import { DiscogsRelease, DiscogsTrack } from '../discogs';
+import { dataUrlToFile } from '../discogs-cover';
 import {
   sanitizeDiscogsArtistName,
   sanitizeDiscogsGenreName,
@@ -541,25 +542,18 @@ export class RecordForm implements OnDestroy {
 
     this.discogsResolvedGenreId.set(genreName ? await this.resolveGenreId(genreName) : null);
 
-    await this.applyDiscogsCover(release.coverImageUrl);
+    this.applyDiscogsCover(release.coverImageUrl);
 
     this.discogsTracklist.set(release.tracklist);
   }
 
-  private async applyDiscogsCover(coverImageUrl: string | null): Promise<void> {
+  private applyDiscogsCover(coverImageUrl: string | null): void {
     if (!coverImageUrl) {
       return;
     }
 
     try {
-      const response = await fetch(coverImageUrl);
-
-      if (!response.ok) {
-        throw new Error(`Cover-Download fehlgeschlagen: HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const file = new File([blob], 'discogs-cover', { type: blob.type });
+      const file = dataUrlToFile(coverImageUrl, 'discogs-cover');
 
       this.revokePreviewObjectUrl();
       this.selectedCoverFile.set(file);
