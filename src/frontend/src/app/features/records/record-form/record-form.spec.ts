@@ -23,6 +23,7 @@ function wait(ms: number): Promise<void> {
 
 const existingRecord: Record = {
   id: 5,
+  collectionNumber: 5,
   labelId: 1,
   labelName: 'Columbia',
   artistId: 2,

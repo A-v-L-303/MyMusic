@@ -121,7 +121,7 @@ public class DeleteArtistCommandHandlerTests
         repository.GetByIdAsync(artist.Id, Arg.Any<CancellationToken>()).Returns(artist);
 
         var referencingRecord = RecordEntity.Create(
-            1, artist.Id, RecordFormat.Album, "Abacab", 1981, RecordCondition.Vg, null, userId);
+            1, 1, artist.Id, RecordFormat.Album, "Abacab", 1981, RecordCondition.Vg, null, userId);
 
         var recordRepository = Substitute.For<IRepository<RecordEntity>>();
 

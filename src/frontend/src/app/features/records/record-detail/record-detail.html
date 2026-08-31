@@ -24,6 +24,9 @@
             {{ record.releaseYear }} · {{ record.labelName }}
           </div>
           <div class="mt-2 flex flex-wrap items-center gap-1.5">
+            <span class="badge badge-neutral tnum" title="Sammlungsnummer"
+              >#{{ record.collectionNumber }}</span
+            >
             <span class="badge badge-neutral" title="Format des Albums">{{ formatLabel() }}</span>
             <span class="grade" [class]="gradeClass()" [title]="gradeTitle()">
               {{ gradeText() }}

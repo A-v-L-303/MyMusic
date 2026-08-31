@@ -2,6 +2,7 @@ namespace MyMusic.Application.Features.Sammlung.Record.ResponseDtos;
 
 public sealed record RecordResponse(
     int Id,
+    int CollectionNumber,
     int LabelId,
     string LabelName,
     int? ArtistId,

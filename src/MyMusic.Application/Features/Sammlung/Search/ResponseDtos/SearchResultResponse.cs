@@ -2,6 +2,7 @@ namespace MyMusic.Application.Features.Sammlung.Search.ResponseDtos;
 
 public sealed record SearchResultResponse(
     int Id,
+    int CollectionNumber,
     int LabelId,
     string LabelName,
     int? ArtistId,

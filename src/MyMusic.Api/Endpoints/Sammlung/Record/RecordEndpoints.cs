@@ -63,7 +63,7 @@ public static class RecordEndpoints
             yearTo,
             countryId,
             format,
-            sortBy ?? "name",
+            sortBy ?? "collectionNumber",
             sortDirection ?? "asc");
 
         return await mediator.SendAsync(query, cancellationToken);

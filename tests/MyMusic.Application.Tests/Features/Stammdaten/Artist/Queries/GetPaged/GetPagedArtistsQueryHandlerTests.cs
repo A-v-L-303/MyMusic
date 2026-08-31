@@ -126,13 +126,13 @@ public class GetPagedArtistsQueryHandlerTests
         var predicate = capturedFilter!.Compile();
 
         var eigenerRecordRichtigesLabel = RecordEntity.Create(
-            5, 1, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            1, 5, 1, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         var eigenerRecordFalschesLabel = RecordEntity.Create(
-            6, 1, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            2, 6, 1, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         var fremderRecordRichtigesLabel = RecordEntity.Create(
-            5, 1, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 5, 1, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         Assert.True(predicate(eigenerRecordRichtigesLabel));
         Assert.False(predicate(eigenerRecordFalschesLabel));

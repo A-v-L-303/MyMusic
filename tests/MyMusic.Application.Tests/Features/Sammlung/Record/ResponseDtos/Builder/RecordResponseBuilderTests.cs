@@ -9,13 +9,14 @@ public class RecordResponseBuilderTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, "Erste Pressung", Guid.NewGuid());
+            3, 1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, "Erste Pressung", Guid.NewGuid());
 
         // act
         var response = _builder.Build(record, "Apple Records", "The Beatles", []);
 
         // assert
         Assert.Equal(record.Id, response.Id);
+        Assert.Equal(3, response.CollectionNumber);
         Assert.Equal(1, response.LabelId);
         Assert.Equal("Apple Records", response.LabelName);
         Assert.Equal(2, response.ArtistId);
@@ -34,7 +35,7 @@ public class RecordResponseBuilderTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid());
+            1, 1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid());
 
         var trackResponses = new List<RecordTrackResponse>
         {
@@ -53,7 +54,7 @@ public class RecordResponseBuilderTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid());
 
         byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
@@ -71,7 +72,7 @@ public class RecordResponseBuilderTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Compilation, "Various Artists", 1999, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Compilation, "Various Artists", 1999, RecordCondition.Vg, null, Guid.NewGuid());
 
         // act
         var response = _builder.Build(record, "Various Records", null, []);
@@ -88,9 +89,9 @@ public class RecordResponseBuilderTests
         var records = new List<RecordEntity>
         {
             RecordEntity.Create(
-                1, 10, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid()),
+                1, 1, 10, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, null, Guid.NewGuid()),
             RecordEntity.Create(
-                2, null, RecordFormat.Compilation, "Various", 1999, RecordCondition.Vg, null, Guid.NewGuid())
+                2, 2, null, RecordFormat.Compilation, "Various", 1999, RecordCondition.Vg, null, Guid.NewGuid())
         };
 
         var labelNamesById = new Dictionary<int, string> { [1] = "Apple Records", [2] = "Various Records" };

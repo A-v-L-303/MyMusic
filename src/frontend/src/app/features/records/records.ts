@@ -54,7 +54,7 @@ export class Records {
   protected readonly filterYearTo = signal<number | undefined>(undefined);
   protected readonly filterCountryId = signal<number | undefined>(undefined);
   protected readonly filterFormat = signal<RecordFormat | undefined>(undefined);
-  protected readonly filterSortBy = signal<RecordSortBy>('name');
+  protected readonly filterSortBy = signal<RecordSortBy>('collectionNumber');
   protected readonly filterSortDirection = signal<RecordSortDirection>('asc');
   protected readonly page = signal(1);
 

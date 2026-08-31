@@ -17,6 +17,7 @@ function wait(ms: number): Promise<void> {
 function buildRecord(overrides: Partial<Record> = {}): Record {
   return {
     id: 1,
+    collectionNumber: 7,
     labelId: 1,
     labelName: 'Columbia',
     artistId: 2,
@@ -152,13 +153,24 @@ describe('RecordDetail', () => {
     expect(grade.getAttribute('title')).toBe('Zustand: ' + RECORD_CONDITION_LABELS.VgPlus);
   });
 
+  it('zeigt die Sammlungsnummer als Badge', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture(buildRecord({ collectionNumber: 7 }));
+
+    // assert
+    expect(
+      compiled(fixture).querySelector('[title="Sammlungsnummer"]')?.textContent?.trim(),
+    ).toBe('#7');
+  });
+
   it('hat Tooltips am Format-Badge, am Schließen- und am Track-hinzufügen-Button', async () => {
     // arrange
     // act
     const fixture = await createLoadedFixture();
 
     // assert
-    expect(compiled(fixture).querySelector('.badge')?.getAttribute('title')).toBe(
+    expect(compiled(fixture).querySelector('[title="Format des Albums"]')?.getAttribute('title')).toBe(
       'Format des Albums',
     );
     expect(

@@ -63,9 +63,12 @@ public sealed class GetPagedRecordsQueryHandler(
             "format" => descending
                 ? queryable => queryable.OrderByDescending(record => record.Format)
                 : queryable => queryable.OrderBy(record => record.Format),
-            _ => descending
+            "name" => descending
                 ? queryable => queryable.OrderByDescending(record => record.AlbumName)
-                : queryable => queryable.OrderBy(record => record.AlbumName)
+                : queryable => queryable.OrderBy(record => record.AlbumName),
+            _ => descending
+                ? queryable => queryable.OrderByDescending(record => record.CollectionNumber)
+                : queryable => queryable.OrderBy(record => record.CollectionNumber)
         };
     }
 

@@ -18,7 +18,7 @@ const defaultValue: RecordFilterValue = {
   yearTo: undefined,
   countryId: undefined,
   format: undefined,
-  sortBy: 'name',
+  sortBy: 'collectionNumber',
   sortDirection: 'asc',
 };
 
@@ -191,6 +191,33 @@ describe('RecordFilter', () => {
       ...defaultValue,
       yearFrom: 1960,
       yearTo: 1969,
+    });
+  });
+
+  it('ist standardmäßig nach Sammlungsnummer sortiert und kann auf ein anderes Feld umgestellt werden', async () => {
+    // arrange
+    const fixture = createComponent();
+    const filterChangeHandler = vi.fn();
+    fixture.componentInstance.filterChange.subscribe(filterChangeHandler);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const select = fixture.nativeElement.querySelector(
+      'select[aria-label="Sortieren nach"]',
+    ) as HTMLSelectElement;
+
+    // assert: Standard ist die Sammlungsnummer
+    expect(select.value).toBe('collectionNumber');
+
+    // act
+    select.value = 'releaseYear';
+    select.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // assert
+    expect(filterChangeHandler).toHaveBeenLastCalledWith({
+      ...defaultValue,
+      sortBy: 'releaseYear',
     });
   });
 

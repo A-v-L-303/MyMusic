@@ -364,7 +364,7 @@ public class GetPagedSearchQueryHandlerTests
         var keinTreffer = CreateRecord(userId, labelId: 3, artistId: 99, albumName: "Anderer Titel");
 
         var fremderTreffer = RecordEntity.Create(
-            2, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 2, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         Assert.True(predicate(trefferAlbumtitel));
         Assert.True(predicate(trefferArtist));
@@ -421,7 +421,7 @@ public class GetPagedSearchQueryHandlerTests
         var trefferUeberTrack = CreateRecord(userId, labelId: 1, artistId: null, albumName: "Anderer Titel");
 
         var fremderTrefferUeberTrack = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Anderer Titel", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Anderer Titel", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         Assert.True(predicate(trefferUeberTrack));
 
@@ -551,6 +551,6 @@ public class GetPagedSearchQueryHandlerTests
     private static RecordEntity CreateRecord(Guid userId, int labelId, int? artistId, string albumName)
     {
         return RecordEntity.Create(
-            labelId, artistId, RecordFormat.Album, albumName, 1969, RecordCondition.Vg, null, userId);
+            1, labelId, artistId, RecordFormat.Album, albumName, 1969, RecordCondition.Vg, null, userId);
     }
 }

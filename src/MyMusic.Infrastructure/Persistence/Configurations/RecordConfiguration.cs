@@ -11,6 +11,10 @@ public sealed class RecordConfiguration : IEntityTypeConfiguration<Record>
         builder.Property(record => record.Id)
             .HasColumnName("id");
 
+        builder.Property(record => record.CollectionNumber)
+            .HasColumnName("collection_number")
+            .IsRequired();
+
         builder.Property(record => record.LabelId)
             .HasColumnName("label_id")
             .IsRequired();
@@ -50,6 +54,9 @@ public sealed class RecordConfiguration : IEntityTypeConfiguration<Record>
         builder.Property(record => record.UserId)
             .HasColumnName("user_id")
             .IsRequired();
+
+        builder.HasIndex(record => new { record.UserId, record.CollectionNumber })
+            .IsUnique();
 
         builder.HasOne<Label>()
             .WithMany()

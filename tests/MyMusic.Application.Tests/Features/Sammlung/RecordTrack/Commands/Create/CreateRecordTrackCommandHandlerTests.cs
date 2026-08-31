@@ -11,7 +11,7 @@ public class CreateRecordTrackCommandHandlerTests
         const int recordId = 1;
 
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         var command = new CreateRecordTrackCommand
         {
@@ -112,7 +112,7 @@ public class CreateRecordTrackCommandHandlerTests
     {
         // arrange
         var fremderRecord = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         var command = new CreateRecordTrackCommand
         {
@@ -157,7 +157,7 @@ public class CreateRecordTrackCommandHandlerTests
         var userId = Guid.NewGuid();
 
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         var command = new CreateRecordTrackCommand
         {

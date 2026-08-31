@@ -28,6 +28,9 @@
     </div>
   </div>
   <div class="record-meta">
+    <span class="badge badge-neutral tnum self-start" title="Sammlungsnummer"
+      >#{{ record().collectionNumber }}</span
+    >
     <div class="record-title">{{ record().albumName }}</div>
     @if (record().artistName) {
       <div class="record-artist">{{ record().artistName }}</div>

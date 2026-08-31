@@ -182,6 +182,8 @@ public class GetPagedRecordsQueryHandlerTests
 
     [Theory]
     [InlineData(null, null)]
+    [InlineData("collectionnumber", "asc")]
+    [InlineData("collectionnumber", "desc")]
     [InlineData("name", "asc")]
     [InlineData("name", "desc")]
     [InlineData("releaseyear", "asc")]
@@ -223,10 +225,10 @@ public class GetPagedRecordsQueryHandlerTests
         Assert.NotNull(capturedOrderBy);
 
         var recordB = RecordEntity.Create(
-            1, null, RecordFormat.CdAlbum, "B-Album", 2000, RecordCondition.Vg, null, userId);
+            2, 1, null, RecordFormat.CdAlbum, "B-Album", 2000, RecordCondition.Vg, null, userId);
 
         var recordA = RecordEntity.Create(
-            1, null, RecordFormat.Album, "A-Album", 1990, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, "A-Album", 1990, RecordCondition.Vg, null, userId);
 
         var ordered = capturedOrderBy!(new List<RecordEntity> { recordB, recordA }.AsQueryable()).ToList();
 
@@ -241,6 +243,56 @@ public class GetPagedRecordsQueryHandlerTests
         };
 
         Assert.Same(expectedFirst, ordered[0]);
+    }
+
+    [Fact]
+    public async Task HandleAsync_OhneSortBy_SortiertNachSammlungsnummerNichtNachAlbumname()
+    {
+        // arrange
+        var userId = Guid.NewGuid();
+
+        Func<IQueryable<RecordEntity>, IOrderedQueryable<RecordEntity>>? capturedOrderBy = null;
+
+        var repository = Substitute.For<IRepository<RecordEntity>>();
+
+        repository.GetPagedAsync(
+                Arg.Any<Expression<Func<RecordEntity, bool>>>(),
+                Arg.Do<Func<IQueryable<RecordEntity>, IOrderedQueryable<RecordEntity>>>(
+                    orderBy => capturedOrderBy = orderBy),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns((Items: (IReadOnlyList<RecordEntity>)new List<RecordEntity>(), TotalCount: 0));
+
+        var labelRepository = Substitute.For<IRepository<LabelEntity>>();
+
+        var artistRepository = Substitute.For<IRepository<ArtistEntity>>();
+
+        var handler = new GetPagedRecordsQueryHandler(
+            repository, labelRepository, artistRepository, new RecordResponseBuilder());
+
+        var query = new GetPagedRecordsQuery(
+            userId, 1, 20, null, null, null, null, null, null, null, null, null);
+
+        // act
+        await handler.HandleAsync(query, CancellationToken.None);
+
+        // assert
+        Assert.NotNull(capturedOrderBy);
+
+        // Sammlungsnummer 1 hat den alphabetisch spaeteren Albumnamen "Zebra" - waere die Sortierung
+        // weiterhin (wie vor der Sammlungsnummer) nach Albumname vorgegeben, stuende "Alpha" (Nummer 2)
+        // an erster Stelle. Der Default ist jetzt aber die Sammlungsnummer, nicht der Albumname.
+        var recordMitNiedrigererNummer = RecordEntity.Create(
+            1, 1, null, RecordFormat.Album, "Zebra", 1990, RecordCondition.Vg, null, userId);
+
+        var recordMitHoehererNummer = RecordEntity.Create(
+            2, 1, null, RecordFormat.Album, "Alpha", 2000, RecordCondition.Vg, null, userId);
+
+        var ordered = capturedOrderBy!(
+            new List<RecordEntity> { recordMitHoehererNummer, recordMitNiedrigererNummer }.AsQueryable()).ToList();
+
+        Assert.Same(recordMitNiedrigererNummer, ordered[0]);
     }
 
     [Fact]
@@ -354,6 +406,6 @@ public class GetPagedRecordsQueryHandlerTests
     private static RecordEntity CreateRecord(
         Guid userId, int labelId, int? artistId, string albumName, int year, RecordFormat format = RecordFormat.Album)
     {
-        return RecordEntity.Create(labelId, artistId, format, albumName, year, RecordCondition.Vg, null, userId);
+        return RecordEntity.Create(1, labelId, artistId, format, albumName, year, RecordCondition.Vg, null, userId);
     }
 }

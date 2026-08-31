@@ -9,7 +9,17 @@ public sealed class CreateRecordCommandHandler(
 {
     public async Task<RecordResponse> HandleAsync(CreateRecordCommand command, CancellationToken cancellationToken)
     {
+        var existingCollectionNumbers = await repository.GetProjectedAsync(
+            r => r.UserId == command.UserId,
+            r => r.CollectionNumber,
+            cancellationToken);
+
+        var nextCollectionNumber = existingCollectionNumbers.Count == 0
+            ? 1
+            : existingCollectionNumbers.Max() + 1;
+
         var record = RecordEntity.Create(
+            nextCollectionNumber,
             command.LabelId,
             command.ArtistId,
             command.Format,

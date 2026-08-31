@@ -174,6 +174,7 @@ describe('RecordService', () => {
     // arrange
     const record: Record = {
       id: 1,
+      collectionNumber: 1,
       labelId: 1,
       labelName: 'Columbia',
       artistId: 2,
@@ -218,6 +219,7 @@ describe('RecordService', () => {
     // arrange
     const created: Record = {
       id: 1,
+      collectionNumber: 1,
       labelId: 1,
       labelName: 'Columbia',
       artistId: 2,
@@ -256,6 +258,7 @@ describe('RecordService', () => {
     // arrange
     const updated: Record = {
       id: 1,
+      collectionNumber: 1,
       labelId: 1,
       labelName: 'Columbia',
       artistId: 2,
@@ -308,6 +311,7 @@ describe('RecordService', () => {
     // arrange
     const updated: Record = {
       id: 1,
+      collectionNumber: 1,
       labelId: 1,
       labelName: 'Columbia',
       artistId: 2,

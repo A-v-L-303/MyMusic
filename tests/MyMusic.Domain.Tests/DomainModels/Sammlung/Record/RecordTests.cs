@@ -12,9 +12,10 @@ public class RecordTests
 
         // act
         var record = RecordEntity.Create(
-            1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, "Erste Pressung", userId);
+            5, 1, 2, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Nm, "Erste Pressung", userId);
 
         // assert
+        Assert.Equal(5, record.CollectionNumber);
         Assert.Equal(1, record.LabelId);
         Assert.Equal(2, record.ArtistId);
         Assert.Null(record.AlbumCover);
@@ -34,10 +35,26 @@ public class RecordTests
 
         // act
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Compilation, "Various Artists", 1999, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Compilation, "Various Artists", 1999, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Null(record.ArtistId);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Create_UngueltigeCollectionNumber_WirftArgumentException(int collectionNumber)
+    {
+        // arrange
+        var userId = Guid.NewGuid();
+
+        // act
+        var act = () => RecordEntity.Create(
+            collectionNumber, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+
+        // assert
+        Assert.Throws<ArgumentException>(act);
     }
 
     [Theory]
@@ -50,7 +67,7 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
-            labelId, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            1, labelId, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Throws<ArgumentException>(act);
@@ -64,7 +81,7 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
-            1, null, RecordFormat.Album, string.Empty, 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, string.Empty, 1969, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Throws<ArgumentException>(act);
@@ -80,7 +97,7 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
-            1, null, RecordFormat.Album, zuLangerName, 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, zuLangerName, 1969, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Throws<ArgumentException>(act);
@@ -99,7 +116,7 @@ public class RecordTests
 
         // act
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, albumName, 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, albumName, 1969, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Equal(albumName, record.AlbumName);
@@ -116,7 +133,7 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
-            1, null, RecordFormat.Album, albumName, 1969, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, albumName, 1969, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Throws<ArgumentException>(act);
@@ -130,6 +147,7 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
+            1,
             1,
             null,
             RecordFormat.Album,
@@ -151,7 +169,7 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", _currentYear + 1, RecordCondition.Vg, null, userId);
+            1, 1, null, RecordFormat.Album, "Abbey Road", _currentYear + 1, RecordCondition.Vg, null, userId);
 
         // assert
         Assert.Throws<ArgumentException>(act);
@@ -167,7 +185,7 @@ public class RecordTests
 
         // act
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, information, userId);
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, information, userId);
 
         // assert
         Assert.Equal(information, record.Information);
@@ -183,20 +201,20 @@ public class RecordTests
 
         // act
         var act = () => RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, zuLangeInformation, userId);
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, zuLangeInformation, userId);
 
         // assert
         Assert.Throws<ArgumentException>(act);
     }
 
     [Fact]
-    public void Update_GibtNeueInstanzMitGeaendertenWertenZurueck_BehaeltIdUserIdUndCover()
+    public void Update_GibtNeueInstanzMitGeaendertenWertenZurueck_BehaeltIdUserIdCollectionNumberUndCover()
     {
         // arrange
         var userId = Guid.NewGuid();
 
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
+            5, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, userId);
 
         // act
         var updatedRecord = record.Update(
@@ -214,6 +232,9 @@ public class RecordTests
         Assert.Equal(record.Id, updatedRecord.Id);
         Assert.Equal(userId, updatedRecord.UserId);
         Assert.Equal(record.AlbumCover, updatedRecord.AlbumCover);
+
+        // die Sammlungsnummer wird über Update nie verändert (einmalig bei Create vergeben)
+        Assert.Equal(5, updatedRecord.CollectionNumber);
     }
 
     [Fact]
@@ -221,7 +242,7 @@ public class RecordTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            5, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
 
@@ -232,6 +253,9 @@ public class RecordTests
         Assert.NotSame(record, updatedRecord);
         Assert.Null(record.AlbumCover);
         Assert.Equal(jpegBytes, updatedRecord.AlbumCover);
+
+        // die Sammlungsnummer wird über SetAlbumCover nie verändert (einmalig bei Create vergeben)
+        Assert.Equal(5, updatedRecord.CollectionNumber);
     }
 
     [Fact]
@@ -239,7 +263,7 @@ public class RecordTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
@@ -255,7 +279,7 @@ public class RecordTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         // act
         var act = () => record.SetAlbumCover([]);
@@ -269,7 +293,7 @@ public class RecordTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         var zuGrosseDatei = new byte[RecordEntity.MaxAlbumCoverSizeBytes + 1];
 
@@ -289,7 +313,7 @@ public class RecordTests
     {
         // arrange
         var record = RecordEntity.Create(
-            1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
+            1, 1, null, RecordFormat.Album, "Abbey Road", 1969, RecordCondition.Vg, null, Guid.NewGuid());
 
         byte[] textBytes = "Kein Bild"u8.ToArray();
 
