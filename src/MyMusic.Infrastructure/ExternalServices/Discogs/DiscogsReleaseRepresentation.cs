@@ -10,4 +10,5 @@ public sealed record DiscogsReleaseRepresentation(
     List<string>? Styles,
     List<DiscogsFormatRepresentation>? Formats,
     List<DiscogsImageRepresentation>? Images,
-    List<DiscogsTrackRepresentation>? Tracklist);
+    List<DiscogsTrackRepresentation>? Tracklist,
+    string? Country);

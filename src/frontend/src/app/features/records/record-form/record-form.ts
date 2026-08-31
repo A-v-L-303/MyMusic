@@ -38,6 +38,7 @@ import { Label } from '../../labels/label';
 import { LabelForm } from '../../labels/label-form/label-form';
 import { LabelService } from '../../labels/label.service';
 import { DiscogsRelease, DiscogsTrack } from '../discogs';
+import { resolveDiscogsCountryId } from '../discogs-country-mapping';
 import { dataUrlToFile } from '../discogs-cover';
 import {
   sanitizeDiscogsArtistName,
@@ -165,7 +166,6 @@ export class RecordForm implements OnDestroy {
   protected readonly labelCreateOpen = signal(false);
   protected readonly discogsLabelPrefillName = signal('');
   protected readonly pendingArtistConfirmName = signal<string | null>(null);
-  protected readonly pendingGenreConfirmName = signal<string | null>(null);
 
   protected readonly discogsSearchOpen = signal(false);
   private readonly discogsTracklist = signal<DiscogsTrack[]>([]);
@@ -173,7 +173,6 @@ export class RecordForm implements OnDestroy {
   private readonly discogsResolvedGenreId = signal<number | null>(null);
 
   private pendingArtistResolve: ((id: number | null) => void) | null = null;
-  private pendingGenreResolve: ((id: number | null) => void) | null = null;
   private pendingLabelResolve: ((id: number | null) => void) | null = null;
 
   protected readonly labelSuggestions = computed<AutocompleteOption[]>(() =>
@@ -289,15 +288,10 @@ export class RecordForm implements OnDestroy {
   }
 
   /**
-   * Löst einen Artist-Namen zu einer Id auf: exakter Treffer in `artists()` wird direkt
-   * referenziert, sonst öffnet sich eine Rückfrage zur Neuanlage (US-DI3). Wird sowohl für
-   * den Record-Artist als auch für jeden Track-Artist beim Discogs-Import wiederverwendet.
-   *
-   * Discogs-Namen können Zeichen enthalten, die `ARTIST_NAME_PATTERN` nicht erlaubt (z. B.
-   * Disambiguierungs-Suffixe wie „ (2)", Kommas, Anführungszeichen) — der Name wird deshalb
-   * vor dem Existenz-Abgleich und der Neuanlage über {@link sanitizeDiscogsArtistName}
-   * bereinigt. Manuell über die Autocomplete eingegebene Namen sind bereits konform und
-   * bleiben durch die Bereinigung unverändert.
+   * Löst einen manuell eingegebenen Artist-Namen (Blur der Autocomplete) zu einer Id auf:
+   * exakter Treffer in `artists()` wird direkt referenziert, sonst öffnet sich eine Rückfrage
+   * zur Neuanlage. Für Artist-Referenzen aus dem Discogs-Import siehe stattdessen
+   * {@link resolveOrCreateArtistId}, die ohne Rückfrage anlegt.
    */
   private resolveArtistId(name: string): Promise<number | null> {
     const cleanedName = sanitizeDiscogsArtistName(name);
@@ -350,15 +344,53 @@ export class RecordForm implements OnDestroy {
   }
 
   /**
-   * Löst einen Genre-Namen zu einer Id auf, analog zu {@link resolveArtistId} — inkl.
-   * Bereinigung über {@link sanitizeDiscogsGenreName} (Discogs-Genres/-Styles können Kommas
-   * oder andere vom Genre-Formular nicht erlaubte Zeichen enthalten).
+   * Löst einen Artist-Namen aus dem Discogs-Import zu einer Id auf (Record-Artist und jeder
+   * Track-Artist) — inkl. Bereinigung über {@link sanitizeDiscogsArtistName}, aber ohne
+   * Rückfrage bei fehlendem Treffer, anders als {@link resolveArtistId} für die manuelle
+   * Eingabe.
    */
-  private resolveGenreId(name: string): Promise<number | null> {
+  private async resolveOrCreateArtistId(name: string): Promise<number | null> {
+    const cleanedName = sanitizeDiscogsArtistName(name);
+
+    if (cleanedName.length < ARTIST_MIN_NAME_LENGTH) {
+      return null;
+    }
+
+    const existing = this.artists().find(
+      (artist) => artist.name.toLowerCase() === cleanedName.toLowerCase(),
+    );
+
+    if (existing) {
+      return existing.id;
+    }
+
+    try {
+      const artist = await firstValueFrom(this.artistService.create({ name: cleanedName }));
+
+      return artist.id;
+    } catch (error) {
+      if (!(error instanceof HttpErrorResponse)) {
+        throw error;
+      }
+
+      this.errorModalService.showFromHttpError(error, 'Künstler');
+
+      return null;
+    }
+  }
+
+  /**
+   * Löst einen Genre-Namen zu einer Id auf, inkl. Bereinigung über
+   * {@link sanitizeDiscogsGenreName} (Discogs-Genres/-Styles können Kommas oder andere vom
+   * Genre-Formular nicht erlaubte Zeichen enthalten). Genre-Anlage passiert ausschließlich über
+   * den Discogs-Import, daher ohne Rückfrage — anders als bei Artist/Label gibt es hier keinen
+   * manuellen Eingabepfad, der davon unberührt bleiben müsste.
+   */
+  private async resolveGenreId(name: string): Promise<number | null> {
     const cleanedName = sanitizeDiscogsGenreName(name);
 
     if (cleanedName.length < GENRE_MIN_NAME_LENGTH) {
-      return Promise.resolve(null);
+      return null;
     }
 
     const existing = this.genres().find(
@@ -366,56 +398,40 @@ export class RecordForm implements OnDestroy {
     );
 
     if (existing) {
-      return Promise.resolve(existing.id);
-    }
-
-    return new Promise<number | null>((resolve) => {
-      this.pendingGenreResolve = resolve;
-      this.pendingGenreConfirmName.set(cleanedName);
-    });
-  }
-
-  protected async onGenreCreateConfirmed(): Promise<void> {
-    const name = this.pendingGenreConfirmName();
-    this.pendingGenreConfirmName.set(null);
-
-    if (!name) {
-      return;
+      return existing.id;
     }
 
     try {
-      const genre = await firstValueFrom(this.genreService.create({ name }));
-      this.pendingGenreResolve?.(genre.id);
+      const genre = await firstValueFrom(this.genreService.create({ name: cleanedName }));
+
+      return genre.id;
     } catch (error) {
       if (!(error instanceof HttpErrorResponse)) {
         throw error;
       }
 
       this.errorModalService.showFromHttpError(error, 'Genre');
-      this.pendingGenreResolve?.(null);
-    } finally {
-      this.pendingGenreResolve = null;
+
+      return null;
     }
   }
 
-  protected onGenreCreateCancelled(): void {
-    this.pendingGenreConfirmName.set(null);
-    this.pendingGenreResolve?.(null);
-    this.pendingGenreResolve = null;
-  }
-
   /**
-   * Löst einen Label-Namen zu einer Id auf. Anders als Artist/Genre braucht ein neues Label
-   * zwingend ein Herkunftsland (das Discogs nicht liefert) — die Neuanlage läuft daher über
-   * das volle, vorbefüllte `LabelForm`-Modal statt über einen einfachen Bestätigungsdialog.
-   * Name wird über {@link sanitizeDiscogsLabelName} bereinigt (Discogs-Labels tragen häufig
-   * einen Disambiguierungs-Suffix wie „ (2)").
+   * Löst einen Label-Namen aus dem Discogs-Import zu einer Id auf. Anders als Artist/Genre
+   * braucht ein neues Label zwingend ein Herkunftsland — lässt sich der von Discogs gelieferte
+   * Ländertext über {@link resolveDiscogsCountryId} einem vorhandenen Land zuordnen, wird das
+   * Label direkt ohne Rückfrage angelegt; sonst öffnet sich wie bisher das vorbefüllte
+   * `LabelForm`-Modal zur manuellen Länderwahl. Name wird über {@link sanitizeDiscogsLabelName}
+   * bereinigt (Discogs-Labels tragen häufig einen Disambiguierungs-Suffix wie „ (2)").
    */
-  private resolveLabelId(name: string): Promise<number | null> {
+  private async resolveLabelId(
+    name: string,
+    discogsCountry: string | null,
+  ): Promise<number | null> {
     const cleanedName = sanitizeDiscogsLabelName(name);
 
     if (!cleanedName) {
-      return Promise.resolve(null);
+      return null;
     }
 
     const existing = this.labels().find(
@@ -423,7 +439,27 @@ export class RecordForm implements OnDestroy {
     );
 
     if (existing) {
-      return Promise.resolve(existing.id);
+      return existing.id;
+    }
+
+    const countryId = resolveDiscogsCountryId(discogsCountry, this.countries());
+
+    if (countryId) {
+      try {
+        const label = await firstValueFrom(
+          this.labelService.create({ name: cleanedName, countryId, information: null }),
+        );
+
+        return label.id;
+      } catch (error) {
+        if (!(error instanceof HttpErrorResponse)) {
+          throw error;
+        }
+
+        this.errorModalService.showFromHttpError(error, 'Label');
+
+        return null;
+      }
     }
 
     return new Promise<number | null>((resolve) => {
@@ -513,7 +549,7 @@ export class RecordForm implements OnDestroy {
     const cleanedLabelName = labelName ? sanitizeDiscogsLabelName(labelName) : '';
 
     if (cleanedLabelName) {
-      const labelId = await this.resolveLabelId(cleanedLabelName);
+      const labelId = await this.resolveLabelId(cleanedLabelName, release.country);
 
       if (labelId) {
         this.formModel.update((model) => ({ ...model, labelId: String(labelId) }));
@@ -525,7 +561,7 @@ export class RecordForm implements OnDestroy {
     const cleanedArtistName = artistName ? sanitizeDiscogsArtistName(artistName) : '';
 
     if (cleanedArtistName) {
-      const recordArtistId = await this.resolveArtistId(cleanedArtistName);
+      const recordArtistId = await this.resolveOrCreateArtistId(cleanedArtistName);
 
       if (recordArtistId) {
         this.formModel.update((model) => ({ ...model, artistId: String(recordArtistId) }));
@@ -657,7 +693,7 @@ export class RecordForm implements OnDestroy {
       let artistId = artistIdByName.get(key);
 
       if (artistId === undefined) {
-        const resolved = await this.resolveArtistId(artistName);
+        const resolved = await this.resolveOrCreateArtistId(artistName);
 
         if (!resolved) {
           continue;

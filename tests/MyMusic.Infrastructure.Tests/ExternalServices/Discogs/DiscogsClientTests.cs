@@ -98,6 +98,7 @@ public class DiscogsClientTests
 
         // assert
         Assert.Equal("data:image/png;base64,BAUG", release.CoverImageUrl);
+        Assert.Equal("US", release.Country);
     }
 
     [Fact]
@@ -142,7 +143,8 @@ public class DiscogsClientTests
         return $$"""
             { "id": 1, "title": "Nevermind", "year": 1991, "artists": [{ "name": "Nirvana" }],
             "labels": [{ "name": "DGC" }], "genres": [], "styles": [], "formats": [],
-            "images": [{ "type": "primary", "uri": "{{coverImageUrl}}" }], "tracklist": [] }
+            "images": [{ "type": "primary", "uri": "{{coverImageUrl}}" }], "tracklist": [],
+            "country": "US" }
             """;
     }
 

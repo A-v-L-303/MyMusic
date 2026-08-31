@@ -29,4 +29,5 @@ export interface DiscogsRelease {
   formats: DiscogsFormat[];
   coverImageUrl: string | null;
   tracklist: DiscogsTrack[];
+  country: string | null;
 }

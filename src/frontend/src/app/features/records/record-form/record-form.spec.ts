@@ -258,6 +258,7 @@ describe('RecordForm', () => {
       { position: 'A1', title: 'So What', duration: '9:22', artist: null },
       { position: 'A2', title: 'Freddie Freeloader', duration: '9:46', artist: null },
     ],
+    country: null,
   };
 
   it('zeigt im Bearbeiten-Modus Label/Künstler-Namen in den Autocomplete-Feldern vorbefüllt', () => {
@@ -889,9 +890,10 @@ describe('RecordForm', () => {
       expect(compiled(fixture).querySelector('app-label-form')).toBeNull();
     });
 
-    it('fragt bei einer neuen Artist-Referenz aus Discogs nach, bevor sie übernommen wird', async () => {
+    it('legt eine neue Artist-Referenz aus Discogs ohne Rückfrage automatisch an', async () => {
       // arrange
       genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      artistServiceMock.create.mockReturnValue(of({ id: 21, name: 'Nirvana' }));
       const fixture = createFixture();
       const release: DiscogsRelease = { ...nevermindRelease, artists: ['Nirvana'] };
 
@@ -899,11 +901,13 @@ describe('RecordForm', () => {
       await applyDiscogsRelease(fixture, release);
 
       // assert
-      expect(compiled(fixture).textContent).toContain('Künstler anlegen');
-      expect(compiled(fixture).textContent).toContain('Nirvana');
+      expect(artistServiceMock.create).toHaveBeenCalledWith({ name: 'Nirvana' });
+      expect(compiled(fixture).textContent).not.toContain('Künstler anlegen');
+      const inputs = compiled(fixture).querySelectorAll('app-autocomplete input');
+      expect((inputs[1] as HTMLInputElement).value).toBe('Nirvana');
     });
 
-    it('bereinigt einen Discogs-Artist-Namen mit unerlaubten Zeichen vor der Rückfrage und Neuanlage', async () => {
+    it('bereinigt einen Discogs-Artist-Namen mit unerlaubten Zeichen vor der automatischen Neuanlage', async () => {
       // arrange
       genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
       artistServiceMock.create.mockReturnValue(of({ id: 30, name: 'Prince' }));
@@ -913,23 +917,15 @@ describe('RecordForm', () => {
       // act
       await applyDiscogsRelease(fixture, release);
 
-      // assert: Rückfrage zeigt bereits den bereinigten Namen, nicht den Discogs-Rohwert
-      expect(compiled(fixture).textContent).toContain('Künstler anlegen');
-      expect(compiled(fixture).textContent).toContain('Prince');
-      expect(compiled(fixture).textContent).not.toContain('Prince (2)');
-
-      // act: Neuanlage bestätigen
-      confirmButtonWithLabel(fixture, 'Anlegen')?.click();
-      await fixture.whenStable();
-
-      // assert
+      // assert: Neuanlage verwendet bereits den bereinigten Namen, nicht den Discogs-Rohwert
       expect(artistServiceMock.create).toHaveBeenCalledWith({ name: 'Prince' });
+      expect(compiled(fixture).textContent).not.toContain('Künstler anlegen');
       const inputs = compiled(fixture).querySelectorAll('app-autocomplete input');
       expect((inputs[1] as HTMLInputElement).value).toBe('Prince');
     });
 
-    it('fragt bei einer neuen Label-Referenz aus Discogs nach und befüllt den Namen vor', async () => {
-      // arrange
+    it('öffnet ohne ermittelbares Land das LabelForm zur manuellen Länderwahl und befüllt den Namen vor', async () => {
+      // arrange: nevermindRelease liefert kein Discogs-Land (country: null)
       genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
       const fixture = createFixture();
       const release: DiscogsRelease = { ...nevermindRelease, labels: ['Sub Pop'] };
@@ -943,7 +939,7 @@ describe('RecordForm', () => {
       expect(nameInput.value).toBe('Sub Pop');
     });
 
-    it('bereinigt einen Discogs-Label-Namen mit unerlaubten Zeichen vor der Rückfrage', async () => {
+    it('bereinigt einen Discogs-Label-Namen mit unerlaubten Zeichen vor der Vorbefüllung im Fallback-Modal', async () => {
       // arrange
       genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
       const fixture = createFixture();
@@ -958,19 +954,54 @@ describe('RecordForm', () => {
       expect(nameInput.value).toBe('Atlantic');
     });
 
-    it('fragt bei einer neuen Genre-Referenz aus Discogs nach, bevor sie für den Track-Import übernommen wird', async () => {
+    it('legt eine neue Label-Referenz mit eindeutigem Discogs-Land ohne Rückfrage automatisch an', async () => {
       // arrange
+      genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
+      countryServiceMock.getAll.mockReturnValue(
+        of([{ id: 5, name: 'Vereinigte Staaten von Amerika', code: 'US' }]),
+      );
+      labelServiceMock.create.mockReturnValue(
+        of({
+          id: 50,
+          name: 'Sub Pop',
+          countryId: 5,
+          countryName: 'Vereinigte Staaten von Amerika',
+          information: null,
+        }),
+      );
+      const fixture = createFixture();
+      const release: DiscogsRelease = { ...nevermindRelease, labels: ['Sub Pop'], country: 'US' };
+
+      // act
+      await applyDiscogsRelease(fixture, release);
+
+      // assert
+      expect(labelServiceMock.create).toHaveBeenCalledWith({
+        name: 'Sub Pop',
+        countryId: 5,
+        information: null,
+      });
+      expect(compiled(fixture).querySelector('app-label-form')).toBeNull();
+      const labelInput = compiled(fixture).querySelectorAll(
+        'app-autocomplete input',
+      )[0] as HTMLInputElement;
+      expect(labelInput.value).toBe('Sub Pop');
+    });
+
+    it('legt eine neue Genre-Referenz aus Discogs ohne Rückfrage automatisch an', async () => {
+      // arrange
+      genreServiceMock.create.mockReturnValue(of({ id: 3, name: 'Jazz' }));
       const fixture = createFixture();
 
       // act
       await applyDiscogsRelease(fixture, nevermindRelease);
 
       // assert
-      expect(compiled(fixture).textContent).toContain('Genre anlegen');
-      expect(compiled(fixture).textContent).toContain('Jazz');
+      expect(genreServiceMock.create).toHaveBeenCalledWith({ name: 'Jazz' });
+      expect(compiled(fixture).textContent).not.toContain('Genre anlegen');
     });
 
-    it('bereinigt einen Discogs-Genre-Namen mit unerlaubten Zeichen vor der Rückfrage und Neuanlage', async () => {
+    it('bereinigt einen Discogs-Genre-Namen mit unerlaubten Zeichen vor der automatischen Neuanlage', async () => {
       // arrange
       genreServiceMock.create.mockReturnValue(of({ id: 40, name: 'Folk World Country' }));
       const fixture = createFixture();
@@ -979,17 +1010,9 @@ describe('RecordForm', () => {
       // act
       await applyDiscogsRelease(fixture, release);
 
-      // assert: Rückfrage zeigt bereits den bereinigten Namen
-      expect(compiled(fixture).textContent).toContain('Genre anlegen');
-      expect(compiled(fixture).textContent).toContain('Folk World Country');
-      expect(compiled(fixture).textContent).not.toContain('Folk, World, Country');
-
-      // act: Neuanlage bestätigen
-      confirmButtonWithLabel(fixture, 'Anlegen')?.click();
-      await fixture.whenStable();
-
-      // assert
+      // assert: Neuanlage verwendet bereits den bereinigten Namen
       expect(genreServiceMock.create).toHaveBeenCalledWith({ name: 'Folk World Country' });
+      expect(compiled(fixture).textContent).not.toContain('Genre anlegen');
     });
 
     it('legt nach dem Speichern alle Tracks eines Discogs-Albums mit dem Record-Artist an', async () => {
@@ -1091,9 +1114,6 @@ describe('RecordForm', () => {
       // act
       submitForm(fixture);
       await fixture.whenStable();
-      fixture.detectChanges();
-      confirmButtonWithLabel(fixture, 'Anlegen')?.click();
-      await fixture.whenStable();
 
       // assert
       expect(artistServiceMock.create).toHaveBeenCalledWith({ name: 'Cannonball Adderley' });
@@ -1115,15 +1135,15 @@ describe('RecordForm', () => {
       });
     });
 
-    it('überspringt den Track-Import komplett, wenn die neue Genre-Referenz abgelehnt wird', async () => {
-      // arrange: genreServiceMock.getAll bleibt beim Default [] – „Jazz" ist eine neue Referenz
+    it('überspringt den Track-Import komplett, wenn die automatische Genre-Neuanlage fehlschlägt', async () => {
+      // arrange: genreServiceMock.getAll bleibt beim Default [] – „Jazz" ist eine neue Referenz,
+      // deren Anlage hier fehlschlägt (genreId ist Pflicht fuer den Track-Import)
+      genreServiceMock.create.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 400 })),
+      );
       recordServiceMock.create.mockReturnValue(of({ ...existingRecord, id: 9 }));
       const fixture = createFixture();
       await applyDiscogsRelease(fixture, nevermindRelease);
-      const cancelButtons = compiled(fixture).querySelectorAll('app-confirm-modal .btn-secondary');
-      (cancelButtons[cancelButtons.length - 1] as HTMLButtonElement).click();
-      await fixture.whenStable();
-      fixture.detectChanges();
       selectFormat(fixture, 'Album');
 
       // act

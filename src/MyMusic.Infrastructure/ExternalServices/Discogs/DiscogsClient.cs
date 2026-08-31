@@ -98,7 +98,8 @@ public sealed class DiscogsClient(HttpClient httpClient, ILogger<DiscogsClient> 
             release.Styles ?? [],
             formats,
             coverImageDataUrl,
-            tracklist);
+            tracklist,
+            release.Country);
     }
 
     private static string? ResolveCoverImageUrl(List<DiscogsImageRepresentation>? images)

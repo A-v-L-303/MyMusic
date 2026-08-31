@@ -53,7 +53,8 @@ public class DiscogsResponseBuilderTests
             [
                 new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01", "Nirvana"),
                 new DiscogsTrack("A2", "In Bloom", null, null),
-            ]);
+            ],
+            "US");
 
         // act
         var response = _builder.BuildRelease(release);
@@ -67,13 +68,14 @@ public class DiscogsResponseBuilderTests
         var format = Assert.Single(response.Formats);
         Assert.Equal("Vinyl", format.Name);
         Assert.Equal(["LP", "Album"], format.Descriptions);
+        Assert.Equal("US", response.Country);
     }
 
     [Fact]
     public void BuildRelease_LeereListen_LiefertLeereResponseListen()
     {
         // arrange
-        var release = new DiscogsRelease(1, "Nevermind", 1991, [], [], [], [], [], null, []);
+        var release = new DiscogsRelease(1, "Nevermind", 1991, [], [], [], [], [], null, [], null);
 
         // act
         var response = _builder.BuildRelease(release);
@@ -83,5 +85,6 @@ public class DiscogsResponseBuilderTests
         Assert.Empty(response.Labels);
         Assert.Empty(response.Formats);
         Assert.Empty(response.Tracklist);
+        Assert.Null(response.Country);
     }
 }

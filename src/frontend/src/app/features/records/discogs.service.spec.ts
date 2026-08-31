@@ -61,6 +61,7 @@ describe('DiscogsService', () => {
       formats: [],
       coverImageUrl: null,
       tracklist: [],
+      country: null,
     };
     let result: DiscogsRelease | undefined;
 

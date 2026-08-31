@@ -1,5 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, output, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  inject,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { rxResource, takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { LucideDisc3, LucideSearch } from '@lucide/angular';
 import { debounceTime, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
@@ -23,6 +31,8 @@ export class DiscogsSearch {
   readonly cancelled = output<void>();
   readonly applied = output<DiscogsRelease>();
 
+  protected readonly queryInput = viewChild<ElementRef<HTMLInputElement>>('queryInput');
+
   protected readonly queryText = signal('');
   protected readonly query = signal('');
   protected readonly loadingRelease = signal(false);
@@ -31,6 +41,8 @@ export class DiscogsSearch {
     toObservable(this.queryText)
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((query) => this.query.set(query.trim()));
+
+    afterNextRender(() => this.queryInput()?.nativeElement.focus());
   }
 
   protected readonly searchResource = rxResource({

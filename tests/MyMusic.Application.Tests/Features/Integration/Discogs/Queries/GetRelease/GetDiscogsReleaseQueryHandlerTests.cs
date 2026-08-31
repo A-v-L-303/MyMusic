@@ -16,7 +16,8 @@ public class GetDiscogsReleaseQueryHandlerTests
             ["Grunge"],
             [new DiscogsFormat("Vinyl", ["LP", "Album"])],
             "https://example.com/cover.jpg",
-            [new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01", "Nirvana")]);
+            [new DiscogsTrack("A1", "Smells Like Teen Spirit", "5:01", "Nirvana")],
+            "US");
 
         var discogsClient = Substitute.For<IDiscogsClient>();
 
@@ -44,6 +45,7 @@ public class GetDiscogsReleaseQueryHandlerTests
         Assert.Equal("Smells Like Teen Spirit", track.Title);
         Assert.Equal("5:01", track.Duration);
         Assert.Equal("Nirvana", track.Artist);
+        Assert.Equal("US", response.Country);
     }
 
     [Fact]
@@ -51,7 +53,7 @@ public class GetDiscogsReleaseQueryHandlerTests
     {
         // arrange
         var release = new DiscogsRelease(
-            1, "Nevermind", 1991, ["Nirvana"], ["DGC"], [], [], [], null, []);
+            1, "Nevermind", 1991, ["Nirvana"], ["DGC"], [], [], [], null, [], null);
 
         var discogsClient = Substitute.For<IDiscogsClient>();
 
