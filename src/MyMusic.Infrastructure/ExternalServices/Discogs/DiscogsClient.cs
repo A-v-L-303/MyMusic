@@ -1,6 +1,6 @@
 namespace MyMusic.Infrastructure.ExternalServices.Discogs;
 
-public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
+public sealed class DiscogsClient(HttpClient httpClient, ILogger<DiscogsClient> logger) : IDiscogsClient
 {
     private static readonly JsonSerializerOptions _caseInsensitiveOptions =
         new() { PropertyNameCaseInsensitive = true };
@@ -21,9 +21,16 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
 
         var results = searchResponse?.Results ?? [];
 
-        return results
+        var searchResults = results
             .Where(result => result.Type == "release")
             .Select(MapSearchResult)
+            .ToList();
+
+        var thumbnailDataUrls = await Task.WhenAll(searchResults
+            .Select(result => DownloadImageAsDataUrlAsync(result.ThumbnailUrl, cancellationToken)));
+
+        return searchResults
+            .Zip(thumbnailDataUrls, (result, thumbnailDataUrl) => result with { ThumbnailUrl = thumbnailDataUrl })
             .ToList();
     }
 
@@ -40,7 +47,8 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
         if (release is null)
             throw new HttpRequestException("Discogs hat keine Release-Daten geliefert.");
 
-        var coverImageDataUrl = await DownloadCoverImageAsDataUrlAsync(release.Images, cancellationToken);
+        var coverImageUrl = ResolveCoverImageUrl(release.Images);
+        var coverImageDataUrl = await DownloadImageAsDataUrlAsync(coverImageUrl, cancellationToken);
 
         return MapRelease(release, coverImageDataUrl);
     }
@@ -93,25 +101,28 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
             tracklist);
     }
 
-    /// <summary>
-    /// Lädt das Cover-Bild serverseitig über den authentifizierten Discogs-Client herunter und
-    /// bettet es als Data-URL ein, damit der Browser nicht direkt gegen Discogs' Bild-CDN
-    /// zugreifen muss (Discogs blockiert Hotlinking ohne passenden User-Agent/Referer).
-    /// </summary>
-    private async Task<string?> DownloadCoverImageAsDataUrlAsync(
-        List<DiscogsImageRepresentation>? images,
-        CancellationToken cancellationToken)
+    private static string? ResolveCoverImageUrl(List<DiscogsImageRepresentation>? images)
     {
         var nonNullImages = images ?? [];
-        var coverImageUrl = nonNullImages.FirstOrDefault(image => image.Type == "primary")?.Uri
-            ?? nonNullImages.FirstOrDefault()?.Uri;
 
-        if (coverImageUrl is null)
+        return nonNullImages.FirstOrDefault(image => image.Type == "primary")?.Uri
+            ?? nonNullImages.FirstOrDefault()?.Uri;
+    }
+
+    /// <summary>
+    /// Lädt ein Discogs-Bild (Release-Cover oder Such-Thumbnail) serverseitig über den
+    /// authentifizierten Discogs-Client herunter und bettet es als Data-URL ein, damit der
+    /// Browser nicht direkt gegen Discogs' Bild-CDN zugreifen muss (Discogs blockiert
+    /// Hotlinking ohne passenden User-Agent/Referer).
+    /// </summary>
+    private async Task<string?> DownloadImageAsDataUrlAsync(string? imageUrl, CancellationToken cancellationToken)
+    {
+        if (imageUrl is null)
             return null;
 
         try
         {
-            var imageResponse = await httpClient.GetAsync(coverImageUrl, cancellationToken);
+            var imageResponse = await httpClient.GetAsync(imageUrl, cancellationToken);
 
             imageResponse.EnsureSuccessStatusCode();
 
@@ -120,8 +131,13 @@ public sealed class DiscogsClient(HttpClient httpClient) : IDiscogsClient
 
             return $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
+            logger.LogWarning(
+                exception,
+                "Discogs-Bild konnte nicht heruntergeladen werden: {ImageUrl}",
+                imageUrl);
+
             return null;
         }
     }

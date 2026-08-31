@@ -1,4 +1,10 @@
+global using System.Net;
+global using System.Net.Http.Headers;
+global using System.Text;
 global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Logging;
+global using MyMusic.Infrastructure.ExternalServices.Discogs;
 global using MyMusic.Infrastructure.Persistence;
 global using MyMusic.Infrastructure.Persistence.Repositories;
+global using MyMusic.Infrastructure.Tests.ExternalServices.Discogs.TestDoubles;
 global using MyMusic.Infrastructure.Tests.Persistence.Repositories.TestDoubles;

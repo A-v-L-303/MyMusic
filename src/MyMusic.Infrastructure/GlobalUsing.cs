@@ -8,6 +8,7 @@ global using System.Text.Json.Serialization;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Logging;
 global using MyMusic.Application.Common.Services;
 global using MyMusic.Domain.Contracts.Repository;
 global using MyMusic.Domain.DomainModels.Sammlung.Record;

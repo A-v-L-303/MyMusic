@@ -104,3 +104,32 @@ Repository- bzw. Angular-Stand verifiziert, nicht angenommen):
 - CSP-Production (HTTP-Header vom Nginx) ist explizit **nicht** Teil dieses
   ADRs und bleibt in TASK.md als offener Punkt geführt, abhängig vom noch
   nicht begonnenen Production-/Docker-Compose-Setup.
+
+## Nachtrag (2026-08-31): img-src fehlte blob: für Object-URL-Vorschauen
+
+Bei der Untersuchung eines gemeldeten Discogs-Cover-Bugs (Cover wurde beim
+Anlegen aus Discogs nicht gespeichert) zeigte sich live gegen den laufenden
+Aspire-AppHost ein zweiter, unabhängiger Befund: Die Cover-Vorschau im
+RecordForm — sowohl beim manuellen Datei-Upload (Block 6i, 2026-08-15) als
+auch bei der Discogs-Übernahme (Block 8b) — nutzt `URL.createObjectURL()`
+und bindet die entstehende `blob:`-URL in ein `<img src>` ein. `img-src`
+erlaubte bisher nur `'self' data:` — `blob:`-URLs werden vom Browser separat
+gegen `img-src` geprüft und ohne explizite Nennung blockiert (verifiziert mit
+einem isolierten Test: ein `<img>` mit einer frisch per `URL.createObjectURL`
+erzeugten `blob:`-URL auf ein bekanntes, gültiges PNG löste in der
+laufenden Anwendung zuverlässig das `error`-Event aus, `naturalWidth`/
+`naturalHeight` blieben 0).
+
+Betroffen war jede Cover-Vorschau seit Einführung dieser CSP (Block 7j,
+2026-08-26) — nicht nur der Discogs-Pfad. Die eigentliche
+Datenübernahme/-speicherung war davon nicht betroffen (das hochgeladene
+`File`-Objekt ist unabhängig von der `<img>`-Vorschau gültig, der Upload
+selbst läuft über `fetch`/`XMLHttpRequest` gegen die eigene API und damit
+über `connect-src`, nicht über `img-src`), lediglich die visuelle Vorschau
+vor dem Speichern blieb ein Platzhalter-Icon.
+
+**Fix**: `img-src` um `blob:` ergänzt (`write-csp-meta.mjs`, eingecheckte
+`index.html`-Baseline, `wiki/sicherheit/sicherheitskonzept.md`). Keine
+Änderung an `connect-src` oder den übrigen Direktiven — die Grundarchitektur
+dieses ADRs bleibt unverändert, wie im Abschnitt „Konsequenzen" oben für
+Nachträge vorgesehen.

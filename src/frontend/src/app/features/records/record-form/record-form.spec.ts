@@ -1134,15 +1134,13 @@ describe('RecordForm', () => {
       expect(recordServiceMock.createTrack).not.toHaveBeenCalled();
     });
 
-    it('lädt bei Übernahme automatisch das Discogs-Cover herunter und übernimmt es als Vorschau', async () => {
-      // arrange
+    it('übernimmt bei Übernahme automatisch das eingebettete Discogs-Cover als Vorschau', async () => {
+      // arrange: coverImageUrl ist die vom Backend eingebettete Data-URL (ADR 0020) —
+      // die Übernahme dekodiert sie direkt, ohne fetch() (ADR 0028)
       genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
-      const blob = new Blob(['cover-bytes'], { type: 'image/jpeg' });
-      const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: () => Promise.resolve(blob) });
-      vi.stubGlobal('fetch', fetchMock);
       const release: DiscogsRelease = {
         ...nevermindRelease,
-        coverImageUrl: 'https://example.com/cover.jpg',
+        coverImageUrl: 'data:image/jpeg;base64,AQID',
       };
       const fixture = createFixture();
 
@@ -1150,7 +1148,6 @@ describe('RecordForm', () => {
       await applyDiscogsRelease(fixture, release);
 
       // assert
-      expect(fetchMock).toHaveBeenCalledWith('https://example.com/cover.jpg');
       const preview = compiled(fixture).querySelector(
         'img[alt="Cover-Vorschau"]',
       ) as HTMLImageElement;
@@ -1158,14 +1155,12 @@ describe('RecordForm', () => {
       expect(preview.src.startsWith('blob:')).toBe(true);
     });
 
-    it('lässt das Cover leer, wenn der Discogs-Bild-Download fehlschlägt', async () => {
+    it('lässt das Cover leer, wenn die Discogs-Data-URL nicht dekodiert werden kann', async () => {
       // arrange
       genreServiceMock.getAll.mockReturnValue(of([{ id: 3, name: 'Jazz' }]));
-      const fetchMock = vi.fn().mockRejectedValue(new Error('Netzwerkfehler'));
-      vi.stubGlobal('fetch', fetchMock);
       const release: DiscogsRelease = {
         ...nevermindRelease,
-        coverImageUrl: 'https://example.com/cover.jpg',
+        coverImageUrl: 'data:image/jpeg;base64,not-valid-base64!!!',
       };
       const fixture = createFixture();
 
@@ -1173,7 +1168,6 @@ describe('RecordForm', () => {
       await applyDiscogsRelease(fixture, release);
 
       // assert
-      expect(fetchMock).toHaveBeenCalled();
       expect(compiled(fixture).querySelector('img[alt="Cover-Vorschau"]')).toBeNull();
     });
   });
