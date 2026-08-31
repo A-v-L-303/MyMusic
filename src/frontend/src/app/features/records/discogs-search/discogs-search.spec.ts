@@ -27,6 +27,7 @@ const release: DiscogsRelease = {
   formats: [],
   coverImageUrl: null,
   tracklist: [],
+  country: null,
 };
 
 describe('DiscogsSearch', () => {
@@ -63,6 +64,33 @@ describe('DiscogsSearch', () => {
     await wait(350);
     fixture.detectChanges();
   }
+
+  it('fokussiert das Suchfeld automatisch nach dem Rendern', async () => {
+    // arrange: nativeElement muss vor der ersten Change Detection im Dokument hängen, da
+    // afterNextRender bereits innerhalb des ersten detectChanges() feuern kann — anders als
+    // createFixture(), das erst danach anhängen würde
+    discogsServiceMock = { search: vi.fn(() => of([])), getRelease: vi.fn() };
+    errorModalServiceMock = { showFromHttpError: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: DiscogsService, useValue: discogsServiceMock },
+        { provide: ErrorModalService, useValue: errorModalServiceMock },
+      ],
+    });
+    const fixture = TestBed.createComponent(DiscogsSearch);
+    document.body.appendChild(fixture.nativeElement);
+
+    // act
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // assert
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    expect(document.activeElement).toBe(input);
+
+    // cleanup: Testfixture nicht im Dokument des Testrunners zurücklassen
+    fixture.nativeElement.remove();
+  });
 
   it('löst unterhalb von 2 Zeichen keine Suche aus', async () => {
     // arrange

@@ -24,7 +24,8 @@ public sealed class DiscogsResponseBuilder
             release.Styles,
             release.Formats.Select(BuildFormat).ToList(),
             release.CoverImageUrl,
-            release.Tracklist.Select(BuildTrack).ToList());
+            release.Tracklist.Select(BuildTrack).ToList(),
+            release.Country);
     }
 
     private static DiscogsFormatResponse BuildFormat(DiscogsFormat format)

@@ -10,4 +10,5 @@ public sealed record DiscogsRelease(
     IReadOnlyList<string> Styles,
     IReadOnlyList<DiscogsFormat> Formats,
     string? CoverImageUrl,
-    IReadOnlyList<DiscogsTrack> Tracklist);
+    IReadOnlyList<DiscogsTrack> Tracklist,
+    string? Country);

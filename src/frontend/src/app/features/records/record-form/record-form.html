@@ -183,17 +183,6 @@
   />
 }
 
-@if (pendingGenreConfirmName(); as newGenreName) {
-  <app-confirm-modal
-    title="Genre anlegen"
-    [message]="'Soll das Genre „' + newGenreName + '“ neu angelegt werden?'"
-    confirmLabel="Anlegen"
-    confirmVariant="primary"
-    (confirmed)="onGenreCreateConfirmed()"
-    (cancelled)="onGenreCreateCancelled()"
-  />
-}
-
 @if (discogsSearchOpen()) {
   <app-discogs-search
     (cancelled)="onDiscogsSearchCancelled()"
