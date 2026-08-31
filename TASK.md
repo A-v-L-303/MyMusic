@@ -3076,8 +3076,10 @@ Nachbesserungen aus einem gemeldeten Bugfix (2026-08-31), siehe
   Thumbnails, Übernahme eines echten Treffers („Nevermind", Nirvana, DGC,
   1991) inkl. korrekt gespeichertem Cover auf der RecordCard.
 
-Nachbesserung aus einem Korrekturauftrag (2026-08-31), PR #102
-(`fix-discogs-referenzen-ohne-rueckfrage`), siehe
+Nachbesserung aus einem Korrekturauftrag (2026-08-31), umgesetzt,
+automatisiert getestet und live gegen den laufenden Aspire-AppHost
+verifiziert, PR #102 (`fix-discogs-referenzen-ohne-rueckfrage`), nach
+`main` gemergt, siehe
 `docs/prompts/2026-08-31-fix-discogs-referenzen-ohne-rueckfrage.md` und
 ADR `docs/adr/0029-discogs-referenzen-ohne-rueckfrage-und-laenderzuordnung.md`:
 
@@ -3107,9 +3109,8 @@ ADR `docs/adr/0029-discogs-referenzen-ohne-rueckfrage-und-laenderzuordnung.md`:
   Production-Build erfolgreich).
 - Wiki korrigiert: `user-stories-discogs.md` (US-DI3) und `discogs-api.md`
   (neuer Abschnitt „Länderzuordnung für neues Label").
-- **Offen**: Die manuelle Live-Verifikation gegen den laufenden
-  Aspire-AppHost mit einem echten Discogs-Release wurde für diese
-  Nachbesserung noch nicht durchgeführt — nur automatisiert verifiziert.
+- Live gegen den laufenden Aspire-AppHost mit einem echten Discogs-Release
+  verifiziert.
 
 Abnahmekriterium:
 
