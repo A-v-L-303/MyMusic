@@ -1522,6 +1522,11 @@ Abnahmekriterium:
   automatisierte Tests grün und zusätzlich live im Browser gegen den
   laufenden Aspire-AppHost verifiziert (Filter-Zeile, Artist-Autosuggest
   gegen echtes Backend, Tooltip, keine Konsolenfehler).
+  (Korrigiert am 2026-08-30: Die Card-Liste lädt nicht mehr seitenweise
+  nummeriert, sondern per Infinite Scroll automatisch nach — Grund: Die
+  Seiten-Buttons-Zeile verstieß bei größeren Sammlungen gegen die
+  Responsiveness-Anforderung „vollständig nutzbar", siehe
+  docs/prompts/2026-08-30-fix-records-suche-infinite-scroll.md.)
 
 ### 6g. Record anlegen/bearbeiten/löschen
 
@@ -3119,6 +3124,9 @@ Aufgaben:
   Fehlermeldung („Die Eingabe muss ...", nicht „Die Suche muss ..."), keine
   Navigation bei Verstoß. Leere Eingabe löst weiterhin keine Aktion aus.
   Prüfung ausschließlich im Frontend (Signal Forms).
+  (Korrigiert am 2026-08-30: Die Ergebnisliste lädt wie die Records-Ansicht
+  nicht mehr seitenweise nummeriert, sondern per Infinite Scroll automatisch
+  nach, siehe docs/prompts/2026-08-30-fix-records-suche-infinite-scroll.md.)
 
 Abnahmekriterium:
 

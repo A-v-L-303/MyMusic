@@ -19,6 +19,18 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+class StubIntersectionObserver implements IntersectionObserver {
+  readonly root: Element | Document | null = null;
+  readonly rootMargin = '';
+  readonly scrollMargin = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn((): IntersectionObserverEntry[] => []);
+}
+
 describe('Records', () => {
   let httpTesting: HttpTestingController;
   let errorModalService: ErrorModalService;
@@ -56,6 +68,8 @@ describe('Records', () => {
   };
 
   beforeEach(() => {
+    vi.stubGlobal('IntersectionObserver', StubIntersectionObserver);
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -74,6 +88,7 @@ describe('Records', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    vi.unstubAllGlobals();
   });
 
   function expectListRequest() {
@@ -274,7 +289,44 @@ describe('Records', () => {
     await fixture.whenStable();
   });
 
-  it('lädt bei Seitenwechsel die gewählte Seite', async () => {
+  it('lädt beim Klick auf "Mehr laden" die nächste Seite nach und hängt die Treffer an', async () => {
+    // arrange
+    const letItBe: Record = { ...abbeyRoad, id: 2, albumName: 'Let It Be' };
+    const twoPages: RecordListResponse = {
+      items: [abbeyRoad],
+      totalCount: 21,
+      page: 1,
+      pageSize: 20,
+      totalPages: 2,
+    };
+    const fixture = await createLoadedFixture(twoPages);
+
+    // act
+    findButton(compiled(fixture), 'Mehr laden').click();
+    fixture.detectChanges();
+    const request = httpTesting.expectOne(
+      (req) => req.url === 'https://api.test/api/records' && req.params.get('page') === '2',
+    );
+    request.flush({ ...twoPages, page: 2, items: [letItBe] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert
+    expect(request.request.params.get('page')).toBe('2');
+    expect(compiled(fixture).textContent).toContain('Abbey Road');
+    expect(compiled(fixture).textContent).toContain('Let It Be');
+  });
+
+  it('zeigt keinen "Mehr laden"-Button, wenn nur eine Seite vorhanden ist', async () => {
+    // arrange
+    // act
+    const fixture = await createLoadedFixture(onePage);
+
+    // assert
+    expect(findButton(compiled(fixture), 'Mehr laden')).toBeUndefined();
+  });
+
+  it('behält beim Nachladen bereits geladene Cards sichtbar statt eines Vollbild-Spinners', async () => {
     // arrange
     const twoPages: RecordListResponse = {
       items: [abbeyRoad],
@@ -284,18 +336,56 @@ describe('Records', () => {
       totalPages: 2,
     };
     const fixture = await createLoadedFixture(twoPages);
-    const pageButtons = compiled(fixture).querySelectorAll('button.btn-sm:not(.btn-icon)');
 
     // act
-    (pageButtons[1] as HTMLButtonElement).click();
+    findButton(compiled(fixture), 'Mehr laden').click();
     fixture.detectChanges();
-    const request = httpTesting.expectOne(
+
+    // assert
+    expect(compiled(fixture).querySelector('.record-card')).not.toBeNull();
+    expect(compiled(fixture).textContent).toContain('Abbey Road');
+    httpTesting
+      .expectOne(
+        (req) => req.url === 'https://api.test/api/records' && req.params.get('page') === '2',
+      )
+      .flush({ ...twoPages, page: 2 });
+    await fixture.whenStable();
+  });
+
+  it('fordert nach einem fehlgeschlagenen Nachladen bei erneutem Klick dieselbe Seite erneut an', async () => {
+    // arrange
+    const twoPages: RecordListResponse = {
+      items: [abbeyRoad],
+      totalCount: 21,
+      page: 1,
+      pageSize: 20,
+      totalPages: 2,
+    };
+    const fixture = await createLoadedFixture(twoPages);
+    findButton(compiled(fixture), 'Mehr laden').click();
+    fixture.detectChanges();
+    httpTesting
+      .expectOne(
+        (req) => req.url === 'https://api.test/api/records' && req.params.get('page') === '2',
+      )
+      .flush(
+        { title: 'Serverfehler', status: 500 },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Mehr laden').click();
+    fixture.detectChanges();
+    const retryRequest = httpTesting.expectOne(
       (req) => req.url === 'https://api.test/api/records' && req.params.get('page') === '2',
     );
 
     // assert
-    expect(request.request.params.get('page')).toBe('2');
-    request.flush({ ...twoPages, page: 2 });
+    expect(errorModalService.current()).toEqual(expect.objectContaining({ kind: 'server' }));
+    expect(retryRequest.request.params.get('page')).toBe('2');
+    retryRequest.flush({ ...twoPages, page: 2 });
     await fixture.whenStable();
   });
 
@@ -471,6 +561,53 @@ describe('Records', () => {
     // assert
     expect(compiled(fixture).querySelector('.btn-danger')).toBeNull();
     expect(compiled(fixture).querySelector('.empty')).not.toBeNull();
+  });
+
+  it('setzt die Liste nach dem Löschen von Seite 2 aus auf Seite 1 zurück', async () => {
+    // arrange
+    const letItBe: Record = { ...abbeyRoad, id: 2, albumName: 'Let It Be' };
+    const twoPages: RecordListResponse = {
+      items: [abbeyRoad],
+      totalCount: 21,
+      page: 1,
+      pageSize: 20,
+      totalPages: 2,
+    };
+    const fixture = await createLoadedFixture(twoPages);
+    findButton(compiled(fixture), 'Mehr laden').click();
+    fixture.detectChanges();
+    httpTesting
+      .expectOne(
+        (req) => req.url === 'https://api.test/api/records' && req.params.get('page') === '2',
+      )
+      .flush({ ...twoPages, page: 2, items: [letItBe] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (
+      compiled(fixture).querySelector(
+        '[aria-label="Record Abbey Road löschen"]',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
+
+    // act
+    findButton(compiled(fixture), 'Löschen').click();
+    const deleteRequest = httpTesting.expectOne(
+      (req) => req.method === 'DELETE' && req.url === 'https://api.test/api/records/1',
+    );
+    deleteRequest.flush(null);
+    await wait(0);
+    fixture.detectChanges();
+    const reloadRequest = httpTesting.expectOne(
+      (req) => req.url === 'https://api.test/api/records' && req.params.get('page') === '1',
+    );
+    reloadRequest.flush(onePage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // assert: Seite-2-Daten sind nach dem Reset verschwunden, nur noch Seite 1 sichtbar
+    expect(compiled(fixture).textContent).toContain('Abbey Road');
+    expect(compiled(fixture).textContent).not.toContain('Let It Be');
   });
 
   it('bricht das Löschen ohne HTTP-Aufruf ab', async () => {

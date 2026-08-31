@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router, RouterOutlet } from '@angular/router';
 import { LucidePlus } from '@lucide/angular';
@@ -11,7 +11,7 @@ import { CountryService } from '../../shared/country/country.service';
 import { AutocompleteOption } from '../../shared/autocomplete/autocomplete';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 import { ErrorModalService } from '../../shared/error-modal/error-modal.service';
-import { Pagination } from '../../shared/pagination/pagination';
+import { LoadMore } from '../../shared/load-more/load-more';
 import { RecordCard } from './record-card/record-card';
 import {
   RecordFilter,
@@ -20,7 +20,7 @@ import {
   RecordSortDirection,
 } from './record-filter/record-filter';
 import { RecordForm } from './record-form/record-form';
-import { Record, RecordFormat } from './record';
+import { Record, RecordFormat, RecordListResponse } from './record';
 import { RecordService } from './record.service';
 
 const PAGE_SIZE = 20;
@@ -31,7 +31,7 @@ const SUGGESTION_PAGE_SIZE = 10;
   imports: [
     RecordFilter,
     RecordCard,
-    Pagination,
+    LoadMore,
     RecordForm,
     ConfirmModal,
     RouterOutlet,
@@ -131,14 +131,32 @@ export class Records {
     this.countriesResource.hasValue() ? this.countriesResource.value() : [],
   );
 
-  protected readonly records = computed(() =>
-    this.recordsResource.hasValue() ? this.recordsResource.value().items : [],
+  private readonly lastResponse = linkedSignal<RecordListResponse | undefined, RecordListResponse | undefined>({
+    source: () => (this.recordsResource.hasValue() ? this.recordsResource.value() : undefined),
+    computation: (current, previous) => current ?? previous?.value,
+  });
+
+  protected readonly records = linkedSignal<RecordListResponse | undefined, Record[]>({
+    source: () => this.lastResponse(),
+    computation: (response, previous) => {
+      if (!response) {
+        return previous?.value ?? [];
+      }
+
+      return response.page > 1 ? [...(previous?.value ?? []), ...response.items] : response.items;
+    },
+  });
+  protected readonly totalCount = computed(() => this.lastResponse()?.totalCount ?? 0);
+  protected readonly nextPage = computed(() => (this.lastResponse()?.page ?? 0) + 1);
+  protected readonly hasMore = computed(() => {
+    const value = this.lastResponse();
+    return value ? value.page < value.totalPages : false;
+  });
+  protected readonly isInitialLoading = computed(
+    () => this.recordsResource.isLoading() && this.page() === 1,
   );
-  protected readonly totalPages = computed(() =>
-    this.recordsResource.hasValue() ? this.recordsResource.value().totalPages : 1,
-  );
-  protected readonly totalCount = computed(() =>
-    this.recordsResource.hasValue() ? this.recordsResource.value().totalCount : 0,
+  protected readonly isLoadingMore = computed(
+    () => this.recordsResource.isLoading() && this.page() > 1,
   );
 
   protected readonly formOpen = signal(false);
@@ -185,8 +203,18 @@ export class Records {
     this.page.set(1);
   }
 
-  protected onPageChange(page: number): void {
-    this.page.set(page);
+  protected onLoadMore(): void {
+    if (this.recordsResource.isLoading()) {
+      return;
+    }
+
+    const target = this.nextPage();
+
+    if (this.page() === target) {
+      this.recordsResource.reload();
+    } else {
+      this.page.set(target);
+    }
   }
 
   protected onArtistQueryChange(query: string): void {
@@ -217,7 +245,7 @@ export class Records {
 
   protected onFormSaved(): void {
     this.formOpen.set(false);
-    this.recordsResource.reload();
+    this.resetToFirstPage();
   }
 
   protected onDeleteRequested(record: Record): void {
@@ -238,12 +266,20 @@ export class Records {
     this.recordService.delete(record.id).subscribe({
       next: () => {
         this.pendingDelete.set(null);
-        this.recordsResource.reload();
+        this.resetToFirstPage();
       },
       error: (error: HttpErrorResponse) => {
         this.pendingDelete.set(null);
         this.errorModalService.showFromHttpError(error, 'Record');
       },
     });
+  }
+
+  private resetToFirstPage(): void {
+    if (this.page() === 1) {
+      this.recordsResource.reload();
+    } else {
+      this.page.set(1);
+    }
   }
 }
